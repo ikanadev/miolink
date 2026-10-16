@@ -1,4 +1,4 @@
-Status: todo
+Status: done
 
 # 002 — Safe HTTP fetching and link metadata
 
