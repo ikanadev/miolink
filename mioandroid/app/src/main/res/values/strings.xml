@@ -1,3 +1,20 @@
 <resources>
     <string name="app_name">Mio Link</string>
+    <string name="navigate_up">Navigate up</string>
+
+    <!-- Browse -->
+    <string name="browse_open_settings">Settings</string>
+    <string name="browse_directory_title">Directory</string>
+    <string name="browse_empty_title">Nothing here yet</string>
+    <string name="browse_empty_message">Links and directories you save will show up here.</string>
+
+    <!-- Link edit -->
+    <string name="link_edit_title">Edit link</string>
+    <string name="link_edit_placeholder_title">Link editing is on its way</string>
+    <string name="link_edit_placeholder_message">Soon you\'ll be able to change this link\'s title, URL and directory here.</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_placeholder_title">Connect your server</string>
+    <string name="settings_placeholder_message">Soon you\'ll enter your miolink server URL and API key here.</string>
 </resources>
