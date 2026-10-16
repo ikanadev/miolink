@@ -14,6 +14,10 @@ directories, like a filesystem, and synced to every client.
 `buf.yaml` and `buf.gen.yaml` live here, at the repository root, and `go.work`
 includes `miobackend`.
 
-Commit messages are a single line.
+## Git
+
+- Commit directly on `main`; don't create branches unless asked. The project
+  is in an early stage with a single developer.
+- Commit messages are a single line.
 
 @miobackend/CLAUDE.md
