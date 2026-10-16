@@ -1,6 +1,7 @@
 package dev.ikana.miolink
 
 import android.app.Application
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewmodel.CreationExtras
 
@@ -11,6 +12,11 @@ class MioLinkApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)
+        // Refresh the cached tree each time the app comes to the foreground.
+        container.treeRepository.syncWhileStarted(
+            ProcessLifecycleOwner.get().lifecycle,
+            container.serverSettings,
+        )
     }
 }
 

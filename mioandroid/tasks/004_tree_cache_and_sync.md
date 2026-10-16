@@ -1,4 +1,4 @@
-Status: todo
+Status: done
 
 # 004 — Tree cache and sync
 

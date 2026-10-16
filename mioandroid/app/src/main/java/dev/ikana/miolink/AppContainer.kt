@@ -3,12 +3,14 @@ package dev.ikana.miolink
 import android.content.Context
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.preferencesDataStoreFile
+import dev.ikana.miolink.core.database.MioDatabase
 import dev.ikana.miolink.core.network.ConnectClients
 import dev.ikana.miolink.core.network.ServiceClientsProvider
 import dev.ikana.miolink.core.settings.ServerSettings
 import dev.ikana.miolink.core.settings.ServerSettingsStore
 import dev.ikana.miolink.settings.DefaultSettingsRepository
 import dev.ikana.miolink.settings.SettingsRepository
+import dev.ikana.miolink.tree.TreeRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -50,4 +52,8 @@ class AppContainer(context: Context) {
 
     val settingsRepository: SettingsRepository =
         DefaultSettingsRepository(serverSettingsStore, connectClients)
+
+    val database: MioDatabase = MioDatabase.create(applicationContext)
+
+    val treeRepository = TreeRepository(database, serviceClients, applicationScope)
 }

@@ -99,13 +99,27 @@ revision protocol:
   the revision in one transaction. It runs when the app comes to the
   foreground (`ProcessLifecycleOwner` `ON_START`), on pull-to-refresh, and
   after a write that found a different revision. Clients with no cache send 0.
+  Concurrent calls share one request. It never throws: failures are logged,
+  returned and exposed in `TreeRepository.lastSyncError`, and never clear
+  the cache. `syncWhileStarted` (called from `MioLinkApplication`) also
+  refreshes when the saved settings change.
+- **The cache belongs to one server.** `SyncStateEntity.serverUrl` records
+  where it came from; when the saved base URL differs, `refresh()` clears the
+  cache before calling `GetTree`.
 - **Writes** go through the domain repository: call the RPC, then
   `TreeRepository.applyWrite(previousRevision, revision) { /* local change */ }`.
   If `previousRevision` equals the cached revision, the local change and the
   new revision are written in one Room transaction. Otherwise the change is
   discarded and `refresh()` runs. The UI updates from Room either way.
+  The lambda's receiver is `TreeDao`; use its in-place methods (`@Upsert`,
+  `rename*`, `move*`, `delete*`), never a `REPLACE` insert, which SQLite runs
+  as delete + insert and would cascade to the subtree.
+- **Room mirrors the backend's cascades** (`ON DELETE CASCADE` on
+  `parent_id` and `directory_id`), so a local recursive delete is one
+  `deleteDirectory(id)`. The schema is exported to `app/schemas/` and
+  committed; the database is excluded from backups since it's only a cache.
 - **`RecordView` doesn't touch the revision.** Update `views` in Room
-  directly after the call succeeds.
+  directly after the call succeeds (`TreeRepository.setLinkViews`).
 - No optimistic updates and no offline write queue for now. A write that
   fails shows an error and changes nothing locally.
 
@@ -120,7 +134,8 @@ revision protocol:
 - `directory` and `link` may import `tree` and `core`, but not each other.
   `browse` is the screen that combines them and may import `directory`,
   `link` and `tree`; nothing imports `browse`. `tree` imports only `core`.
-  `core` imports no domain package.
+  `core` imports no domain package, except `core/database/MioDatabase`,
+  which Room needs to list every entity and DAO.
 - Proto messages never leave the repositories. Convert them in the domain's
   `convert.kt` with `toEntity()` / `toProto()` style functions. ViewModels and
   composables see only entities or UI models.

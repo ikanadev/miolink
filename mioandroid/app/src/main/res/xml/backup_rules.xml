@@ -2,8 +2,11 @@
 <!-- Backup rules for Android 11 and lower; see data_extraction_rules.xml for
      12+. The API key's ciphertext and its Tink keyset are excluded: the
      keyset is wrapped by an Android Keystore key that is never backed up, so
-     a restored copy couldn't be decrypted. The user re-enters the key. -->
+     a restored copy couldn't be decrypted. The user re-enters the key.
+     The Room database is only a cache of the server's tree, so it's
+     excluded too. -->
 <full-backup-content>
     <exclude domain="file" path="datastore/server_settings.preferences_pb" />
     <exclude domain="sharedpref" path="miolink_api_key_keyset.xml" />
+    <exclude domain="database" path="miolink.db" />
 </full-backup-content>
