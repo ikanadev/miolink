@@ -5,4 +5,5 @@ plugins {
     // makes AGP use this Kotlin version instead of the older one it bundles.
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlin.compose) apply false
+    alias(libs.plugins.kotlin.serialization) apply false
 }

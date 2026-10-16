@@ -1,4 +1,4 @@
-Status: todo
+Status: done
 
 # 002 — App skeleton, navigation and Expressive theme
 

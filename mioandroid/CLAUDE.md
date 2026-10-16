@@ -51,7 +51,7 @@ backend, not by layer:
 MioLinkApplication.kt    creates the AppContainer
 AppContainer.kt          wiring only (the app's main.go): OkHttp, Connect client, Room, DataStore, repositories
 MainActivity.kt          setContent { MioLinkTheme { MioLinkApp() } }; receives share intents
-MioLinkApp.kt            top-level Scaffold and NavDisplay
+MioLinkApp.kt            back stack and NavDisplay; each screen owns its Scaffold and insets
 
 core/
   network/               Connect ProtocolClient, API key interceptor, ConnectException -> app errors
