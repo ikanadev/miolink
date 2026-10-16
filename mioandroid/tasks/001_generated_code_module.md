@@ -1,4 +1,4 @@
-Status: todo
+Status: done
 
 # 001 — `:gen` module with generated protobuf and Connect code
 

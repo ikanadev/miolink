@@ -515,8 +515,8 @@ const file_miolink_directory_v1_directory_service_proto_rawDesc = "" +
 	"\x0fCreateDirectory\x12,.miolink.directory.v1.CreateDirectoryRequest\x1a-.miolink.directory.v1.CreateDirectoryResponse\"\x00\x12p\n" +
 	"\x0fRenameDirectory\x12,.miolink.directory.v1.RenameDirectoryRequest\x1a-.miolink.directory.v1.RenameDirectoryResponse\"\x00\x12j\n" +
 	"\rMoveDirectory\x12*.miolink.directory.v1.MoveDirectoryRequest\x1a+.miolink.directory.v1.MoveDirectoryResponse\"\x00\x12p\n" +
-	"\x0fDeleteDirectory\x12,.miolink.directory.v1.DeleteDirectoryRequest\x1a-.miolink.directory.v1.DeleteDirectoryResponse\"\x00B\xd6\x01\n" +
-	"\x18com.miolink.directory.v1B\x15DirectoryServiceProtoP\x01Z/miobackend/gen/miolink/directory/v1;directoryv1\xa2\x02\x03MDX\xaa\x02\x14Miolink.Directory.V1\xca\x02\x15Miolink\\Directory_\\V1\xe2\x02!Miolink\\Directory_\\V1\\GPBMetadata\xea\x02\x16Miolink::Directory::V1b\x06proto3"
+	"\x0fDeleteDirectory\x12,.miolink.directory.v1.DeleteDirectoryRequest\x1a-.miolink.directory.v1.DeleteDirectoryResponse\"\x00B\xe8\x01\n" +
+	"*dev.ikana.miolink.gen.miolink.directory.v1B\x15DirectoryServiceProtoP\x01Z/miobackend/gen/miolink/directory/v1;directoryv1\xa2\x02\x03MDX\xaa\x02\x14Miolink.Directory.V1\xca\x02\x15Miolink\\Directory_\\V1\xe2\x02!Miolink\\Directory_\\V1\\GPBMetadata\xea\x02\x16Miolink::Directory::V1b\x06proto3"
 
 var (
 	file_miolink_directory_v1_directory_service_proto_rawDescOnce sync.Once

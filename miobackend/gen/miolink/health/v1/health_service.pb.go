@@ -103,8 +103,8 @@ const file_miolink_health_v1_health_service_proto_rawDesc = "" +
 	"\vPingRequest\"\x0e\n" +
 	"\fPingResponse2Z\n" +
 	"\rHealthService\x12I\n" +
-	"\x04Ping\x12\x1e.miolink.health.v1.PingRequest\x1a\x1f.miolink.health.v1.PingResponse\"\x00B\xbc\x01\n" +
-	"\x15com.miolink.health.v1B\x12HealthServiceProtoP\x01Z)miobackend/gen/miolink/health/v1;healthv1\xa2\x02\x03MHX\xaa\x02\x11Miolink.Health.V1\xca\x02\x11Miolink\\Health\\V1\xe2\x02\x1dMiolink\\Health\\V1\\GPBMetadata\xea\x02\x13Miolink::Health::V1b\x06proto3"
+	"\x04Ping\x12\x1e.miolink.health.v1.PingRequest\x1a\x1f.miolink.health.v1.PingResponse\"\x00B\xce\x01\n" +
+	"'dev.ikana.miolink.gen.miolink.health.v1B\x12HealthServiceProtoP\x01Z)miobackend/gen/miolink/health/v1;healthv1\xa2\x02\x03MHX\xaa\x02\x11Miolink.Health.V1\xca\x02\x11Miolink\\Health\\V1\xe2\x02\x1dMiolink\\Health\\V1\\GPBMetadata\xea\x02\x13Miolink::Health::V1b\x06proto3"
 
 var (
 	file_miolink_health_v1_health_service_proto_rawDescOnce sync.Once

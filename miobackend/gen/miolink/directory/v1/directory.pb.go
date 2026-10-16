@@ -109,8 +109,8 @@ const file_miolink_directory_v1_directory_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAtB\f\n" +
 	"\n" +
-	"_parent_idB\xcf\x01\n" +
-	"\x18com.miolink.directory.v1B\x0eDirectoryProtoP\x01Z/miobackend/gen/miolink/directory/v1;directoryv1\xa2\x02\x03MDX\xaa\x02\x14Miolink.Directory.V1\xca\x02\x15Miolink\\Directory_\\V1\xe2\x02!Miolink\\Directory_\\V1\\GPBMetadata\xea\x02\x16Miolink::Directory::V1b\x06proto3"
+	"_parent_idB\xe1\x01\n" +
+	"*dev.ikana.miolink.gen.miolink.directory.v1B\x0eDirectoryProtoP\x01Z/miobackend/gen/miolink/directory/v1;directoryv1\xa2\x02\x03MDX\xaa\x02\x14Miolink.Directory.V1\xca\x02\x15Miolink\\Directory_\\V1\xe2\x02!Miolink\\Directory_\\V1\\GPBMetadata\xea\x02\x16Miolink::Directory::V1b\x06proto3"
 
 var (
 	file_miolink_directory_v1_directory_proto_rawDescOnce sync.Once

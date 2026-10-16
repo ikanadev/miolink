@@ -137,8 +137,8 @@ const file_miolink_link_v1_link_proto_rawDesc = "" +
 	"\rthumbnail_url\x18\x05 \x01(\tR\fthumbnailUrl\x12\x14\n" +
 	"\x05views\x18\x06 \x01(\x03R\x05views\x129\n" +
 	"\n" +
-	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAtB\xa5\x01\n" +
-	"\x13com.miolink.link.v1B\tLinkProtoP\x01Z%miobackend/gen/miolink/link/v1;linkv1\xa2\x02\x03MLX\xaa\x02\x0fMiolink.Link.V1\xca\x02\x0fMiolink\\Link\\V1\xe2\x02\x1bMiolink\\Link\\V1\\GPBMetadata\xea\x02\x11Miolink::Link::V1b\x06proto3"
+	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAtB\xb7\x01\n" +
+	"%dev.ikana.miolink.gen.miolink.link.v1B\tLinkProtoP\x01Z%miobackend/gen/miolink/link/v1;linkv1\xa2\x02\x03MLX\xaa\x02\x0fMiolink.Link.V1\xca\x02\x0fMiolink\\Link\\V1\xe2\x02\x1bMiolink\\Link\\V1\\GPBMetadata\xea\x02\x11Miolink::Link::V1b\x06proto3"
 
 var (
 	file_miolink_link_v1_link_proto_rawDescOnce sync.Once

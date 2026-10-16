@@ -13,6 +13,17 @@ from these files with [buf](https://buf.build):
 `buf.yaml` and `buf.gen.yaml` live at the repository root, and this directory
 (`proto/`) is the buf module.
 
+Generated output is committed so each client builds without buf:
+
+- `miobackend`: `miobackend/gen/miolink/<domain>/v1`, Go package prefix
+  `miobackend/gen`.
+- `mioandroid`: `mioandroid/gen/src/main/java` (the `:gen` Gradle module),
+  Java/Kotlin package prefix `dev.ikana.miolink.gen`, so
+  `miolink.tree.v1` becomes `dev.ikana.miolink.gen.miolink.tree.v1`. The
+  remote plugin versions in `buf.gen.yaml` must match the runtime libraries in
+  `mioandroid/gradle/libs.versions.toml` (protoc `v36.x` with protobuf
+  `4.36.x`, `connectrpc/kotlin` with the same `connect-kotlin` version).
+
 ## Layout
 
 ```

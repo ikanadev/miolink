@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Mio Link"
 include(":app")
+include(":gen")

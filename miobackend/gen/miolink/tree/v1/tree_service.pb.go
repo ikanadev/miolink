@@ -161,8 +161,8 @@ const file_miolink_tree_v1_tree_service_proto_rawDesc = "" +
 	"\vdirectories\x18\x03 \x03(\v2\x1f.miolink.directory.v1.DirectoryR\vdirectories\x12+\n" +
 	"\x05links\x18\x04 \x03(\v2\x15.miolink.link.v1.LinkR\x05links2]\n" +
 	"\vTreeService\x12N\n" +
-	"\aGetTree\x12\x1f.miolink.tree.v1.GetTreeRequest\x1a .miolink.tree.v1.GetTreeResponse\"\x00B\xac\x01\n" +
-	"\x13com.miolink.tree.v1B\x10TreeServiceProtoP\x01Z%miobackend/gen/miolink/tree/v1;treev1\xa2\x02\x03MTX\xaa\x02\x0fMiolink.Tree.V1\xca\x02\x0fMiolink\\Tree\\V1\xe2\x02\x1bMiolink\\Tree\\V1\\GPBMetadata\xea\x02\x11Miolink::Tree::V1b\x06proto3"
+	"\aGetTree\x12\x1f.miolink.tree.v1.GetTreeRequest\x1a .miolink.tree.v1.GetTreeResponse\"\x00B\xbe\x01\n" +
+	"%dev.ikana.miolink.gen.miolink.tree.v1B\x10TreeServiceProtoP\x01Z%miobackend/gen/miolink/tree/v1;treev1\xa2\x02\x03MTX\xaa\x02\x0fMiolink.Tree.V1\xca\x02\x0fMiolink\\Tree\\V1\xe2\x02\x1bMiolink\\Tree\\V1\\GPBMetadata\xea\x02\x11Miolink::Tree::V1b\x06proto3"
 
 var (
 	file_miolink_tree_v1_tree_service_proto_rawDescOnce sync.Once

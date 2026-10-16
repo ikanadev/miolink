@@ -735,8 +735,8 @@ const file_miolink_link_v1_link_service_proto_rawDesc = "" +
 	"DeleteLink\x12\".miolink.link.v1.DeleteLinkRequest\x1a#.miolink.link.v1.DeleteLinkResponse\"\x00\x12W\n" +
 	"\n" +
 	"RecordView\x12\".miolink.link.v1.RecordViewRequest\x1a#.miolink.link.v1.RecordViewResponse\"\x00\x12r\n" +
-	"\x13RefreshLinkMetadata\x12+.miolink.link.v1.RefreshLinkMetadataRequest\x1a,.miolink.link.v1.RefreshLinkMetadataResponse\"\x00B\xac\x01\n" +
-	"\x13com.miolink.link.v1B\x10LinkServiceProtoP\x01Z%miobackend/gen/miolink/link/v1;linkv1\xa2\x02\x03MLX\xaa\x02\x0fMiolink.Link.V1\xca\x02\x0fMiolink\\Link\\V1\xe2\x02\x1bMiolink\\Link\\V1\\GPBMetadata\xea\x02\x11Miolink::Link::V1b\x06proto3"
+	"\x13RefreshLinkMetadata\x12+.miolink.link.v1.RefreshLinkMetadataRequest\x1a,.miolink.link.v1.RefreshLinkMetadataResponse\"\x00B\xbe\x01\n" +
+	"%dev.ikana.miolink.gen.miolink.link.v1B\x10LinkServiceProtoP\x01Z%miobackend/gen/miolink/link/v1;linkv1\xa2\x02\x03MLX\xaa\x02\x0fMiolink.Link.V1\xca\x02\x0fMiolink\\Link\\V1\xe2\x02\x1bMiolink\\Link\\V1\\GPBMetadata\xea\x02\x11Miolink::Link::V1b\x06proto3"
 
 var (
 	file_miolink_link_v1_link_service_proto_rawDescOnce sync.Once
