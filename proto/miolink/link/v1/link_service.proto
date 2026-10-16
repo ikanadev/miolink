@@ -1,0 +1,129 @@
+syntax = "proto3";
+
+package miolink.link.v1;
+
+import "miolink/link/v1/link.proto";
+
+// LinkService creates, edits, moves and deletes links, and counts views.
+//
+// Every write that changes the tree returns previous_revision and revision,
+// the tree revision before and after the change. If previous_revision equals
+// the client's cached revision, the client applies the change locally;
+// otherwise it refetches the tree with TreeService.GetTree.
+service LinkService {
+  // CreateLink saves a URL. The server fetches the page for its title and
+  // preview image. If that fails, the title is the URL's hostname and there
+  // is no thumbnail; the link is created either way.
+  rpc CreateLink(CreateLinkRequest) returns (CreateLinkResponse) {}
+  // UpdateLink changes a link's title.
+  rpc UpdateLink(UpdateLinkRequest) returns (UpdateLinkResponse) {}
+  // MoveLink moves a link to another directory.
+  rpc MoveLink(MoveLinkRequest) returns (MoveLinkResponse) {}
+  // DeleteLink deletes a link.
+  rpc DeleteLink(DeleteLinkRequest) returns (DeleteLinkResponse) {}
+  // RecordView counts one view of a link. It doesn't change the tree
+  // revision.
+  rpc RecordView(RecordViewRequest) returns (RecordViewResponse) {}
+  // RefreshLinkMetadata fetches the page again and replaces the link's title
+  // and thumbnail, overwriting a title the user edited.
+  rpc RefreshLinkMetadata(RefreshLinkMetadataRequest) returns (RefreshLinkMetadataResponse) {}
+}
+
+// CreateLinkRequest is the request for LinkService.CreateLink.
+message CreateLinkRequest {
+  // Directory to create the link in. Use 1 for the root.
+  int64 directory_id = 1;
+  // Absolute http or https URL, at most 2048 characters.
+  string url = 2;
+}
+
+// CreateLinkResponse is the response for LinkService.CreateLink.
+message CreateLinkResponse {
+  // The created link.
+  Link link = 1;
+  // Tree revision before the change.
+  int64 previous_revision = 2;
+  // Tree revision after the change.
+  int64 revision = 3;
+}
+
+// UpdateLinkRequest is the request for LinkService.UpdateLink.
+message UpdateLinkRequest {
+  // Link to update.
+  int64 id = 1;
+  // New title, 1-500 characters after trimming whitespace.
+  string title = 2;
+}
+
+// UpdateLinkResponse is the response for LinkService.UpdateLink.
+message UpdateLinkResponse {
+  // The updated link.
+  Link link = 1;
+  // Tree revision before the change.
+  int64 previous_revision = 2;
+  // Tree revision after the change.
+  int64 revision = 3;
+}
+
+// MoveLinkRequest is the request for LinkService.MoveLink.
+message MoveLinkRequest {
+  // Link to move.
+  int64 id = 1;
+  // Directory to move the link to.
+  int64 directory_id = 2;
+}
+
+// MoveLinkResponse is the response for LinkService.MoveLink.
+message MoveLinkResponse {
+  // The moved link.
+  Link link = 1;
+  // Tree revision before the change.
+  int64 previous_revision = 2;
+  // Tree revision after the change.
+  int64 revision = 3;
+}
+
+// DeleteLinkRequest is the request for LinkService.DeleteLink.
+message DeleteLinkRequest {
+  // Link to delete.
+  int64 id = 1;
+}
+
+// DeleteLinkResponse is the response for LinkService.DeleteLink.
+message DeleteLinkResponse {
+  // Tree revision before the change.
+  int64 previous_revision = 1;
+  // Tree revision after the change.
+  int64 revision = 2;
+}
+
+// RecordViewRequest is the request for LinkService.RecordView.
+message RecordViewRequest {
+  // Link that was opened.
+  int64 id = 1;
+}
+
+// RecordViewResponse is the response for LinkService.RecordView.
+message RecordViewResponse {
+  // The link's view count after this view.
+  int64 views = 1;
+}
+
+// RefreshLinkMetadataRequest is the request for
+// LinkService.RefreshLinkMetadata.
+message RefreshLinkMetadataRequest {
+  // Link to refresh.
+  int64 id = 1;
+}
+
+// RefreshLinkMetadataResponse is the response for
+// LinkService.RefreshLinkMetadata.
+message RefreshLinkMetadataResponse {
+  // The refreshed link.
+  Link link = 1;
+  // Tree revision before the change.
+  int64 previous_revision = 2;
+  // Tree revision after the change. Equal to previous_revision when the
+  // title and thumbnail didn't change.
+  int64 revision = 3;
+}

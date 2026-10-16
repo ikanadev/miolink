@@ -13,11 +13,18 @@ type Querier interface {
 	// ancestors, 0 otherwise. Walks up the tree from descendant_id.
 	CountAncestorMatches(ctx context.Context, arg CountAncestorMatchesParams) (int64, error)
 	CreateDirectory(ctx context.Context, arg CreateDirectoryParams) (Directory, error)
+	CreateLink(ctx context.Context, arg CreateLinkParams) (Link, error)
 	DeleteDirectory(ctx context.Context, id int64) (int64, error)
+	DeleteLink(ctx context.Context, id int64) (int64, error)
 	GetDirectory(ctx context.Context, id int64) (Directory, error)
+	GetLink(ctx context.Context, id int64) (Link, error)
 	GetRevision(ctx context.Context) (int64, error)
+	IncrementLinkViews(ctx context.Context, id int64) (int64, error)
 	MoveDirectory(ctx context.Context, arg MoveDirectoryParams) (Directory, error)
+	MoveLink(ctx context.Context, arg MoveLinkParams) (Link, error)
 	RenameDirectory(ctx context.Context, arg RenameDirectoryParams) (Directory, error)
+	UpdateLinkMetadata(ctx context.Context, arg UpdateLinkMetadataParams) (Link, error)
+	UpdateLinkTitle(ctx context.Context, arg UpdateLinkTitleParams) (Link, error)
 }
 
 var _ Querier = (*Queries)(nil)

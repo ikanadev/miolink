@@ -20,11 +20,14 @@ import (
 
 	"miobackend/gen/miolink/directory/v1/directoryv1connect"
 	"miobackend/gen/miolink/health/v1/healthv1connect"
+	"miobackend/gen/miolink/link/v1/linkv1connect"
 	"miobackend/internal/auth"
 	"miobackend/internal/config"
 	"miobackend/internal/database"
 	"miobackend/internal/directory"
 	"miobackend/internal/health"
+	"miobackend/internal/link"
+	"miobackend/internal/linkmeta"
 	"miobackend/internal/safehttp"
 	"miobackend/internal/thumbnail"
 )
@@ -48,7 +51,9 @@ func run() error {
 	}
 	defer db.Close()
 
-	thumbnails, err := thumbnail.NewStore(cfg.ThumbnailsDir, safehttp.NewClient(safehttp.Options{}))
+	// Page and image fetches only reach public addresses.
+	fetchClient := safehttp.NewClient(safehttp.Options{})
+	thumbnails, err := thumbnail.NewStore(cfg.ThumbnailsDir, fetchClient)
 	if err != nil {
 		return err
 	}
@@ -58,6 +63,7 @@ func run() error {
 	mux := http.NewServeMux()
 	mux.Handle(healthv1connect.NewHealthServiceHandler(health.NewHandler(), interceptors))
 	mux.Handle(directoryv1connect.NewDirectoryServiceHandler(directory.NewHandler(db), interceptors))
+	mux.Handle(linkv1connect.NewLinkServiceHandler(link.NewHandler(db, linkmeta.New(fetchClient), thumbnails), interceptors))
 	// Public on purpose (no API key): see "Link metadata and thumbnails" in CLAUDE.md.
 	mux.Handle(thumbnail.Pattern, thumbnails.Handler())
 

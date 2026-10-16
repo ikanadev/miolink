@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package miolink.link.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// Link is a saved URL. Every link belongs to exactly one directory.
+message Link {
+  // Unique identifier.
+  int64 id = 1;
+  // Directory the link is in. 1 is the root.
+  int64 directory_id = 2;
+  // Title, 1-500 characters. Taken from the page when the link is created
+  // and editable by the user.
+  string title = 3;
+  // Absolute http or https URL.
+  string url = 4;
+  // Path of the thumbnail image relative to the API base URL, such as
+  // "/thumbnails/<sha256>.jpg". Empty when the link has no thumbnail.
+  string thumbnail_url = 5;
+  // How many times the link was opened.
+  int64 views = 6;
+  // When the link was created.
+  google.protobuf.Timestamp created_at = 7;
+}
