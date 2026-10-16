@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package miolink.directory.v1;
+
+import "miolink/directory/v1/directory.proto";
+
+// DirectoryService creates, renames, moves and deletes directories.
+//
+// Every write returns previous_revision and revision, the tree revision
+// before and after the change. If previous_revision equals the client's
+// cached revision, the client applies the change locally; otherwise it
+// refetches the tree with TreeService.GetTree.
+service DirectoryService {
+  // CreateDirectory creates a directory inside an existing one.
+  rpc CreateDirectory(CreateDirectoryRequest) returns (CreateDirectoryResponse) {}
+  // RenameDirectory changes a directory's name. The root can't be renamed.
+  rpc RenameDirectory(RenameDirectoryRequest) returns (RenameDirectoryResponse) {}
+  // MoveDirectory moves a directory under a new parent. The root can't be
+  // moved, and a directory can't be moved into itself or its descendants.
+  rpc MoveDirectory(MoveDirectoryRequest) returns (MoveDirectoryResponse) {}
+  // DeleteDirectory deletes a directory with all its subdirectories and
+  // links. The root can't be deleted.
+  rpc DeleteDirectory(DeleteDirectoryRequest) returns (DeleteDirectoryResponse) {}
+}
+
+// CreateDirectoryRequest is the request for DirectoryService.CreateDirectory.
+message CreateDirectoryRequest {
+  // Directory to create the new one in. Use 1 for the root.
+  int64 parent_id = 1;
+  // Name of the new directory.
+  string name = 2;
+}
+
+// CreateDirectoryResponse is the response for DirectoryService.CreateDirectory.
+message CreateDirectoryResponse {
+  // The created directory.
+  Directory directory = 1;
+  // Tree revision before the change.
+  int64 previous_revision = 2;
+  // Tree revision after the change.
+  int64 revision = 3;
+}
+
+// RenameDirectoryRequest is the request for DirectoryService.RenameDirectory.
+message RenameDirectoryRequest {
+  // Directory to rename.
+  int64 id = 1;
+  // New name.
+  string name = 2;
+}
+
+// RenameDirectoryResponse is the response for DirectoryService.RenameDirectory.
+message RenameDirectoryResponse {
+  // The renamed directory.
+  Directory directory = 1;
+  // Tree revision before the change.
+  int64 previous_revision = 2;
+  // Tree revision after the change.
+  int64 revision = 3;
+}
+
+// MoveDirectoryRequest is the request for DirectoryService.MoveDirectory.
+message MoveDirectoryRequest {
+  // Directory to move.
+  int64 id = 1;
+  // New parent directory. Moving to the current parent changes nothing.
+  int64 new_parent_id = 2;
+}
+
+// MoveDirectoryResponse is the response for DirectoryService.MoveDirectory.
+message MoveDirectoryResponse {
+  // The moved directory.
+  Directory directory = 1;
+  // Tree revision before the change.
+  int64 previous_revision = 2;
+  // Tree revision after the change.
+  int64 revision = 3;
+}
+
+// DeleteDirectoryRequest is the request for DirectoryService.DeleteDirectory.
+message DeleteDirectoryRequest {
+  // Directory to delete, together with its subdirectories and links.
+  int64 id = 1;
+}
+
+// DeleteDirectoryResponse is the response for DirectoryService.DeleteDirectory.
+message DeleteDirectoryResponse {
+  // Tree revision before the change.
+  int64 previous_revision = 1;
+  // Tree revision after the change. A recursive delete bumps it once per
+  // deleted row.
+  int64 revision = 2;
+}

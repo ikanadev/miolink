@@ -157,8 +157,8 @@ tasks/                   NNN_<name>.md work items, one per session
 ### Errors
 - Handlers return `connect.NewError` with a precise code:
   `sql.ErrNoRows` -> `CodeNotFound`, invalid input -> `CodeInvalidArgument`,
-  unique constraint violations -> `CodeAlreadyExists`, anything else ->
-  `CodeInternal`.
+  unique constraint violations -> `CodeAlreadyExists` (detect them with
+  `database.IsUniqueViolation`), anything else -> `CodeInternal`.
 - Don't leak SQL or internal error text to clients for `CodeInternal`; log it
   with `slog` and return a generic message.
 

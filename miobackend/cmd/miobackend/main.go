@@ -18,10 +18,12 @@ import (
 	connectcors "connectrpc.com/cors"
 	"github.com/rs/cors"
 
+	"miobackend/gen/miolink/directory/v1/directoryv1connect"
 	"miobackend/gen/miolink/health/v1/healthv1connect"
 	"miobackend/internal/auth"
 	"miobackend/internal/config"
 	"miobackend/internal/database"
+	"miobackend/internal/directory"
 	"miobackend/internal/health"
 )
 
@@ -48,6 +50,7 @@ func run() error {
 
 	mux := http.NewServeMux()
 	mux.Handle(healthv1connect.NewHealthServiceHandler(health.NewHandler(), interceptors))
+	mux.Handle(directoryv1connect.NewDirectoryServiceHandler(directory.NewHandler(db), interceptors))
 
 	// Connect over HTTP/1.1 and HTTP/2; unencrypted HTTP/2 (h2c) is for gRPC clients
 	// when TLS is terminated by a reverse proxy.

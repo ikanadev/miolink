@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package miolink.directory.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// Directory is a node in the link tree, like a directory in a Linux
+// filesystem. Directories nest to any depth.
+message Directory {
+  // Unique identifier. The hidden root directory has id 1.
+  int64 id = 1;
+  // Parent directory. Unset only for the root directory (id 1).
+  optional int64 parent_id = 2;
+  // Name, unique among siblings (case-sensitive): 1-255 characters, no '/',
+  // and not '.' or '..'. The root's name is empty.
+  string name = 3;
+  // When the directory was created.
+  google.protobuf.Timestamp created_at = 4;
+}
