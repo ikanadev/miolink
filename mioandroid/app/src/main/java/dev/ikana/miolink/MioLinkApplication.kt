@@ -8,19 +8,22 @@ import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
 
-class MioLinkApplication : Application(), SingletonImageLoader.Factory {
+open class MioLinkApplication : Application(), SingletonImageLoader.Factory {
     lateinit var container: AppContainer
         private set
 
     override fun onCreate() {
         super.onCreate()
-        container = AppContainer(this)
+        container = createContainer()
         // Refresh the cached tree each time the app comes to the foreground.
         container.treeRepository.syncWhileStarted(
             ProcessLifecycleOwner.get().lifecycle,
             container.serverSettings,
         )
     }
+
+    /** Builds the [AppContainer]; Robolectric tests override it (no Android Keystore there). */
+    protected open fun createContainer(): AppContainer = AppContainer(this)
 
     /** Coil's `AsyncImage` uses the container's loader, which shares OkHttp. */
     override fun newImageLoader(context: PlatformContext): ImageLoader = container.imageLoader

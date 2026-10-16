@@ -120,6 +120,7 @@
     <string name="link_write_unreachable">Couldn\'t reach the server. Check your connection and try again.</string>
     <string name="link_write_unauthenticated">The server rejected the API key. Check it in Settings.</string>
     <string name="link_write_not_configured">Connect a server in Settings first.</string>
+    <string name="link_write_directory_gone">That directory no longer exists. Choose where to save the link.</string>
     <string name="link_write_failed">The server couldn\'t save this change. Try again in a moment.</string>
     <string name="link_move_title">Move “%1$s”</string>
     <string name="link_move_subtitle">Choose the directory to move it to.</string>
@@ -129,6 +130,8 @@
     <string name="link_gone">That link no longer exists</string>
 
     <!-- Add link -->
+    <string name="share_no_url">Nothing to save: the shared text has no web link</string>
+    <string name="share_saved">Saved to Mio Link</string>
     <string name="link_add_title">Add link</string>
     <string name="link_add_message">Mio Link fetches the page\'s title and preview image for you.</string>
     <string name="link_add_save">Save</string>

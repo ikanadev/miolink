@@ -14,6 +14,13 @@ data class Browse(val directoryId: Long = ROOT_DIRECTORY_ID) : NavKey
 @Serializable
 data class LinkEdit(val linkId: Long) : NavKey
 
+/**
+ * The share flow's sheet for [url], shared from another app (`ShareActivity`
+ * only; the main back stack never holds it).
+ */
+@Serializable
+data class ShareLink(val url: String) : NavKey
+
 /** Server URL and API key. */
 @Serializable
 data object Settings : NavKey

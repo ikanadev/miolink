@@ -55,6 +55,45 @@ fun isWebUrl(text: String): Boolean {
     return (scheme == "http" || scheme == "https") && !uri.host.isNullOrEmpty()
 }
 
+/**
+ * The first http(s) URL in text shared from another app, or null when it has
+ * none. Apps often share "Page title https://example.com/page" or a URL
+ * inside a sentence, so the URL is cut at whitespace, quotes and angle
+ * brackets, and trailing punctuation (and closing brackets without a
+ * matching opening one) is dropped. Length isn't checked here: an overlong
+ * URL is still returned so the sheet can explain why it can't be saved.
+ */
+fun findSharedUrl(text: CharSequence?): String? {
+    if (text.isNullOrBlank()) return null
+    return SHARED_URL.findAll(text)
+        .map { trimUrlEnd(it.value) }
+        .firstOrNull { isWebUrl(it) }
+}
+
+/** `http://` or `https://` not preceded by a letter or digit, up to a separator. */
+private val SHARED_URL = Regex("""(?<![\p{L}\p{N}])https?://[^\s<>"`“”‘’«»]+""", RegexOption.IGNORE_CASE)
+
+private const val TRAILING_PUNCTUATION = ".,;:!?'*"
+private val CLOSING_TO_OPENING = mapOf(')' to '(', ']' to '[', '}' to '{')
+
+private fun trimUrlEnd(candidate: String): String {
+    var url = candidate
+    while (url.isNotEmpty()) {
+        val last = url.last()
+        val opening = CLOSING_TO_OPENING[last]
+        val drop = when {
+            last in TRAILING_PUNCTUATION -> true
+            // "(see https://example.com/a)" drops the ")", but
+            // "https://en.wikipedia.org/wiki/Go_(game)" keeps it.
+            opening != null -> url.count { it == last } > url.count { it == opening }
+            else -> false
+        }
+        if (!drop) break
+        url = url.dropLast(1)
+    }
+    return url
+}
+
 /** `example.com`, `example.com/path`: a dot before any `/`, no spaces. */
 private fun looksLikeHost(text: String): Boolean {
     if (text.any { it.isWhitespace() }) return false

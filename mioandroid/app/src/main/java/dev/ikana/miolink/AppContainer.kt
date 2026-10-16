@@ -1,6 +1,7 @@
 package dev.ikana.miolink
 
 import android.content.Context
+import com.google.crypto.tink.Aead
 import coil3.ImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.crossfade
@@ -30,7 +31,11 @@ import okhttp3.OkHttpClient
  * constructs them; ViewModels read them through [appContainer] in their
  * `viewModelFactory { initializer { ... } }`.
  */
-class AppContainer(context: Context) {
+class AppContainer(
+    context: Context,
+    /** Encrypts the stored API key; Android Keystore unless a test passes another. */
+    apiKeyAead: Lazy<Aead>? = null,
+) {
     val applicationContext: Context = context.applicationContext
 
     /** Lives as long as the process; for work that outlives any screen. */
@@ -43,7 +48,7 @@ class AppContainer(context: Context) {
                 applicationContext.preferencesDataStoreFile(ServerSettingsStore.DATASTORE_NAME)
             },
         ),
-        aead = lazy { ServerSettingsStore.createApiKeyAead(applicationContext) },
+        aead = apiKeyAead ?: lazy { ServerSettingsStore.createApiKeyAead(applicationContext) },
     )
 
     /** The saved server settings; null until the user saves them. */

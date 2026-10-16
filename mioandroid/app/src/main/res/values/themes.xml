@@ -2,4 +2,12 @@
 <resources>
 
     <style name="Theme.MioLink" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- ShareActivity: a transparent window, so the share sheet opens over
+         the app that shared. Inherits the night variant of Theme.MioLink. -->
+    <style name="Theme.MioLink.Share">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
 </resources>

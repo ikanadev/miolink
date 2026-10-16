@@ -38,6 +38,8 @@ android {
         compose = true
     }
     testOptions {
+        // Robolectric loads the merged manifest and resources (activity tests).
+        unitTests.isIncludeAndroidResources = true
         unitTests.all {
             // Robolectric (SDK 36) reaches into FileDescriptor through
             // jdk.internal.access, which JDK 25 doesn't export by default.
@@ -92,6 +94,8 @@ dependencies {
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.androidx.room.testing)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

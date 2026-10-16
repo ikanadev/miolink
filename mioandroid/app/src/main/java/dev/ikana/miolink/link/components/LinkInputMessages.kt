@@ -45,6 +45,7 @@ fun linkWriteFailureText(error: ApiError): String = stringResource(
         ApiError.Unreachable -> R.string.link_write_unreachable
         ApiError.Unauthenticated -> R.string.link_write_unauthenticated
         ApiError.NotConfigured -> R.string.link_write_not_configured
+        ApiError.NotFound -> R.string.link_write_directory_gone
         else -> R.string.link_write_failed
     },
 )

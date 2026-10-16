@@ -64,6 +64,7 @@ import dev.ikana.miolink.core.ui.pathTo
 import dev.ikana.miolink.link.LinkUrlError
 import dev.ikana.miolink.link.LinkUrlInput
 import dev.ikana.miolink.link.parseLinkUrl
+import dev.ikana.miolink.navigation.ROOT_DIRECTORY_ID
 import kotlinx.coroutines.launch
 
 /**
@@ -151,12 +152,14 @@ fun AddLinkSheet(
     }
 }
 
-/** "Mio Link / Work / Projects" for [directoryId], or null when it isn't cached. */
+/**
+ * "Mio Link / Work / Projects" for [directoryId], or null when it isn't
+ * cached. The root is always named, even before the first sync.
+ */
 private fun directoryPath(directories: List<PickerDirectory>, directoryId: Long, rootName: String): String? {
-    if (directories.isEmpty()) return null
     val byId = directories.associateBy { it.id }
     val path = pathTo(directories, directoryId).mapNotNull { byId[it] }
-    if (path.isEmpty()) return null
+    if (path.isEmpty()) return rootName.takeIf { directoryId == ROOT_DIRECTORY_ID }
     return path.joinToString(" / ") { it.name.ifEmpty { rootName } }
 }
 

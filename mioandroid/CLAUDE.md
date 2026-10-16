@@ -51,8 +51,10 @@ backend, not by layer:
 ```
 MioLinkApplication.kt    creates the AppContainer
 AppContainer.kt          wiring only (the app's main.go): OkHttp, Connect client, Room, DataStore, repositories
-MainActivity.kt          setContent { MioLinkTheme { MioLinkApp() } }; receives share intents
+MainActivity.kt          setContent { MioLinkTheme { MioLinkApp() } }
 MioLinkApp.kt            back stack and NavDisplay; each screen owns its Scaffold and insets
+ShareActivity.kt         the share target (ACTION_SEND text/plain): translucent, separate from MainActivity
+ShareApp.kt              the share flow's own back stack: Settings (if needed), ShareLink sheet, LinkEdit
 
 core/
   network/               Connect ProtocolClient, API key interceptor, ConnectException -> app errors
@@ -73,9 +75,10 @@ directory/
   components/            DirectoryListItem, DirectoryActionsSheet, NewDirectoryDialog, RenameDirectoryDialog
 link/
   LinkRepository.kt      interface + DefaultLinkRepository: CreateLink, UpdateLink, MoveLink, DeleteLink, RecordView, RefreshLinkMetadata
-  LinkInput.kt           parseLinkUrl, validateLinkTitle (the backend's rules)
+  LinkInput.kt           parseLinkUrl, validateLinkTitle (the backend's rules), findSharedUrl
   LinkEditScreen.kt      opened after CreateLink so the user can fix the title
   LinkEditViewModel.kt
+  ShareLinkScreen.kt     AddLinkSheet for a shared URL (+ ShareLinkViewModel)
   components/            LinkCard, LinkActionsSheet, AddLinkSheet (+ clipboard helpers, input error messages)
 browse/
   BrowseScreen.kt        a directory's contents: subdirectories and links, with their actions
@@ -203,6 +206,7 @@ revision protocol:
   `initialUrl` and an optional `onDirectoryChange` (which adds a "Change"
   button opening `DirectoryPicker`), and reports `onSave(url)`; the caller
   runs `CreateLink`, passes `isSaving`/`failure`, and removes it on success.
+  The "Save in" row names the root even before the first sync.
   The URL is prefilled from the clipboard only when it holds an http(s)
   URL; on Android 12+ it's read only if the system already classified the
   clip as a URL (reading shows a toast), otherwise a paste button offers it.
@@ -223,8 +227,21 @@ revision protocol:
   Coil's singleton by `MioLinkApplication` (`SingletonImageLoader.Factory`).
 - Until server settings are saved, the app opens `Settings` alone, without
   a back arrow; saving swaps it for `Browse`.
-- Sharing a URL to the app (`ACTION_SEND`, `text/plain`) calls `CreateLink` in
-  the current or root directory and opens `LinkEditScreen`.
+- Sharing to the app (`ACTION_SEND`, `text/plain`) opens `ShareActivity`,
+  not `MainActivity`: a translucent activity (`Theme.MioLink.Share`,
+  `taskAffinity=""`, excluded from recents) that runs in the sharing app's
+  task. The sheet appears over that app, every exit returns to it, and an
+  open `MainActivity` keeps its place. `findSharedUrl` takes the first
+  http(s) URL in `EXTRA_TEXT`; without one the activity finishes with a
+  toast. `ShareApp` shows `AddLinkSheet` prefilled with the URL in the root
+  directory, with "Change" once the tree is cached (an empty cache is
+  refreshed first; saving to the root doesn't wait for it). Unconfigured
+  settings open `Settings` first and continue to the sheet after saving; a
+  rejected API key opens `Settings` over the sheet. `NOT_FOUND` on save
+  (directory deleted elsewhere) refreshes and falls back to the root with a
+  message in the sheet. Success replaces the sheet with `LinkEdit`; leaving
+  it finishes the activity with a toast ("Saved to Mio Link" or its exit
+  message).
 
 ### Tests
 - Test repositories and the sync logic with a fake Connect service and an
@@ -233,8 +250,12 @@ revision protocol:
   `MockWebServer` is fine for the HTTP layer.
 - Robolectric is configured in `app/src/test/resources/robolectric.properties`
   (SDK 36, a plain `Application` so tests don't build the real
-  `AppContainer`). Android Keystore isn't available there; test with an
-  in-memory Tink AEAD.
+  `AppContainer`) and loads the merged manifest and resources
+  (`isIncludeAndroidResources`). Android Keystore isn't available there; test
+  with an in-memory Tink AEAD. Activity tests use
+  `@Config(application = TestMioLinkApplication::class)`, which overrides
+  `MioLinkApplication.createContainer()` to pass that AEAD to the real
+  `AppContainer`, and drive Compose with `createEmptyComposeRule()`.
 
 ## Commands
 

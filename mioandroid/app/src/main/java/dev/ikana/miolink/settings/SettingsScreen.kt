@@ -63,17 +63,19 @@ import dev.ikana.miolink.ui.theme.MioLinkTheme
 /**
  * Server URL and API key. [onNavigateUp] is null on first launch, when this
  * is the only screen; there's nothing to go back to until settings are saved.
+ * [onSaved] runs once they're saved; by default it navigates up.
  */
 @Composable
 fun SettingsScreen(
     onNavigateUp: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    onSaved: () -> Unit = { onNavigateUp?.invoke() },
     viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.isSaved) {
         // On first launch the app swaps this screen for Browse by itself.
-        if (state.isSaved) onNavigateUp?.invoke()
+        if (state.isSaved) onSaved()
     }
     SettingsContent(
         state = state,

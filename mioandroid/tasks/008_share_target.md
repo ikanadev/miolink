@@ -1,4 +1,4 @@
-Status: todo
+Status: done
 
 # 008 — Save links from the share sheet
 
@@ -29,3 +29,11 @@ way to save links.
 URL extraction cases (plain URL, text with a URL, several URLs, none). A
 Robolectric test that launching `MainActivity` with a share intent shows the
 sheet with the URL.
+
+## Outcome
+
+The share target is a separate translucent `ShareActivity` rather than
+`MainActivity` with `singleTask`: the sheet opens over the sharing app, back
+always returns to it, and an open Mio Link window keeps its place. The
+Robolectric test (`ShareActivityTest`) launches `ShareActivity`. See "UI" in
+`../CLAUDE.md`.

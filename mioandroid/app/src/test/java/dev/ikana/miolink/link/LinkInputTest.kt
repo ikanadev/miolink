@@ -47,4 +47,48 @@ class LinkInputTest {
         // Characters are code points, like the backend's runes.
         assertEquals(MAX_LINK_TITLE_LENGTH, titleLength("😀".repeat(MAX_LINK_TITLE_LENGTH)))
     }
+
+    @Test
+    fun findsAPlainSharedUrl() {
+        assertEquals("https://example.com/a?b=c#d", findSharedUrl("https://example.com/a?b=c#d"))
+        assertEquals("http://example.com", findSharedUrl("  http://example.com\n"))
+        assertEquals("HTTPS://Example.com/Page", findSharedUrl("HTTPS://Example.com/Page"))
+    }
+
+    @Test
+    fun findsTheUrlInSharedText() {
+        assertEquals(
+            "https://www.youtube.com/watch?v=abc123",
+            findSharedUrl("Watch \"A video\" on YouTube https://www.youtube.com/watch?v=abc123"),
+        )
+        assertEquals("https://example.com/post", findSharedUrl("Great post:\nhttps://example.com/post."))
+        assertEquals("https://example.com/a", findSharedUrl("(see https://example.com/a)"))
+        assertEquals("https://example.com/a", findSharedUrl("<https://example.com/a>"))
+        assertEquals("https://example.com/a", findSharedUrl("“https://example.com/a”"))
+        assertEquals(
+            "https://en.wikipedia.org/wiki/Go_(game)",
+            findSharedUrl("Read https://en.wikipedia.org/wiki/Go_(game), it's good"),
+        )
+    }
+
+    @Test
+    fun takesTheFirstOfSeveralUrls() {
+        assertEquals(
+            "https://first.example.com/",
+            findSharedUrl("https://first.example.com/ and https://second.example.com/"),
+        )
+        // A candidate that isn't a valid URL is skipped.
+        assertEquals("https://example.com", findSharedUrl("https:// broken, then https://example.com"))
+    }
+
+    @Test
+    fun findsNothingWithoutAWebUrl() {
+        assertNull(findSharedUrl(null))
+        assertNull(findSharedUrl(""))
+        assertNull(findSharedUrl("   "))
+        assertNull(findSharedUrl("Just some text you copied"))
+        assertNull(findSharedUrl("example.com without a scheme"))
+        assertNull(findSharedUrl("ftp://example.com/file"))
+        assertNull(findSharedUrl("xhttps://example.com"))
+    }
 }
