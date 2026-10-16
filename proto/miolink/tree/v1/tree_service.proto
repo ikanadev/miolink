@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package miolink.tree.v1;
+
+import "miolink/directory/v1/directory.proto";
+import "miolink/link/v1/link.proto";
+
+// TreeService returns the whole tree of directories and links, which clients
+// cache and keep in sync using the tree revision.
+service TreeService {
+  // GetTree returns the whole tree, or not_modified when the client's cached
+  // revision is current. The tree is never paginated: this is an intentional
+  // exception to the List pagination convention, because clients always need
+  // the complete tree to rebuild their cache.
+  rpc GetTree(GetTreeRequest) returns (GetTreeResponse) {}
+}
+
+// GetTreeRequest is the request for TreeService.GetTree.
+message GetTreeRequest {
+  // Tree revision the client has cached, or 0 when it has no cache.
+  int64 known_revision = 1;
+}
+
+// GetTreeResponse is the response for TreeService.GetTree.
+//
+// When not_modified is true, directories and links are empty and the client
+// keeps its cache. Otherwise revision, directories and links hold a
+// consistent snapshot of the whole tree. A bool flag is used instead of a oneof so the
+// lists stay plain repeated fields in every generated client.
+message GetTreeResponse {
+  // True when known_revision equals the current revision.
+  bool not_modified = 1;
+  // Current tree revision, set in both cases.
+  int64 revision = 2;
+  // Every directory ordered by id, the root (id 1, no parent) included.
+  // Clients rebuild the nesting from parent_id.
+  repeated miolink.directory.v1.Directory directories = 3;
+  // Every link ordered by id. Clients place them by directory_id.
+  repeated miolink.link.v1.Link links = 4;
+}

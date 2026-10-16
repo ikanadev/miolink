@@ -21,6 +21,7 @@ import (
 	"miobackend/gen/miolink/directory/v1/directoryv1connect"
 	"miobackend/gen/miolink/health/v1/healthv1connect"
 	"miobackend/gen/miolink/link/v1/linkv1connect"
+	"miobackend/gen/miolink/tree/v1/treev1connect"
 	"miobackend/internal/auth"
 	"miobackend/internal/config"
 	"miobackend/internal/database"
@@ -30,6 +31,7 @@ import (
 	"miobackend/internal/linkmeta"
 	"miobackend/internal/safehttp"
 	"miobackend/internal/thumbnail"
+	"miobackend/internal/tree"
 )
 
 func main() {
@@ -62,6 +64,7 @@ func run() error {
 
 	mux := http.NewServeMux()
 	mux.Handle(healthv1connect.NewHealthServiceHandler(health.NewHandler(), interceptors))
+	mux.Handle(treev1connect.NewTreeServiceHandler(tree.NewHandler(db), interceptors))
 	mux.Handle(directoryv1connect.NewDirectoryServiceHandler(directory.NewHandler(db), interceptors))
 	mux.Handle(linkv1connect.NewLinkServiceHandler(link.NewHandler(db, linkmeta.New(fetchClient), thumbnails), interceptors))
 	// Public on purpose (no API key): see "Link metadata and thumbnails" in CLAUDE.md.

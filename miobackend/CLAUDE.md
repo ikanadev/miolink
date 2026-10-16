@@ -39,7 +39,8 @@ Clients cache the whole tree and only refetch it when it changed.
   an `int64` that starts at 1. Triggers bump it on every change to
   directories and links. They don't bump it for changes to `views`, so
   opening a link doesn't make every client refetch.
-- `GetTree(known_revision)` returns `not_modified` when the client is
+- `GetTree(known_revision)` returns `not_modified` (a bool flag, plus the
+  current revision) when the client is
   current, or the full tree as flat lists with the new revision. Clients with
   no cache send 0. The tree is never paginated.
 - Every write RPC returns `previous_revision` and `revision`, both read inside
