@@ -1,4 +1,4 @@
-Status: todo
+Status: done
 
 # 003 — Thumbnail storage and serving
 

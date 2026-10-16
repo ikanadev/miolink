@@ -64,6 +64,14 @@ Clients cache the whole tree and only refetch it when it changed.
 - `GET /thumbnails/{name}` is a plain HTTP route, not Connect. It serves the
   files with `Cache-Control: public, max-age=31536000, immutable`. Proto
   messages expose `thumbnail_url` as a path relative to the API base URL.
+- `GET /thumbnails/{name}` is **public**: it doesn't require the API key.
+  Web `<img>` tags can't send an `Authorization` header, and the names only
+  hide which images were saved (a hash of a public image can be computed by
+  anyone), so protecting them isn't worth making clients load images through
+  `fetch`. The handler accepts only names matching `^[0-9a-f]{64}\.jpg$`
+  (anything else is a 404, before touching the filesystem), so it can't
+  reach other files. Stored images are re-encoded copies of public images;
+  nothing private is served.
 - Several links can share a file, so deleting a link never deletes its
   thumbnail directly. A periodic cleanup removes unreferenced files.
 
@@ -178,12 +186,14 @@ tasks/                   NNN_<name>.md work items, one per session
 ### Auth and configuration
 - Every RPC is authenticated by `internal/auth` through
   `connect.WithInterceptors`. Pass the shared `interceptors` option to every
-  new handler in `main.go`; no RPC is public.
+  new handler in `main.go`; no RPC is public. The one deliberate exception
+  is `GET /thumbnails/{name}`, a plain HTTP route rather than an RPC (see
+  "Link metadata and thumbnails"). Don't add other unauthenticated routes.
 - Configuration comes only from `MIOLINK_*` environment variables, loaded in
   `internal/config`. Document every new variable in `.env.example`.
 - There is one API key shared by all clients. The server only knows its
   SHA-256 hash (`MIOLINK_API_KEY_HASH`). Never store, log or commit the
-  plaintext key; `.env` and `*.db` files are gitignored.
+  plaintext key; `.env`, `*.db` files and `/thumbnails/` are gitignored.
 - Don't reintroduce per-device keys or user accounts; this is a deliberate
   single-user design. Rotating the key means `make keygen`, updating the
   hash, and re-entering the key on every client.

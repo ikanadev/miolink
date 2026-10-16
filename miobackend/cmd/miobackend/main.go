@@ -25,6 +25,8 @@ import (
 	"miobackend/internal/database"
 	"miobackend/internal/directory"
 	"miobackend/internal/health"
+	"miobackend/internal/safehttp"
+	"miobackend/internal/thumbnail"
 )
 
 func main() {
@@ -46,11 +48,18 @@ func run() error {
 	}
 	defer db.Close()
 
+	thumbnails, err := thumbnail.NewStore(cfg.ThumbnailsDir, safehttp.NewClient(safehttp.Options{}))
+	if err != nil {
+		return err
+	}
+
 	interceptors := connect.WithInterceptors(auth.NewInterceptor(cfg.APIKeyHash))
 
 	mux := http.NewServeMux()
 	mux.Handle(healthv1connect.NewHealthServiceHandler(health.NewHandler(), interceptors))
 	mux.Handle(directoryv1connect.NewDirectoryServiceHandler(directory.NewHandler(db), interceptors))
+	// Public on purpose (no API key): see "Link metadata and thumbnails" in CLAUDE.md.
+	mux.Handle(thumbnail.Pattern, thumbnails.Handler())
 
 	// Connect over HTTP/1.1 and HTTP/2; unencrypted HTTP/2 (h2c) is for gRPC clients
 	// when TLS is terminated by a reverse proxy.

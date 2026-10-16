@@ -20,6 +20,8 @@ type Config struct {
 	APIKeyHash [32]byte
 	// CORSOrigins are the browser origins allowed to call the API.
 	CORSOrigins []string
+	// ThumbnailsDir is the directory thumbnails are stored in.
+	ThumbnailsDir string
 }
 
 // Load reads the configuration from the environment.
@@ -28,6 +30,7 @@ type Config struct {
 //	MIOLINK_DATABASE_PATH  SQLite file path (default "miolink.db")
 //	MIOLINK_API_KEY_HASH   required; SHA-256 of the API key, 64 hex characters
 //	MIOLINK_CORS_ORIGINS   optional; comma-separated allowed origins
+//	MIOLINK_THUMBNAILS_DIR thumbnail directory (default "thumbnails")
 func Load() (Config, error) {
 	hash, err := parseHash(os.Getenv("MIOLINK_API_KEY_HASH"))
 	if err != nil {
@@ -35,10 +38,11 @@ func Load() (Config, error) {
 	}
 
 	return Config{
-		Addr:         getenv("MIOLINK_ADDR", ":8080"),
-		DatabasePath: getenv("MIOLINK_DATABASE_PATH", "miolink.db"),
-		APIKeyHash:   hash,
-		CORSOrigins:  splitList(os.Getenv("MIOLINK_CORS_ORIGINS")),
+		Addr:          getenv("MIOLINK_ADDR", ":8080"),
+		DatabasePath:  getenv("MIOLINK_DATABASE_PATH", "miolink.db"),
+		APIKeyHash:    hash,
+		CORSOrigins:   splitList(os.Getenv("MIOLINK_CORS_ORIGINS")),
+		ThumbnailsDir: getenv("MIOLINK_THUMBNAILS_DIR", "thumbnails"),
 	}, nil
 }
 

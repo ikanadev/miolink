@@ -8,3 +8,6 @@
 
 # Build output
 bin/
+
+# Stored thumbnails (MIOLINK_THUMBNAILS_DIR default)
+/thumbnails/
