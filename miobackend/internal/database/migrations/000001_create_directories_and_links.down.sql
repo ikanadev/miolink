@@ -1,0 +1,11 @@
+DROP TRIGGER IF EXISTS links_revision_delete;
+DROP TRIGGER IF EXISTS links_revision_update;
+DROP TRIGGER IF EXISTS links_revision_insert;
+DROP TRIGGER IF EXISTS directories_revision_delete;
+DROP TRIGGER IF EXISTS directories_revision_update;
+DROP TRIGGER IF EXISTS directories_revision_insert;
+DROP TABLE IF EXISTS sync_state;
+DROP INDEX IF EXISTS links_directory_created;
+DROP TABLE IF EXISTS links;
+DROP TRIGGER IF EXISTS directories_protect_root;
+DROP TABLE IF EXISTS directories;
