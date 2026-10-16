@@ -362,4 +362,3 @@ func TestDeleteDirectoryRemovesLinks(t *testing.T) {
 	_, err = e.h.RecordView(context.Background(), &linkv1.RecordViewRequest{Id: resp.GetLink().GetId()})
 	wantCode(t, err, connect.CodeNotFound)
 }
-
