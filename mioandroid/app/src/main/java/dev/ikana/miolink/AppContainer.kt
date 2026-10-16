@@ -11,6 +11,8 @@ import dev.ikana.miolink.core.network.ConnectClients
 import dev.ikana.miolink.core.network.ServiceClientsProvider
 import dev.ikana.miolink.core.settings.ServerSettings
 import dev.ikana.miolink.core.settings.ServerSettingsStore
+import dev.ikana.miolink.directory.DefaultDirectoryRepository
+import dev.ikana.miolink.directory.DirectoryRepository
 import dev.ikana.miolink.link.DefaultLinkRepository
 import dev.ikana.miolink.link.LinkRepository
 import dev.ikana.miolink.settings.DefaultSettingsRepository
@@ -61,6 +63,9 @@ class AppContainer(context: Context) {
     val database: MioDatabase = MioDatabase.create(applicationContext)
 
     val treeRepository = TreeRepository(database, serviceClients, applicationScope)
+
+    val directoryRepository: DirectoryRepository =
+        DefaultDirectoryRepository(serviceClients, treeRepository)
 
     val linkRepository: LinkRepository = DefaultLinkRepository(serviceClients, treeRepository)
 

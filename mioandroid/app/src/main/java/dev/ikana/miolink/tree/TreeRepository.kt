@@ -66,6 +66,8 @@ class TreeRepository(
 
     override fun link(id: Long): Flow<LinkEntity?> = dao.observeLink(id)
 
+    override suspend fun subtreeCount(id: Long): SubtreeCount = dao.countSubtree(id)
+
     /** The cached revision, or null while nothing is cached. */
     override val revision: Flow<Long?> = dao.observeRevision()
 

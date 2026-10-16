@@ -58,7 +58,7 @@ core/
   network/               Connect ProtocolClient, API key interceptor, ConnectException -> app errors
   database/              Room database and migrations
   settings/              server base URL and API key storage
-  ui/                    shared composables (ConfirmDeleteDialog, DirectoryPicker, ThumbnailImage, ...)
+  ui/                    shared composables (ConfirmDeleteDialog, DirectoryPicker, ProgressButtonContent, ThumbnailImage, ...)
 navigation/              route keys and the back stack
 ui/theme/                Color.kt, Type.kt, Shape.kt, Theme.kt (MaterialExpressiveTheme)
 
@@ -68,8 +68,9 @@ tree/                    the cached tree and the sync protocol
   TreeDao.kt, *Entity.kt Room entities and DAO for directories, links and the revision
   convert.kt             proto <-> entity
 directory/
-  DirectoryRepository.kt CreateDirectory, RenameDirectory, MoveDirectory, DeleteDirectory
-  components/            DirectoryListItem, NewDirectoryDialog, RenameDirectoryDialog
+  DirectoryRepository.kt interface + DefaultDirectoryRepository: CreateDirectory, RenameDirectory, MoveDirectory, DeleteDirectory
+  DirectoryName.kt       validateDirectoryName (the backend's rules, plus sibling duplicates)
+  components/            DirectoryListItem, DirectoryActionsSheet, NewDirectoryDialog, RenameDirectoryDialog
 link/
   LinkRepository.kt      interface + DefaultLinkRepository: CreateLink, UpdateLink, MoveLink, DeleteLink, RecordView, RefreshLinkMetadata
   LinkEditScreen.kt      opened after CreateLink so the user can fix the title
@@ -146,8 +147,8 @@ revision protocol:
 - `AppContainer` is the only place that constructs dependencies. ViewModels
   get them through a `viewModelFactory { initializer { ... } }` that reads the
   container from the `Application`.
-- ViewModels depend on interfaces (`SettingsRepository`, `LinkRepository`
-  with a `Default*` implementation; `TreeSource`, implemented by
+- ViewModels depend on interfaces (`SettingsRepository`, `LinkRepository`,
+  `DirectoryRepository` with a `Default*` implementation; `TreeSource`, implemented by
   `TreeRepository`), so their tests use fakes.
 
 ### Network and errors
@@ -176,11 +177,25 @@ revision protocol:
   `Color.kt` otherwise. Define shapes in `Shape.kt` instead of hardcoding them
   in components.
 - `ExperimentalMaterial3ExpressiveApi` is opted in once in
-  `app/build.gradle.kts`, not per file.
+  `app/build.gradle.kts`, not per file. `ExperimentalMaterial3Api` (still
+  needed for `ModalBottomSheet`) is opted in per composable that uses it.
+- `core/ui` can't import `tree`, so `DirectoryPicker` takes
+  `PickerDirectory` (id, parent, name); callers map their entities.
 - Screens are split into a stateful `XxxScreen(viewModel)` and a stateless
   `XxxContent(state, onAction)` that previews and tests use.
 - Deleting a directory always shows the confirm dialog first (deletes are
-  recursive).
+  recursive), with the subdirectories and links it removes counted from the
+  cache (`TreeSource.subtreeCount`).
+- Write dialogs (`BrowseUiState.dialog`) stay open while their RPC runs,
+  with a `LoadingIndicator` in the confirm button and dismissal blocked.
+  Names are validated before sending; `ALREADY_EXISTS`/`INVALID_ARGUMENT`
+  show under the name field and unreachable/unknown failures in the dialog,
+  so the user can retry. `NOT_FOUND` closes the dialog and refreshes;
+  `UNAUTHENTICATED` closes it with a snackbar offering Settings. Success
+  closes it with a snackbar.
+- `Browse` adds things through a `FloatingActionButtonMenu` that hides while
+  scrolling down; a long press on a subdirectory opens its actions sheet
+  (also exposed as accessibility custom actions). The root has no actions.
 - `Browse` shows the cache only. Sync errors are snackbars over cached data
   (`UNAUTHENTICATED` offers Settings); with nothing cached, a full-screen
   error with Retry or Settings. A directory deleted elsewhere navigates to

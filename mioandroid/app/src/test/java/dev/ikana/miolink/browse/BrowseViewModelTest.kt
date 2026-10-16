@@ -3,10 +3,14 @@ package dev.ikana.miolink.browse
 import app.cash.turbine.test
 import dev.ikana.miolink.core.network.ApiError
 import dev.ikana.miolink.core.network.ApiException
+import dev.ikana.miolink.directory.DirectoryNameError
+import dev.ikana.miolink.directory.DirectoryRepository
+import dev.ikana.miolink.directory.RejectedName
 import dev.ikana.miolink.link.LinkRepository
 import dev.ikana.miolink.navigation.ROOT_DIRECTORY_ID
 import dev.ikana.miolink.tree.DirectoryEntity
 import dev.ikana.miolink.tree.LinkEntity
+import dev.ikana.miolink.tree.SubtreeCount
 import dev.ikana.miolink.tree.TreeSource
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -71,6 +75,13 @@ class BrowseViewModelTest {
 
         override val revision: Flow<Long?> = directories.map { if (it.isEmpty()) null else 1L }
 
+        override suspend fun subtreeCount(id: Long): SubtreeCount {
+            val all = directories.value
+            val ids = mutableSetOf(id)
+            while (ids.addAll(all.filter { it.parentId in ids }.map { it.id })) Unit
+            return SubtreeCount(ids.size - 1, allLinks.value.count { it.directoryId in ids })
+        }
+
         override suspend fun refresh(): ApiError? {
             refreshes++
             return refreshResult.await().also { lastSyncError.value = it }
@@ -88,8 +99,33 @@ class BrowseViewModelTest {
         }
     }
 
+    /** Records calls; fails with [failure], or suspends on [gate] when set. */
+    private class FakeDirectories : DirectoryRepository {
+        val calls = mutableListOf<String>()
+        var failure: ApiError? = null
+        var gate: CompletableDeferred<Unit>? = null
+
+        private suspend fun call(description: String) {
+            calls += description
+            gate?.await()
+            failure?.let { throw ApiException(it) }
+        }
+
+        override suspend fun create(parentId: Long, name: String): Long {
+            call("create $parentId $name")
+            return 42
+        }
+
+        override suspend fun rename(id: Long, name: String) = call("rename $id $name")
+
+        override suspend fun move(id: Long, newParentId: Long) = call("move $id $newParentId")
+
+        override suspend fun delete(id: Long) = call("delete $id")
+    }
+
     private val tree = FakeTree()
     private val links = FakeLinks()
+    private val directories = FakeDirectories()
 
     private fun dir(id: Long, parentId: Long?, name: String) = DirectoryEntity(id, parentId, name, 0)
 
@@ -106,7 +142,7 @@ class BrowseViewModelTest {
     )
 
     private fun TestScope.viewModel(directoryId: Long): BrowseViewModel {
-        val viewModel = BrowseViewModel(directoryId, tree, links)
+        val viewModel = BrowseViewModel(directoryId, tree, links, directories)
         // stateIn(WhileSubscribed) only runs while collected, like on screen.
         backgroundScope.launch { viewModel.state.collect {} }
         return viewModel
@@ -304,5 +340,177 @@ class BrowseViewModelTest {
         advanceUntilIdle()
 
         assertEquals(BrowseMessage.Error(ApiError.Unauthenticated), viewModel.state.value.message)
+    }
+
+    // Directory writes.
+
+    @Test
+    fun createDirectoryClosesTheDialogAndOffersToOpenIt() = runTest(dispatcher) {
+        tree.directories.value = sampleTree
+        val viewModel = viewModel(2)
+        viewModel.onAction(BrowseAction.ShowNewDirectory)
+        advanceUntilIdle()
+        assertEquals(BrowseDialog.NewDirectory(), viewModel.state.value.dialog)
+
+        directories.gate = CompletableDeferred()
+        viewModel.onAction(BrowseAction.CreateDirectory("Ideas"))
+        advanceUntilIdle()
+        assertTrue(viewModel.state.value.isSaving)
+        // The dialog can't be dismissed while saving.
+        viewModel.onAction(BrowseAction.DismissDialog)
+        advanceUntilIdle()
+        assertEquals(BrowseDialog.NewDirectory(), viewModel.state.value.dialog)
+
+        directories.gate!!.complete(Unit)
+        advanceUntilIdle()
+        val state = viewModel.state.value
+        assertEquals(listOf("create 2 Ideas"), directories.calls)
+        assertNull(state.dialog)
+        assertFalse(state.isSaving)
+        assertEquals(BrowseMessage.DirectoryCreated(42, "Ideas"), state.message)
+    }
+
+    @Test
+    fun invalidOrDuplicateNamesAreNotSent() = runTest(dispatcher) {
+        tree.directories.value = sampleTree
+        val viewModel = viewModel(2)
+        advanceUntilIdle()
+        viewModel.onAction(BrowseAction.ShowNewDirectory)
+
+        viewModel.onAction(BrowseAction.CreateDirectory("a/b"))
+        advanceUntilIdle()
+        assertEquals(
+            BrowseDialog.NewDirectory(rejected = RejectedName("a/b", DirectoryNameError.ContainsSlash)),
+            viewModel.state.value.dialog,
+        )
+
+        // Projects is already in Work.
+        viewModel.onAction(BrowseAction.CreateDirectory("Projects"))
+        advanceUntilIdle()
+        assertEquals(
+            BrowseDialog.NewDirectory(rejected = RejectedName("Projects", DirectoryNameError.Duplicate)),
+            viewModel.state.value.dialog,
+        )
+        assertEquals(emptyList<String>(), directories.calls)
+    }
+
+    @Test
+    fun alreadyExistsFromTheServerStaysUnderTheNameField() = runTest(dispatcher) {
+        tree.directories.value = sampleTree
+        val viewModel = viewModel(ROOT_DIRECTORY_ID)
+        advanceUntilIdle()
+        val work = sampleTree.single { it.id == 2L }
+        viewModel.onAction(BrowseAction.ShowRenameDirectory(work))
+        directories.failure = ApiError.AlreadyExists("name already exists")
+
+        viewModel.onAction(BrowseAction.RenameDirectory(2, "Office"))
+        advanceUntilIdle()
+
+        val state = viewModel.state.value
+        assertEquals(
+            BrowseDialog.RenameDirectory(work, rejected = RejectedName("Office", DirectoryNameError.Duplicate)),
+            state.dialog,
+        )
+        assertFalse(state.isSaving)
+        assertNull(state.message)
+    }
+
+    @Test
+    fun unreachableServerKeepsTheDialogOpenToRetry() = runTest(dispatcher) {
+        tree.directories.value = sampleTree
+        val viewModel = viewModel(ROOT_DIRECTORY_ID)
+        advanceUntilIdle()
+        val home = sampleTree.single { it.id == 5L }
+        viewModel.onAction(BrowseAction.ShowMoveDirectory(home))
+        directories.failure = ApiError.Unreachable
+
+        viewModel.onAction(BrowseAction.MoveDirectory(5, 2))
+        advanceUntilIdle()
+
+        assertEquals(BrowseDialog.MoveDirectory(home, failure = ApiError.Unreachable), viewModel.state.value.dialog)
+    }
+
+    @Test
+    fun notFoundClosesTheDialogAndRefreshes() = runTest(dispatcher) {
+        tree.directories.value = sampleTree
+        tree.refreshResult.complete(null)
+        val viewModel = viewModel(ROOT_DIRECTORY_ID)
+        advanceUntilIdle()
+        val home = sampleTree.single { it.id == 5L }
+        viewModel.onAction(BrowseAction.ShowRenameDirectory(home))
+        directories.failure = ApiError.NotFound
+
+        viewModel.onAction(BrowseAction.RenameDirectory(5, "House"))
+        advanceUntilIdle()
+
+        val state = viewModel.state.value
+        assertNull(state.dialog)
+        assertEquals(BrowseMessage.DirectoryGone, state.message)
+        assertEquals(1, tree.refreshes)
+    }
+
+    @Test
+    fun rejectedApiKeyClosesTheDialogAndOffersSettings() = runTest(dispatcher) {
+        tree.directories.value = sampleTree
+        val viewModel = viewModel(ROOT_DIRECTORY_ID)
+        advanceUntilIdle()
+        viewModel.onAction(BrowseAction.ShowNewDirectory)
+        directories.failure = ApiError.Unauthenticated
+
+        viewModel.onAction(BrowseAction.CreateDirectory("Ideas"))
+        advanceUntilIdle()
+
+        assertNull(viewModel.state.value.dialog)
+        assertEquals(BrowseMessage.WriteError(ApiError.Unauthenticated), viewModel.state.value.message)
+    }
+
+    @Test
+    fun deleteAsksWithTheSubtreeCountThenDeletes() = runTest(dispatcher) {
+        tree.directories.value = sampleTree
+        tree.allLinks.value = listOf(link(10, 3, 0), link(11, 4, 0), link(12, 5, 0))
+        val viewModel = viewModel(ROOT_DIRECTORY_ID)
+        val work = sampleTree.single { it.id == 2L }
+
+        viewModel.onAction(BrowseAction.ShowDeleteDirectory(work))
+        advanceUntilIdle()
+        assertEquals(
+            BrowseDialog.DeleteDirectory(work, SubtreeCount(subdirectories = 2, links = 2)),
+            viewModel.state.value.dialog,
+        )
+
+        viewModel.onAction(BrowseAction.DeleteDirectory(2))
+        advanceUntilIdle()
+        assertEquals(listOf("delete 2"), directories.calls)
+        assertNull(viewModel.state.value.dialog)
+        assertEquals(BrowseMessage.DirectoryDeleted("Work"), viewModel.state.value.message)
+    }
+
+    @Test
+    fun moveReportsTheDestination() = runTest(dispatcher) {
+        tree.directories.value = sampleTree
+        val viewModel = viewModel(2)
+        advanceUntilIdle()
+        val projects = sampleTree.single { it.id == 3L }
+        viewModel.onAction(BrowseAction.ShowMoveDirectory(projects))
+
+        viewModel.onAction(BrowseAction.MoveDirectory(3, 5))
+        advanceUntilIdle()
+
+        assertEquals(listOf("move 3 5"), directories.calls)
+        assertEquals(BrowseMessage.DirectoryMoved("Projects", "Home"), viewModel.state.value.message)
+    }
+
+    @Test
+    fun dialogForADirectoryDeletedElsewhereCloses() = runTest(dispatcher) {
+        tree.directories.value = sampleTree
+        val viewModel = viewModel(ROOT_DIRECTORY_ID)
+        viewModel.onAction(BrowseAction.ShowDirectoryActions(sampleTree.single { it.id == 5L }))
+        advanceUntilIdle()
+        assertTrue(viewModel.state.value.dialog is BrowseDialog.DirectoryActions)
+
+        tree.directories.value = sampleTree.filter { it.id != 5L }
+        advanceUntilIdle()
+
+        assertNull(viewModel.state.value.dialog)
     }
 }

@@ -25,6 +25,9 @@ interface TreeSource {
 
     fun link(id: Long): Flow<LinkEntity?>
 
+    /** What deleting directory [id] would remove with it, from the cache. */
+    suspend fun subtreeCount(id: Long): SubtreeCount
+
     /** The cached revision, or null while nothing is cached. */
     val revision: Flow<Long?>
 

@@ -1,6 +1,14 @@
 <resources>
     <string name="app_name">Mio Link</string>
     <string name="navigate_up">Navigate up</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="progress_working">Working</string>
+
+    <!-- Directory picker -->
+    <string name="directory_picker_current_location">Current location</string>
+    <string name="directory_picker_expand">Expand %1$s</string>
+    <string name="directory_picker_collapse">Collapse %1$s</string>
 
     <!-- Browse -->
     <string name="browse_open_settings">Settings</string>
@@ -27,6 +35,56 @@
     <string name="browse_error_unreachable">Couldn\'t reach the server</string>
     <string name="browse_error_sync">Couldn\'t sync your links</string>
     <string name="browse_open_link_failed">No browser found to open this link</string>
+    <string name="browse_create_menu_open">Add a directory or link</string>
+    <string name="browse_create_menu_close">Close menu</string>
+    <string name="browse_new_directory">New directory</string>
+    <string name="browse_directory_created">Created “%1$s”</string>
+    <string name="browse_directory_renamed">Renamed to “%1$s”</string>
+    <string name="browse_directory_moved">Moved “%1$s” to “%2$s”</string>
+    <string name="browse_directory_deleted">Deleted “%1$s”</string>
+    <string name="browse_directory_gone">That directory no longer exists</string>
+    <string name="browse_open">Open</string>
+    <string name="browse_write_unreachable">Couldn\'t reach the server. Check your connection and try again.</string>
+    <string name="browse_write_failed">The server couldn\'t save this change. Try again in a moment.</string>
+    <string name="browse_write_error">Couldn\'t save the change</string>
+
+    <!-- Directory -->
+    <string name="directory_new_title">New directory</string>
+    <string name="directory_rename_title">Rename directory</string>
+    <string name="directory_name_label">Name</string>
+    <string name="directory_create">Create</string>
+    <string name="directory_rename">Rename</string>
+    <string name="directory_name_error_empty">Enter a name</string>
+    <plurals name="directory_name_error_too_long">
+        <item quantity="one">Use at most %1$d character</item>
+        <item quantity="other">Use at most %1$d characters</item>
+    </plurals>
+    <string name="directory_name_error_slash">Names can\'t contain “/”</string>
+    <string name="directory_name_error_reserved">“.” and “..” can\'t be used as names</string>
+    <string name="directory_name_error_duplicate">A directory with this name already exists here</string>
+    <string name="directory_name_error_rejected">The server didn\'t accept this name</string>
+    <string name="directory_show_actions">Show actions</string>
+    <string name="directory_action_rename">Rename</string>
+    <string name="directory_action_move">Move</string>
+    <string name="directory_action_delete">Delete</string>
+    <string name="directory_move_title">Move “%1$s”</string>
+    <string name="directory_move_subtitle">Choose the directory to move it into.</string>
+    <string name="directory_move_confirm">Move here</string>
+    <string name="directory_move_into_itself">Can\'t move a directory into itself or a directory inside it</string>
+    <string name="directory_move_duplicate">The destination already has a directory named “%1$s”</string>
+    <string name="directory_move_rejected">The server didn\'t allow this move</string>
+    <string name="directory_delete_title">Delete “%1$s”?</string>
+    <string name="directory_delete_message_empty">The directory is empty. This can\'t be undone.</string>
+    <string name="directory_delete_message">Everything inside it will be deleted too: %1$s. This can\'t be undone.</string>
+    <string name="directory_delete_both">%1$s and %2$s</string>
+    <plurals name="directory_subdirectory_count">
+        <item quantity="one">%1$d subdirectory</item>
+        <item quantity="other">%1$d subdirectories</item>
+    </plurals>
+    <plurals name="directory_link_count">
+        <item quantity="one">%1$d link</item>
+        <item quantity="other">%1$d links</item>
+    </plurals>
 
     <!-- Link -->
     <string name="link_open">Open link</string>

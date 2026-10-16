@@ -1,6 +1,7 @@
 package dev.ikana.miolink.browse
 
 import android.content.ActivityNotFoundException
+import androidx.activity.compose.BackHandler
 import android.content.Context
 import androidx.annotation.StringRes
 import androidx.browser.customtabs.CustomTabColorSchemeParams
@@ -22,6 +23,8 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Button
+import androidx.compose.material3.FloatingActionButtonMenu
+import androidx.compose.material3.FloatingActionButtonMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItemDefaults
@@ -35,28 +38,42 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.ToggleFloatingActionButton
+import androidx.compose.material3.ToggleFloatingActionButtonDefaults.animateIcon
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.animateFloatingActionButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -66,13 +83,20 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.connectrpc.Code
 import dev.ikana.miolink.R
 import dev.ikana.miolink.core.network.ApiError
+import dev.ikana.miolink.core.ui.ConfirmDeleteDialog
+import dev.ikana.miolink.core.ui.DirectoryPicker
 import dev.ikana.miolink.core.ui.EmptyState
 import dev.ikana.miolink.core.ui.NavigateUpButton
+import dev.ikana.miolink.core.ui.PickerDirectory
+import dev.ikana.miolink.directory.components.DirectoryActionsSheet
 import dev.ikana.miolink.directory.components.DirectoryListItem
+import dev.ikana.miolink.directory.components.NewDirectoryDialog
+import dev.ikana.miolink.directory.components.RenameDirectoryDialog
 import dev.ikana.miolink.link.components.LinkCard
 import dev.ikana.miolink.navigation.ROOT_DIRECTORY_ID
 import dev.ikana.miolink.tree.DirectoryEntity
 import dev.ikana.miolink.tree.LinkEntity
+import dev.ikana.miolink.tree.SubtreeCount
 import dev.ikana.miolink.ui.theme.MioLinkTheme
 import kotlinx.coroutines.launch
 
@@ -104,17 +128,25 @@ fun BrowseScreen(
     }
 
     state.message?.let { message ->
-        val text = stringResource(message.textRes())
-        val actionLabel = message.actionRes()?.let { stringResource(it) }
+        val text = message.text()
+        val action = message.action()
+        val actionLabel = action?.let { stringResource(it.labelRes()) }
         LaunchedEffect(message) {
+            // Errors wait for the user; confirmations come and go.
+            val isError = action == MessageAction.Settings || action == MessageAction.Retry
             val result = snackbarHostState.showSnackbar(
                 message = text,
                 actionLabel = actionLabel,
-                withDismissAction = actionLabel != null,
-                duration = if (actionLabel != null) SnackbarDuration.Long else SnackbarDuration.Short,
+                withDismissAction = isError,
+                duration = if (isError) SnackbarDuration.Long else SnackbarDuration.Short,
             )
             if (result == SnackbarResult.ActionPerformed) {
-                if (message.opensSettings()) onOpenSettings() else viewModel.onAction(BrowseAction.Refresh)
+                when (action) {
+                    MessageAction.Settings -> onOpenSettings()
+                    MessageAction.Retry -> viewModel.onAction(BrowseAction.Refresh)
+                    is MessageAction.OpenDirectory -> onOpenDirectory(action.id)
+                    null -> Unit
+                }
             }
             viewModel.onAction(BrowseAction.MessageShown(message))
         }
@@ -158,22 +190,58 @@ private fun openInCustomTab(context: Context, url: String, toolbarColor: Int): B
     false
 }
 
-@StringRes
-private fun BrowseMessage.textRes(): Int = when (this) {
-    is BrowseMessage.Error -> when (error) {
-        ApiError.Unauthenticated -> R.string.browse_error_unauthenticated
-        ApiError.NotConfigured -> R.string.browse_error_not_configured
-        ApiError.Unreachable -> R.string.browse_error_unreachable
-        else -> R.string.browse_error_sync
-    }
+/** What a snackbar's action button does. */
+private sealed interface MessageAction {
+    data object Settings : MessageAction
+    data object Retry : MessageAction
+    data class OpenDirectory(val id: Long) : MessageAction
 }
 
 @StringRes
-private fun BrowseMessage.actionRes(): Int? =
-    if (opensSettings()) R.string.browse_open_settings else R.string.browse_retry
+private fun MessageAction.labelRes(): Int = when (this) {
+    MessageAction.Settings -> R.string.browse_open_settings
+    MessageAction.Retry -> R.string.browse_retry
+    is MessageAction.OpenDirectory -> R.string.browse_open
+}
 
-private fun BrowseMessage.opensSettings(): Boolean = when (this) {
-    is BrowseMessage.Error -> error.needsSettings()
+@Composable
+private fun BrowseMessage.text(): String = when (this) {
+    is BrowseMessage.Error -> stringResource(
+        when (error) {
+            ApiError.Unauthenticated -> R.string.browse_error_unauthenticated
+            ApiError.NotConfigured -> R.string.browse_error_not_configured
+            ApiError.Unreachable -> R.string.browse_error_unreachable
+            else -> R.string.browse_error_sync
+        },
+    )
+    is BrowseMessage.WriteError -> stringResource(
+        when (error) {
+            ApiError.Unauthenticated -> R.string.browse_error_unauthenticated
+            ApiError.NotConfigured -> R.string.browse_error_not_configured
+            ApiError.Unreachable -> R.string.browse_error_unreachable
+            else -> R.string.browse_write_error
+        },
+    )
+    is BrowseMessage.DirectoryCreated -> stringResource(R.string.browse_directory_created, name)
+    is BrowseMessage.DirectoryRenamed -> stringResource(R.string.browse_directory_renamed, name)
+    is BrowseMessage.DirectoryMoved -> stringResource(
+        R.string.browse_directory_moved,
+        name,
+        destination.ifEmpty { stringResource(R.string.app_name) },
+    )
+    is BrowseMessage.DirectoryDeleted -> stringResource(R.string.browse_directory_deleted, name)
+    BrowseMessage.DirectoryGone -> stringResource(R.string.browse_directory_gone)
+}
+
+private fun BrowseMessage.action(): MessageAction? = when (this) {
+    is BrowseMessage.Error -> if (error.needsSettings()) MessageAction.Settings else MessageAction.Retry
+    is BrowseMessage.WriteError -> MessageAction.Settings.takeIf { error.needsSettings() }
+    is BrowseMessage.DirectoryCreated -> MessageAction.OpenDirectory(id)
+    is BrowseMessage.DirectoryRenamed,
+    is BrowseMessage.DirectoryMoved,
+    is BrowseMessage.DirectoryDeleted,
+    BrowseMessage.DirectoryGone,
+    -> null
 }
 
 private fun ApiError.needsSettings(): Boolean =
@@ -185,6 +253,10 @@ private enum class ContentKind { Loading, SyncError, Tree }
  * The directory's contents: a collapsing top bar with the name and the path
  * to it, then subdirectories and links. Pull to refresh; while nothing is
  * cached, a loading indicator or the sync error with a way to fix it.
+ *
+ * Once a tree is cached, a FAB menu adds directories (and links, task 007)
+ * here; it hides while scrolling down. A long press on a subdirectory opens
+ * its actions. [BrowseUiState.dialog] is shown on top.
  */
 @Composable
 fun BrowseContent(
@@ -194,10 +266,43 @@ fun BrowseContent(
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val kind = when {
+        state.isLoading -> ContentKind.Loading
+        !state.hasCache -> ContentKind.SyncError
+        else -> ContentKind.Tree
+    }
+    var fabExpanded by rememberSaveable { mutableStateOf(false) }
+    var fabVisible by rememberSaveable { mutableStateOf(true) }
+    BackHandler(enabled = fabExpanded) { fabExpanded = false }
+    val fabScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (available.y < -FAB_SCROLL_THRESHOLD) {
+                    fabVisible = false
+                    fabExpanded = false
+                } else if (available.y > FAB_SCROLL_THRESHOLD) {
+                    fabVisible = true
+                }
+                return Offset.Zero
+            }
+        }
+    }
     Scaffold(
-        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = modifier
+            .nestedScroll(fabScrollConnection)
+            .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = { BrowseTopBar(state, onAction, scrollBehavior) },
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        floatingActionButton = {
+            if (kind == ContentKind.Tree) {
+                CreateMenu(
+                    visible = fabVisible,
+                    expanded = fabExpanded,
+                    onExpandedChange = { fabExpanded = it },
+                    onAction = onAction,
+                )
+            }
+        },
     ) { innerPadding ->
         val layoutDirection = LocalLayoutDirection.current
         // The list draws behind the navigation bar; the top bar stays above.
@@ -205,14 +310,10 @@ fun BrowseContent(
             start = innerPadding.calculateStartPadding(layoutDirection) + 16.dp,
             end = innerPadding.calculateEndPadding(layoutDirection) + 16.dp,
             top = 8.dp,
-            bottom = innerPadding.calculateBottomPadding() + 16.dp,
+            // Room to scroll the last item above the FAB.
+            bottom = innerPadding.calculateBottomPadding() + 16.dp + FAB_CLEARANCE,
         )
         val pullState = rememberPullToRefreshState()
-        val kind = when {
-            state.isLoading -> ContentKind.Loading
-            !state.hasCache -> ContentKind.SyncError
-            else -> ContentKind.Tree
-        }
         PullToRefreshBox(
             isRefreshing = state.isRefreshing && kind != ContentKind.Loading,
             onRefresh = { onAction(BrowseAction.Refresh) },
@@ -254,10 +355,164 @@ fun BrowseContent(
             }
         }
     }
+    BrowseDialogs(state, onAction)
 }
 
 /** Leaves room for the padding, so an empty list doesn't scroll. */
 private const val FULL_HEIGHT_FRACTION = 0.9f
+
+/** Scroll distance (px per event) that hides or shows the FAB, ignoring jitter. */
+private const val FAB_SCROLL_THRESHOLD = 4f
+
+/** A FAB's height plus its margin. */
+private val FAB_CLEARANCE = 80.dp
+
+/**
+ * The FAB menu for adding things to this directory. Hidden (scaled away)
+ * while [visible] is false, unless it's open.
+ */
+@Composable
+private fun CreateMenu(
+    visible: Boolean,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    onAction: (BrowseAction) -> Unit,
+) {
+    val openLabel = stringResource(R.string.browse_create_menu_open)
+    val closeLabel = stringResource(R.string.browse_create_menu_close)
+    FloatingActionButtonMenu(
+        expanded = expanded,
+        button = {
+            ToggleFloatingActionButton(
+                checked = expanded,
+                onCheckedChange = onExpandedChange,
+                modifier = Modifier
+                    .semantics {
+                        traversalIndex = -1f
+                        contentDescription = if (expanded) closeLabel else openLabel
+                    }
+                    .animateFloatingActionButton(visible = visible || expanded, alignment = Alignment.BottomEnd),
+            ) {
+                val icon by remember {
+                    derivedStateOf { if (checkedProgress > 0.5f) R.drawable.ic_close else R.drawable.ic_add }
+                }
+                Icon(
+                    painter = painterResource(icon),
+                    contentDescription = null,
+                    modifier = Modifier.animateIcon({ checkedProgress }),
+                )
+            }
+        },
+    ) {
+        // Task 007: add a "New link" FloatingActionButtonMenuItem here, above
+        // "New directory", that closes the menu and opens AddLinkSheet for
+        // this directory (a new BrowseAction and BrowseDialog variant).
+        FloatingActionButtonMenuItem(
+            onClick = {
+                onExpandedChange(false)
+                onAction(BrowseAction.ShowNewDirectory)
+            },
+            text = { Text(stringResource(R.string.browse_new_directory)) },
+            icon = { Icon(painterResource(R.drawable.ic_create_new_folder), contentDescription = null) },
+        )
+    }
+}
+
+/** The dialog or sheet in [BrowseUiState.dialog], if any. */
+@Composable
+private fun BrowseDialogs(state: BrowseUiState, onAction: (BrowseAction) -> Unit) {
+    val dismiss = { onAction(BrowseAction.DismissDialog) }
+    when (val dialog = state.dialog) {
+        null -> Unit
+        is BrowseDialog.DirectoryActions -> {
+            val directory = dialog.directory
+            DirectoryActionsSheet(
+                directory = directory,
+                onRename = { onAction(BrowseAction.ShowRenameDirectory(directory)) },
+                onMove = { onAction(BrowseAction.ShowMoveDirectory(directory)) },
+                onDelete = { onAction(BrowseAction.ShowDeleteDirectory(directory)) },
+                onDismiss = dismiss,
+            )
+        }
+        is BrowseDialog.NewDirectory -> NewDirectoryDialog(
+            siblingNames = state.directories.map { it.name },
+            onConfirm = { onAction(BrowseAction.CreateDirectory(it)) },
+            onDismiss = dismiss,
+            isSaving = state.isSaving,
+            rejected = dialog.rejected,
+            errorMessage = dialog.failure?.let { writeFailureText(it) },
+        )
+        is BrowseDialog.RenameDirectory -> RenameDirectoryDialog(
+            currentName = dialog.directory.name,
+            siblingNames = state.directories.filter { it.id != dialog.directory.id }.map { it.name },
+            onConfirm = { onAction(BrowseAction.RenameDirectory(dialog.directory.id, it)) },
+            onDismiss = dismiss,
+            isSaving = state.isSaving,
+            rejected = dialog.rejected,
+            errorMessage = dialog.failure?.let { writeFailureText(it) },
+        )
+        is BrowseDialog.MoveDirectory -> {
+            val directory = dialog.directory
+            val pickerDirectories = remember(state.allDirectories) {
+                state.allDirectories.map { PickerDirectory(it.id, it.parentId, it.name) }
+            }
+            DirectoryPicker(
+                directories = pickerDirectories,
+                title = stringResource(R.string.directory_move_title, directory.name),
+                confirmLabel = stringResource(R.string.directory_move_confirm),
+                onConfirm = { onAction(BrowseAction.MoveDirectory(directory.id, it)) },
+                onDismiss = dismiss,
+                subtitle = stringResource(R.string.directory_move_subtitle),
+                currentDirectoryId = directory.parentId,
+                disabledSubtreeId = directory.id,
+                disabledReason = stringResource(R.string.directory_move_into_itself),
+                isSaving = state.isSaving,
+                errorMessage = dialog.failure?.let { error ->
+                    when (error) {
+                        is ApiError.AlreadyExists -> stringResource(R.string.directory_move_duplicate, directory.name)
+                        is ApiError.InvalidArgument -> stringResource(R.string.directory_move_rejected)
+                        else -> writeFailureText(error)
+                    }
+                },
+            )
+        }
+        is BrowseDialog.DeleteDirectory -> ConfirmDeleteDialog(
+            title = stringResource(R.string.directory_delete_title, dialog.directory.name),
+            message = deleteMessage(dialog.count),
+            onConfirm = { onAction(BrowseAction.DeleteDirectory(dialog.directory.id)) },
+            onDismiss = dismiss,
+            isDeleting = state.isSaving,
+            errorMessage = dialog.failure?.let { writeFailureText(it) },
+        )
+    }
+}
+
+/** Why a write failed, for a dialog that lets the user try again. */
+@Composable
+private fun writeFailureText(error: ApiError): String = stringResource(
+    if (error == ApiError.Unreachable) R.string.browse_write_unreachable else R.string.browse_write_failed,
+)
+
+/** What a recursive delete takes with it, counted from the cache. */
+@Composable
+private fun deleteMessage(count: SubtreeCount): String {
+    val directories = count.subdirectories.takeIf { it > 0 }?.let {
+        pluralStringResource(R.plurals.directory_subdirectory_count, it, it)
+    }
+    val links = count.links.takeIf { it > 0 }?.let {
+        pluralStringResource(R.plurals.directory_link_count, it, it)
+    }
+    val contents = if (directories != null && links != null) {
+        stringResource(R.string.directory_delete_both, directories, links)
+    } else {
+        directories ?: links
+    }
+    return if (contents == null) {
+        stringResource(R.string.directory_delete_message_empty)
+    } else {
+        stringResource(R.string.directory_delete_message, contents)
+    }
+}
 
 private fun LazyListScope.directoryContents(
     state: BrowseUiState,
@@ -290,14 +545,37 @@ private fun LazyListScope.directoryContents(
             key = { _, directory -> "directory-${directory.id}" },
             contentType = { _, _ -> "directory" },
         ) { index, directory ->
+            val renameLabel = stringResource(R.string.directory_action_rename)
+            val moveLabel = stringResource(R.string.directory_action_move)
+            val deleteLabel = stringResource(R.string.directory_action_delete)
+            // The long press vibrates (combinedClickable's haptic feedback)
+            // and opens the actions; screen readers get them as custom actions.
             DirectoryListItem(
                 directory = directory,
                 index = index,
                 count = count,
                 onClick = { onAction(BrowseAction.OpenDirectory(directory.id)) },
+                onLongClick = { onAction(BrowseAction.ShowDirectoryActions(directory)) },
+                onLongClickLabel = stringResource(R.string.directory_show_actions),
                 modifier = Modifier
                     .animateItem()
-                    .padding(bottom = if (index < count - 1) ListItemDefaults.SegmentedGap else 0.dp),
+                    .padding(bottom = if (index < count - 1) ListItemDefaults.SegmentedGap else 0.dp)
+                    .semantics {
+                        customActions = listOf(
+                            CustomAccessibilityAction(renameLabel) {
+                                onAction(BrowseAction.ShowRenameDirectory(directory))
+                                true
+                            },
+                            CustomAccessibilityAction(moveLabel) {
+                                onAction(BrowseAction.ShowMoveDirectory(directory))
+                                true
+                            },
+                            CustomAccessibilityAction(deleteLabel) {
+                                onAction(BrowseAction.ShowDeleteDirectory(directory))
+                                true
+                            },
+                        )
+                    },
             )
         }
     }

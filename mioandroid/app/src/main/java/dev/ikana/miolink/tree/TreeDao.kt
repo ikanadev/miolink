@@ -42,6 +42,23 @@ interface TreeDao {
     @Query("SELECT * FROM directories WHERE id = :id")
     suspend fun getDirectory(id: Long): DirectoryEntity?
 
+    /**
+     * What deleting directory [id] removes with it: its subdirectories at any
+     * depth and the links in it and in them. Zeros when it isn't cached.
+     */
+    @Query(
+        """
+        WITH RECURSIVE subtree(id) AS (
+            SELECT id FROM directories WHERE id = :id
+            UNION ALL
+            SELECT d.id FROM directories d JOIN subtree s ON d.parent_id = s.id
+        )
+        SELECT MAX((SELECT COUNT(*) FROM subtree) - 1, 0) AS subdirectories,
+               (SELECT COUNT(*) FROM links WHERE directory_id IN (SELECT id FROM subtree)) AS links
+        """,
+    )
+    suspend fun countSubtree(id: Long): SubtreeCount
+
     // Sync state.
 
     @Query("SELECT * FROM sync_state WHERE id = 1")

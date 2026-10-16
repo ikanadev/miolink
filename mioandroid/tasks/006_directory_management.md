@@ -1,4 +1,4 @@
-Status: todo
+Status: done
 
 # 006 — Create, rename, move and delete directories
 
