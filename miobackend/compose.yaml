@@ -1,0 +1,21 @@
+# Runs the backend with the database and thumbnails in the "data" volume.
+# MIOLINK_API_KEY_HASH and MIOLINK_CORS_ORIGINS are read from .env.
+# `docker compose down` keeps the volume; `down -v` deletes it.
+services:
+  miobackend:
+    build: .
+    image: miobackend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      MIOLINK_ADDR: ":8080"
+      MIOLINK_DATABASE_PATH: /data/miolink.db
+      MIOLINK_THUMBNAILS_DIR: /data/thumbnails
+      MIOLINK_API_KEY_HASH: ${MIOLINK_API_KEY_HASH:?set MIOLINK_API_KEY_HASH in .env (make keygen)}
+      MIOLINK_CORS_ORIGINS: ${MIOLINK_CORS_ORIGINS:-}
+    volumes:
+      - data:/data
+
+volumes:
+  data:

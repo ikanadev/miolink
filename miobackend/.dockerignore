@@ -1,0 +1,16 @@
+# Local settings and secrets
+.env
+
+# SQLite database files
+*.db
+*.db-*
+
+# Build output, task notes, local thumbnails
+bin/
+tasks/
+thumbnails/
+
+# Not needed to build the image
+Dockerfile
+.dockerignore
+compose.yaml

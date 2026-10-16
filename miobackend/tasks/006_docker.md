@@ -1,4 +1,4 @@
-Status: todo
+Status: done
 
 # 006 — Docker image and compose file
 
