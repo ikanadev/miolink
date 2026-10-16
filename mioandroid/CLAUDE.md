@@ -20,7 +20,7 @@ root directory) and the sync protocol. This file only covers the client side.
 | Settings | DataStore; the API key is encrypted with Tink before it's stored |
 | Images | Coil 3 (`coil-compose`, `coil-network-okhttp`), sharing the app's OkHttpClient |
 | DI | None. A manual `AppContainer` built in `MioLinkApplication` |
-| Tests | JUnit 4, `kotlinx-coroutines-test`, Turbine, in-memory Room |
+| Tests | JUnit 4, `kotlinx-coroutines-test`, Turbine, Robolectric (for in-memory Room on the JVM) |
 
 Versions live only in `gradle/libs.versions.toml`. Material 3 is pinned there
 on top of the Compose BOM because the BOM's version doesn't have the
@@ -57,7 +57,7 @@ core/
   network/               Connect ProtocolClient, API key interceptor, ConnectException -> app errors
   database/              Room database and migrations
   settings/              server base URL and API key storage
-  ui/                    shared composables (ConfirmDeleteDialog, ThumbnailImage, EmptyState, ...)
+  ui/                    shared composables (ConfirmDeleteDialog, DirectoryPicker, ThumbnailImage, ...)
 navigation/              route keys and the back stack
 ui/theme/                Color.kt, Type.kt, Shape.kt, Theme.kt (MaterialExpressiveTheme)
 
@@ -67,14 +67,15 @@ tree/                    the cached tree and the sync protocol
   convert.kt             proto <-> entity
 directory/
   DirectoryRepository.kt CreateDirectory, RenameDirectory, MoveDirectory, DeleteDirectory
-  DirectoryScreen.kt     a directory's contents
-  DirectoryViewModel.kt
-  components/
+  components/            NewDirectoryDialog, RenameDirectoryDialog
 link/
   LinkRepository.kt      CreateLink, UpdateLink, MoveLink, DeleteLink, RecordView, RefreshLinkMetadata
   LinkEditScreen.kt      opened after CreateLink so the user can fix the title
   LinkEditViewModel.kt
-  components/
+  components/            LinkCard, AddLinkSheet
+browse/
+  BrowseScreen.kt        a directory's contents: subdirectories and links, with their actions
+  BrowseViewModel.kt
 settings/                SettingsScreen, SettingsViewModel (base URL, API key, test with Ping)
 ```
 
@@ -117,7 +118,9 @@ revision protocol:
 
 ### Domains
 - `directory` and `link` may import `tree` and `core`, but not each other.
-  `tree` imports only `core`. `core` imports no domain package.
+  `browse` is the screen that combines them and may import `directory`,
+  `link` and `tree`; nothing imports `browse`. `tree` imports only `core`.
+  `core` imports no domain package.
 - Proto messages never leave the repositories. Convert them in the domain's
   `convert.kt` with `toEntity()` / `toProto()` style functions. ViewModels and
   composables see only entities or UI models.
@@ -153,7 +156,7 @@ revision protocol:
 
 ### Tests
 - Test repositories and the sync logic with a fake Connect service and an
-  in-memory Room database. Test ViewModels against fake repositories with
+  in-memory Room database (`Room.inMemoryDatabaseBuilder` under Robolectric). Test ViewModels against fake repositories with
   `kotlinx-coroutines-test` and Turbine. No network.
 
 ## Commands

@@ -8,6 +8,7 @@ directories, like a filesystem, and synced to every client.
 | `proto/` | Source of truth for the API (Connect RPC). Conventions in `proto/README.md` |
 | `miobackend/` | Go server, SQLite storage. Details and rules in `miobackend/CLAUDE.md` |
 | `miobackend/tasks/` | Pending backend work, one task file per session |
+| `mioandroid/tasks/` | Pending Android work, one task file per session |
 | `mioandroid/` | Android client (Kotlin, Compose). Details and rules in `mioandroid/CLAUDE.md` |
 | `mioweb/` | Web client (not started) |
 
