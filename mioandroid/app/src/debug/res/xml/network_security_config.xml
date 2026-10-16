@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug only: allow http:// so a backend on the LAN or the emulator host
+     (http://10.0.2.2:8080) works during development. Release builds use
+     src/main's version, which allows HTTPS only. -->
+<network-security-config xmlns:tools="http://schemas.android.com/tools">
+    <base-config
+        cleartextTrafficPermitted="true"
+        tools:ignore="InsecureBaseConfiguration" />
+</network-security-config>

@@ -1,4 +1,4 @@
-Status: todo
+Status: done
 
 # 003 — Server settings and the Connect client
 

@@ -15,6 +15,27 @@
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
-    <string name="settings_placeholder_title">Connect your server</string>
-    <string name="settings_placeholder_message">Soon you\'ll enter your miolink server URL and API key here.</string>
+    <string name="settings_welcome_title">Connect your server</string>
+    <string name="settings_welcome_message">Mio Link keeps your links on your own miolink server. Enter its address and the API key you created with make keygen.</string>
+    <string name="settings_server_title">Server</string>
+    <string name="settings_server_message">The miolink server this app syncs with, and the API key it uses.</string>
+    <string name="settings_base_url_label">Server URL</string>
+    <string name="settings_base_url_placeholder">https://links.example.com</string>
+    <string name="settings_base_url_supporting">Starts with https:// or http://</string>
+    <string name="settings_base_url_required">Enter the server URL</string>
+    <string name="settings_base_url_invalid">Enter a full URL starting with https:// or http://</string>
+    <string name="settings_api_key_label">API key</string>
+    <string name="settings_api_key_supporting">Stored encrypted on this device</string>
+    <string name="settings_api_key_required">Enter the API key</string>
+    <string name="settings_api_key_show">Show API key</string>
+    <string name="settings_api_key_hide">Hide API key</string>
+    <string name="settings_test_connection">Test connection</string>
+    <string name="settings_save">Save</string>
+    <string name="settings_save_first_run">Save and continue</string>
+    <string name="settings_save_failed">Couldn\'t save the settings. Try again.</string>
+    <string name="settings_connection_ok">Connected. The server accepted this API key.</string>
+    <string name="settings_connection_unreachable">Couldn\'t reach the server. Check the URL and your network connection.</string>
+    <string name="settings_connection_unauthenticated">The server rejected this API key.</string>
+    <string name="settings_connection_not_miolink">The server answered, but it doesn\'t look like a miolink server. Check the URL.</string>
+    <string name="settings_connection_failed">The server returned an error. Try again later.</string>
 </resources>

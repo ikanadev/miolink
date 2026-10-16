@@ -138,7 +138,17 @@ revision protocol:
   is stale (refresh), `UNAUTHENTICATED` sends the user to settings,
   `ALREADY_EXISTS` and `INVALID_ARGUMENT` become messages shown next to the
   input, anything else is a generic error.
-- Never log the API key, and never store it unencrypted.
+- Repositories call the backend through `ServiceClientsProvider.current()`
+  (the clients for the saved settings, rebuilt when they change) on every
+  call, never a client they kept, and unwrap responses with
+  `getOrThrowApi()`, which throws `ApiException(ApiError)`. A transport
+  failure (DNS, refused, TLS, timeout) is `ApiError.Unreachable`.
+- Never log the API key, and never store it unencrypted. The settings
+  DataStore and the Tink keyset are excluded from backups (`res/xml`): the
+  Keystore key that wraps them never leaves the device, so a restored copy
+  couldn't be decrypted. An undecryptable key reads as "not configured".
+- Cleartext `http://` is allowed only in debug builds
+  (`src/debug/res/xml/network_security_config.xml`).
 
 ### UI
 - Wrap the app in `MioLinkTheme`, which uses `MaterialExpressiveTheme` with
@@ -151,13 +161,20 @@ revision protocol:
   `XxxContent(state, onAction)` that previews and tests use.
 - Deleting a directory always shows the confirm dialog first (deletes are
   recursive).
+- Until server settings are saved, the app opens `Settings` alone, without
+  a back arrow; saving swaps it for `Browse`.
 - Sharing a URL to the app (`ACTION_SEND`, `text/plain`) calls `CreateLink` in
   the current or root directory and opens `LinkEditScreen`.
 
 ### Tests
 - Test repositories and the sync logic with a fake Connect service and an
   in-memory Room database (`Room.inMemoryDatabaseBuilder` under Robolectric). Test ViewModels against fake repositories with
-  `kotlinx-coroutines-test` and Turbine. No network.
+  `kotlinx-coroutines-test` and Turbine. No network; a local OkHttp
+  `MockWebServer` is fine for the HTTP layer.
+- Robolectric is configured in `app/src/test/resources/robolectric.properties`
+  (SDK 36, a plain `Application` so tests don't build the real
+  `AppContainer`). Android Keystore isn't available there; test with an
+  in-memory Tink AEAD.
 
 ## Commands
 

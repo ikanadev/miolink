@@ -35,6 +35,13 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        unitTests.all {
+            // Robolectric (SDK 36) reaches into FileDescriptor through
+            // jdk.internal.access, which JDK 25 doesn't export by default.
+            it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED")
+        }
+    }
 }
 
 kotlin {
@@ -59,7 +66,17 @@ dependencies {
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.kotlinx.serialization.core)
+    implementation(libs.connect.kotlin.okhttp)
+    implementation(libs.connect.kotlin.google.javalite.ext)
+    implementation(libs.okhttp)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.tink.android)
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.turbine)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.okhttp.mockwebserver)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

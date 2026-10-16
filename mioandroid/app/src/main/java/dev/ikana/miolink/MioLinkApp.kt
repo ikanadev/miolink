@@ -1,6 +1,7 @@
 package dev.ikana.miolink
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
@@ -17,11 +18,18 @@ import dev.ikana.miolink.settings.SettingsScreen
 /**
  * The app's navigation. Each screen owns its `Scaffold` (top bar, FAB,
  * insets); this only holds the back stack and maps route keys to screens.
+ *
+ * Until server settings are saved ([isConfigured] false) the app opens
+ * [Settings] alone, without a back arrow; saving them swaps it for [Browse].
  */
 @Composable
-fun MioLinkApp(modifier: Modifier = Modifier) {
-    val backStack = rememberNavBackStack(Browse())
+fun MioLinkApp(isConfigured: Boolean, modifier: Modifier = Modifier) {
+    val backStack = rememberNavBackStack(if (isConfigured) Browse() else Settings)
     val navigateUp: () -> Unit = { if (backStack.size > 1) backStack.removeLastOrNull() }
+
+    LaunchedEffect(isConfigured) {
+        if (isConfigured && backStack.toList() == listOf(Settings)) backStack[0] = Browse()
+    }
 
     NavDisplay(
         backStack = backStack,
@@ -44,7 +52,7 @@ fun MioLinkApp(modifier: Modifier = Modifier) {
                 LinkEditScreen(linkId = key.linkId, onNavigateUp = navigateUp)
             }
             entry<Settings> {
-                SettingsScreen(onNavigateUp = navigateUp)
+                SettingsScreen(onNavigateUp = navigateUp.takeIf { backStack.size > 1 })
             }
         },
     )
