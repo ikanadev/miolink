@@ -87,6 +87,33 @@ func (q *Queries) IncrementLinkViews(ctx context.Context, id int64) (int64, erro
 	return views, err
 }
 
+const listThumbnails = `-- name: ListThumbnails :many
+SELECT DISTINCT thumbnail FROM links WHERE thumbnail IS NOT NULL
+`
+
+func (q *Queries) ListThumbnails(ctx context.Context) ([]*string, error) {
+	rows, err := q.db.QueryContext(ctx, listThumbnails)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*string{}
+	for rows.Next() {
+		var thumbnail *string
+		if err := rows.Scan(&thumbnail); err != nil {
+			return nil, err
+		}
+		items = append(items, thumbnail)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const moveLink = `-- name: MoveLink :one
 UPDATE links SET directory_id = ? WHERE id = ?
 RETURNING id, directory_id, title, url, thumbnail, views, created_at

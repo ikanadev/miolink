@@ -22,6 +22,7 @@ type Querier interface {
 	IncrementLinkViews(ctx context.Context, id int64) (int64, error)
 	ListAllDirectories(ctx context.Context) ([]Directory, error)
 	ListAllLinks(ctx context.Context) ([]Link, error)
+	ListThumbnails(ctx context.Context) ([]*string, error)
 	MoveDirectory(ctx context.Context, arg MoveDirectoryParams) (Directory, error)
 	MoveLink(ctx context.Context, arg MoveLinkParams) (Link, error)
 	RenameDirectory(ctx context.Context, arg RenameDirectoryParams) (Directory, error)

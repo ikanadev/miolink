@@ -74,7 +74,11 @@ Clients cache the whole tree and only refetch it when it changed.
   reach other files. Stored images are re-encoded copies of public images;
   nothing private is served.
 - Several links can share a file, so deleting a link never deletes its
-  thumbnail directly. A periodic cleanup removes unreferenced files.
+  thumbnail directly. A cleanup (`thumbnail.Store.RunCleanup`, started in
+  `main.go` at startup and then every 24 h) removes unreferenced files and
+  stale `.tmp-*` files older than 1 hour; the age rule protects a file saved
+  before its `CreateLink` transaction committed. It never touches other
+  names in the directory.
 
 ## API overview
 

@@ -21,6 +21,9 @@ RETURNING *;
 -- name: DeleteLink :execrows
 DELETE FROM links WHERE id = ?;
 
+-- name: ListThumbnails :many
+SELECT DISTINCT thumbnail FROM links WHERE thumbnail IS NOT NULL;
+
 -- name: IncrementLinkViews :one
 UPDATE links SET views = views + 1 WHERE id = ?
 RETURNING views;

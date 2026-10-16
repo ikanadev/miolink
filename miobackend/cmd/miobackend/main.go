@@ -25,6 +25,7 @@ import (
 	"miobackend/internal/auth"
 	"miobackend/internal/config"
 	"miobackend/internal/database"
+	"miobackend/internal/database/sqlc"
 	"miobackend/internal/directory"
 	"miobackend/internal/health"
 	"miobackend/internal/link"
@@ -86,6 +87,8 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	go thumbnails.RunCleanup(ctx, thumbnail.CleanupInterval, referencedThumbnails(sqlc.New(db)))
+
 	errc := make(chan error, 1)
 	go func() {
 		slog.Info("listening", "addr", cfg.Addr, "database", cfg.DatabasePath)
@@ -104,6 +107,23 @@ func run() error {
 		return err
 	}
 	return nil
+}
+
+// referencedThumbnails adapts the ListThumbnails query to thumbnail.ReferencedFunc.
+func referencedThumbnails(q *sqlc.Queries) thumbnail.ReferencedFunc {
+	return func(ctx context.Context) ([]string, error) {
+		rows, err := q.ListThumbnails(ctx)
+		if err != nil {
+			return nil, err
+		}
+		names := make([]string, 0, len(rows))
+		for _, name := range rows {
+			if name != nil {
+				names = append(names, *name)
+			}
+		}
+		return names, nil
+	}
 }
 
 // withCORS allows the web app's origins to call the API from the browser.

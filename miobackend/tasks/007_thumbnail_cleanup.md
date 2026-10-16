@@ -1,4 +1,4 @@
-Status: todo
+Status: done
 
 # 007 — Remove unused thumbnails
 
