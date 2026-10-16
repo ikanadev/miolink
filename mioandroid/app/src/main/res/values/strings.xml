@@ -4,9 +4,36 @@
 
     <!-- Browse -->
     <string name="browse_open_settings">Settings</string>
-    <string name="browse_directory_title">Directory</string>
+    <string name="browse_retry">Retry</string>
+    <string name="browse_loading">Loading your links</string>
+    <string name="browse_path">Path: %1$s</string>
+    <string name="browse_open_directory">Open %1$s</string>
+    <string name="browse_section_directories">Directories</string>
+    <string name="browse_section_links">Links</string>
     <string name="browse_empty_title">Nothing here yet</string>
     <string name="browse_empty_message">Links and directories you save will show up here.</string>
+    <string name="browse_empty_directory_title">This directory is empty</string>
+    <string name="browse_empty_directory_message">Links and directories you add here will show up in this list.</string>
+    <string name="browse_not_configured_title">Connect your server</string>
+    <string name="browse_not_configured_message">Enter your miolink server\'s address and API key in Settings to see your links.</string>
+    <string name="browse_unauthenticated_title">API key rejected</string>
+    <string name="browse_unauthenticated_message">The server didn\'t accept the saved API key. Check it in Settings.</string>
+    <string name="browse_unreachable_title">Can\'t reach the server</string>
+    <string name="browse_unreachable_message">Check your network connection and the server URL, then try again.</string>
+    <string name="browse_sync_failed_title">Couldn\'t load your links</string>
+    <string name="browse_sync_failed_message">The server returned an error. Try again in a moment.</string>
+    <string name="browse_error_unauthenticated">The server rejected the API key</string>
+    <string name="browse_error_not_configured">Connect a server in Settings</string>
+    <string name="browse_error_unreachable">Couldn\'t reach the server</string>
+    <string name="browse_error_sync">Couldn\'t sync your links</string>
+    <string name="browse_open_link_failed">No browser found to open this link</string>
+
+    <!-- Link -->
+    <string name="link_open">Open link</string>
+    <plurals name="link_views">
+        <item quantity="one">%1$d view</item>
+        <item quantity="other">%1$d views</item>
+    </plurals>
 
     <!-- Link edit -->
     <string name="link_edit_title">Edit link</string>

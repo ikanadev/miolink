@@ -1,6 +1,9 @@
 package dev.ikana.miolink
 
 import android.content.Context
+import coil3.ImageLoader
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import coil3.request.crossfade
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.preferencesDataStoreFile
 import dev.ikana.miolink.core.database.MioDatabase
@@ -8,6 +11,8 @@ import dev.ikana.miolink.core.network.ConnectClients
 import dev.ikana.miolink.core.network.ServiceClientsProvider
 import dev.ikana.miolink.core.settings.ServerSettings
 import dev.ikana.miolink.core.settings.ServerSettingsStore
+import dev.ikana.miolink.link.DefaultLinkRepository
+import dev.ikana.miolink.link.LinkRepository
 import dev.ikana.miolink.settings.DefaultSettingsRepository
 import dev.ikana.miolink.settings.SettingsRepository
 import dev.ikana.miolink.tree.TreeRepository
@@ -42,7 +47,7 @@ class AppContainer(context: Context) {
     /** The saved server settings; null until the user saves them. */
     val serverSettings: Flow<ServerSettings?> = serverSettingsStore.settings
 
-    /** Shared by every RPC client (each adds its own auth) and, later, Coil. */
+    /** Shared by every RPC client (each adds its own auth) and Coil (no auth). */
     val okHttpClient: OkHttpClient = ConnectClients.createOkHttpClient()
 
     val connectClients = ConnectClients(okHttpClient, serverSettings, applicationScope)
@@ -56,4 +61,18 @@ class AppContainer(context: Context) {
     val database: MioDatabase = MioDatabase.create(applicationContext)
 
     val treeRepository = TreeRepository(database, serviceClients, applicationScope)
+
+    val linkRepository: LinkRepository = DefaultLinkRepository(serviceClients, treeRepository)
+
+    /**
+     * Loads thumbnails over [okHttpClient]. `GET /thumbnails/{name}` is
+     * public, so requests carry no API key. Installed as Coil's singleton by
+     * [MioLinkApplication].
+     */
+    val imageLoader: ImageLoader by lazy {
+        ImageLoader.Builder(applicationContext)
+            .components { add(OkHttpNetworkFetcherFactory(callFactory = { okHttpClient })) }
+            .crossfade(true)
+            .build()
+    }
 }

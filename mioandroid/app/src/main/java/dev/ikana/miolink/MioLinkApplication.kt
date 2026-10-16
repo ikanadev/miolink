@@ -4,8 +4,11 @@ import android.app.Application
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewmodel.CreationExtras
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.SingletonImageLoader
 
-class MioLinkApplication : Application() {
+class MioLinkApplication : Application(), SingletonImageLoader.Factory {
     lateinit var container: AppContainer
         private set
 
@@ -18,6 +21,9 @@ class MioLinkApplication : Application() {
             container.serverSettings,
         )
     }
+
+    /** Coil's `AsyncImage` uses the container's loader, which shares OkHttp. */
+    override fun newImageLoader(context: PlatformContext): ImageLoader = container.imageLoader
 }
 
 /**

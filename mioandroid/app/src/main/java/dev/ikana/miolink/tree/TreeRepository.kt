@@ -41,33 +41,33 @@ class TreeRepository(
     private val database: MioDatabase,
     private val serviceClients: ServiceClientsProvider,
     private val scope: CoroutineScope,
-) {
+) : TreeSource {
     private val dao = database.treeDao()
 
     private val _lastSyncError = MutableStateFlow<ApiError?>(null)
 
     /** Why the last [refresh] failed, or null after one succeeds. */
-    val lastSyncError: StateFlow<ApiError?> = _lastSyncError.asStateFlow()
+    override val lastSyncError: StateFlow<ApiError?> = _lastSyncError.asStateFlow()
 
     private val refreshLock = Mutex()
     private var inFlight: Deferred<ApiError?>? = null
 
-    fun directory(id: Long): Flow<DirectoryEntity?> = dao.observeDirectory(id)
+    override fun directory(id: Long): Flow<DirectoryEntity?> = dao.observeDirectory(id)
 
     /** Subdirectories of [parentId], by name. */
-    fun childDirectories(parentId: Long): Flow<List<DirectoryEntity>> =
+    override fun childDirectories(parentId: Long): Flow<List<DirectoryEntity>> =
         dao.observeChildDirectories(parentId)
 
     /** Links in [directoryId], newest first. */
-    fun links(directoryId: Long): Flow<List<LinkEntity>> = dao.observeLinks(directoryId)
+    override fun links(directoryId: Long): Flow<List<LinkEntity>> = dao.observeLinks(directoryId)
 
     /** Every directory, the root included, ordered by id. */
-    fun allDirectories(): Flow<List<DirectoryEntity>> = dao.observeAllDirectories()
+    override fun allDirectories(): Flow<List<DirectoryEntity>> = dao.observeAllDirectories()
 
-    fun link(id: Long): Flow<LinkEntity?> = dao.observeLink(id)
+    override fun link(id: Long): Flow<LinkEntity?> = dao.observeLink(id)
 
     /** The cached revision, or null while nothing is cached. */
-    val revision: Flow<Long?> = dao.observeRevision()
+    override val revision: Flow<Long?> = dao.observeRevision()
 
     /**
      * Stores a link's new view count. `RecordView` doesn't change the
@@ -81,7 +81,7 @@ class TreeRepository(
      * logs it and exposes it in [lastSyncError]. A failure never clears the
      * cache.
      */
-    suspend fun refresh(): ApiError? {
+    override suspend fun refresh(): ApiError? {
         val request = refreshLock.withLock {
             inFlight?.takeIf { it.isActive }
                 ?: scope.async { fetchAndStore() }.also { inFlight = it }

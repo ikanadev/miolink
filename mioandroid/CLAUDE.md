@@ -19,6 +19,7 @@ root directory) and the sync protocol. This file only covers the client side.
 | Local cache | Room (KSP) |
 | Settings | DataStore; the API key is encrypted with Tink before it's stored |
 | Images | Coil 3 (`coil-compose`, `coil-network-okhttp`), sharing the app's OkHttpClient |
+| Opening links | Custom Tabs (`androidx.browser`) |
 | DI | None. A manual `AppContainer` built in `MioLinkApplication` |
 | Tests | JUnit 4, `kotlinx-coroutines-test`, Turbine, Robolectric (for in-memory Room on the JVM) |
 
@@ -62,14 +63,15 @@ navigation/              route keys and the back stack
 ui/theme/                Color.kt, Type.kt, Shape.kt, Theme.kt (MaterialExpressiveTheme)
 
 tree/                    the cached tree and the sync protocol
-  TreeRepository.kt      tree as Flow, refresh() via GetTree, applyWrite()
+  TreeSource.kt          read side of the tree (flows, lastSyncError, refresh); faked in ViewModel tests
+  TreeRepository.kt      implements TreeSource; applyWrite(), setLinkViews()
   TreeDao.kt, *Entity.kt Room entities and DAO for directories, links and the revision
   convert.kt             proto <-> entity
 directory/
   DirectoryRepository.kt CreateDirectory, RenameDirectory, MoveDirectory, DeleteDirectory
-  components/            NewDirectoryDialog, RenameDirectoryDialog
+  components/            DirectoryListItem, NewDirectoryDialog, RenameDirectoryDialog
 link/
-  LinkRepository.kt      CreateLink, UpdateLink, MoveLink, DeleteLink, RecordView, RefreshLinkMetadata
+  LinkRepository.kt      interface + DefaultLinkRepository: CreateLink, UpdateLink, MoveLink, DeleteLink, RecordView, RefreshLinkMetadata
   LinkEditScreen.kt      opened after CreateLink so the user can fix the title
   LinkEditViewModel.kt
   components/            LinkCard, AddLinkSheet
@@ -144,6 +146,9 @@ revision protocol:
 - `AppContainer` is the only place that constructs dependencies. ViewModels
   get them through a `viewModelFactory { initializer { ... } }` that reads the
   container from the `Application`.
+- ViewModels depend on interfaces (`SettingsRepository`, `LinkRepository`
+  with a `Default*` implementation; `TreeSource`, implemented by
+  `TreeRepository`), so their tests use fakes.
 
 ### Network and errors
 - Every request carries `Authorization: Bearer <api key>`, added by one OkHttp
@@ -176,6 +181,14 @@ revision protocol:
   `XxxContent(state, onAction)` that previews and tests use.
 - Deleting a directory always shows the confirm dialog first (deletes are
   recursive).
+- `Browse` shows the cache only. Sync errors are snackbars over cached data
+  (`UNAUTHENTICATED` offers Settings); with nothing cached, a full-screen
+  error with Retry or Settings. A directory deleted elsewhere navigates to
+  its nearest existing ancestor (`BrowseUiState.redirectTo`).
+- Links open in a Custom Tab, then `RecordView` counts the view.
+- Thumbnails load through `core/ui/ThumbnailImage` (Coil `AsyncImage`).
+  `AppContainer.imageLoader` uses the shared OkHttpClient and is installed as
+  Coil's singleton by `MioLinkApplication` (`SingletonImageLoader.Factory`).
 - Until server settings are saved, the app opens `Settings` alone, without
   a back arrow; saving swaps it for `Browse`.
 - Sharing a URL to the app (`ACTION_SEND`, `text/plain`) calls `CreateLink` in
