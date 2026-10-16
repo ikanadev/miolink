@@ -58,7 +58,7 @@ core/
   network/               Connect ProtocolClient, API key interceptor, ConnectException -> app errors
   database/              Room database and migrations
   settings/              server base URL and API key storage
-  ui/                    shared composables (ConfirmDeleteDialog, DirectoryPicker, ProgressButtonContent, ThumbnailImage, ...)
+  ui/                    shared composables (ConfirmDeleteDialog, DirectoryPicker, ProgressButtonContent, ThumbnailImage, ...), openInCustomTab
 navigation/              route keys and the back stack
 ui/theme/                Color.kt, Type.kt, Shape.kt, Theme.kt (MaterialExpressiveTheme)
 
@@ -73,9 +73,10 @@ directory/
   components/            DirectoryListItem, DirectoryActionsSheet, NewDirectoryDialog, RenameDirectoryDialog
 link/
   LinkRepository.kt      interface + DefaultLinkRepository: CreateLink, UpdateLink, MoveLink, DeleteLink, RecordView, RefreshLinkMetadata
+  LinkInput.kt           parseLinkUrl, validateLinkTitle (the backend's rules)
   LinkEditScreen.kt      opened after CreateLink so the user can fix the title
   LinkEditViewModel.kt
-  components/            LinkCard, AddLinkSheet
+  components/            LinkCard, LinkActionsSheet, AddLinkSheet (+ clipboard helpers, input error messages)
 browse/
   BrowseScreen.kt        a directory's contents: subdirectories and links, with their actions
   BrowseViewModel.kt
@@ -193,9 +194,25 @@ revision protocol:
   so the user can retry. `NOT_FOUND` closes the dialog and refreshes;
   `UNAUTHENTICATED` closes it with a snackbar offering Settings. Success
   closes it with a snackbar.
-- `Browse` adds things through a `FloatingActionButtonMenu` that hides while
-  scrolling down; a long press on a subdirectory opens its actions sheet
-  (also exposed as accessibility custom actions). The root has no actions.
+- `Browse` adds things through a `FloatingActionButtonMenu` (New link, New
+  directory) that hides while scrolling down; a long press on a
+  subdirectory (rename, move, delete) or a link (edit, move, delete) opens
+  its actions sheet, also exposed as accessibility custom actions. The root
+  has no actions.
+- `AddLinkSheet` is a form only: it takes the destination, an optional
+  `initialUrl` and an optional `onDirectoryChange` (which adds a "Change"
+  button opening `DirectoryPicker`), and reports `onSave(url)`; the caller
+  runs `CreateLink`, passes `isSaving`/`failure`, and removes it on success.
+  The URL is prefilled from the clipboard only when it holds an http(s)
+  URL; on Android 12+ it's read only if the system already classified the
+  clip as a URL (reading shows a toast), otherwise a paste button offers it.
+  A created link opens `LinkEdit` (`BrowseUiState.editLinkId`).
+- `LinkEdit` saves the title from the top bar only when it changed (trimmed,
+  validated first), asks before discarding an edited title, and moves,
+  refreshes metadata and deletes in place. It closes itself
+  (`LinkEditUiState.exit`) after saving or deleting, or when the link
+  disappears from the cache (deleted elsewhere); `onClose(message)` hands a
+  message to the `Browse` entry below, which shows it in its snackbar.
 - `Browse` shows the cache only. Sync errors are snackbars over cached data
   (`UNAUTHENTICATED` offers Settings); with nothing cached, a full-screen
   error with Retry or Settings. A directory deleted elsewhere navigates to

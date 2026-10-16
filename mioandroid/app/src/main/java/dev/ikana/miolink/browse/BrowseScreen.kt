@@ -1,11 +1,7 @@
 package dev.ikana.miolink.browse
 
-import android.content.ActivityNotFoundException
 import androidx.activity.compose.BackHandler
-import android.content.Context
 import androidx.annotation.StringRes
-import androidx.browser.customtabs.CustomTabColorSchemeParams
-import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -77,7 +73,6 @@ import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.connectrpc.Code
@@ -88,10 +83,13 @@ import dev.ikana.miolink.core.ui.DirectoryPicker
 import dev.ikana.miolink.core.ui.EmptyState
 import dev.ikana.miolink.core.ui.NavigateUpButton
 import dev.ikana.miolink.core.ui.PickerDirectory
+import dev.ikana.miolink.core.ui.openInCustomTab
 import dev.ikana.miolink.directory.components.DirectoryActionsSheet
 import dev.ikana.miolink.directory.components.DirectoryListItem
 import dev.ikana.miolink.directory.components.NewDirectoryDialog
 import dev.ikana.miolink.directory.components.RenameDirectoryDialog
+import dev.ikana.miolink.link.components.AddLinkSheet
+import dev.ikana.miolink.link.components.LinkActionsSheet
 import dev.ikana.miolink.link.components.LinkCard
 import dev.ikana.miolink.navigation.ROOT_DIRECTORY_ID
 import dev.ikana.miolink.tree.DirectoryEntity
@@ -105,6 +103,9 @@ import kotlinx.coroutines.launch
  *
  * [onNavigateTo] shows another directory already on the path (a breadcrumb,
  * or the nearest ancestor when this one was deleted on another device).
+ * [onEditLink] opens a link's edit screen. [incomingMessage] is a message
+ * another screen left for this one (a link deleted from its edit screen),
+ * shown in the snackbar; [onIncomingMessageShown] clears it.
  */
 @Composable
 fun BrowseScreen(
@@ -113,7 +114,10 @@ fun BrowseScreen(
     onNavigateTo: (Long) -> Unit,
     onNavigateUp: () -> Unit,
     onOpenSettings: () -> Unit,
+    onEditLink: (Long) -> Unit,
     modifier: Modifier = Modifier,
+    incomingMessage: String? = null,
+    onIncomingMessageShown: () -> Unit = {},
     viewModel: BrowseViewModel = viewModel(factory = BrowseViewModel.factory(directoryId)),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -125,6 +129,20 @@ fun BrowseScreen(
 
     LaunchedEffect(state.redirectTo) {
         state.redirectTo?.let(onNavigateTo)
+    }
+
+    LaunchedEffect(state.editLinkId) {
+        state.editLinkId?.let { id ->
+            onEditLink(id)
+            viewModel.onAction(BrowseAction.LinkEditOpened)
+        }
+    }
+
+    LaunchedEffect(incomingMessage) {
+        if (incomingMessage != null) {
+            viewModel.onAction(BrowseAction.ShowText(incomingMessage))
+            onIncomingMessageShown()
+        }
     }
 
     state.message?.let { message ->
@@ -160,6 +178,7 @@ fun BrowseScreen(
                 is BrowseAction.OpenAncestor -> onNavigateTo(action.id)
                 BrowseAction.NavigateUp -> onNavigateUp()
                 BrowseAction.OpenSettings -> onOpenSettings()
+                is BrowseAction.EditLink -> onEditLink(action.id)
                 is BrowseAction.OpenLink -> {
                     val toolbarColor = colorScheme.surfaceContainer.toArgb()
                     if (openInCustomTab(context, action.link.url, toolbarColor)) {
@@ -174,20 +193,6 @@ fun BrowseScreen(
         modifier = modifier,
         snackbarHostState = snackbarHostState,
     )
-}
-
-/** Opens [url] in a Custom Tab. False when no browser can open it. */
-private fun openInCustomTab(context: Context, url: String, toolbarColor: Int): Boolean = try {
-    CustomTabsIntent.Builder()
-        .setShowTitle(true)
-        .setDefaultColorSchemeParams(
-            CustomTabColorSchemeParams.Builder().setToolbarColor(toolbarColor).build(),
-        )
-        .build()
-        .launchUrl(context, url.toUri())
-    true
-} catch (_: ActivityNotFoundException) {
-    false
 }
 
 /** What a snackbar's action button does. */
@@ -231,6 +236,14 @@ private fun BrowseMessage.text(): String = when (this) {
     )
     is BrowseMessage.DirectoryDeleted -> stringResource(R.string.browse_directory_deleted, name)
     BrowseMessage.DirectoryGone -> stringResource(R.string.browse_directory_gone)
+    is BrowseMessage.LinkMoved -> stringResource(
+        R.string.browse_link_moved,
+        title,
+        destination.ifEmpty { stringResource(R.string.app_name) },
+    )
+    is BrowseMessage.LinkDeleted -> stringResource(R.string.link_deleted, title)
+    BrowseMessage.LinkGone -> stringResource(R.string.link_gone)
+    is BrowseMessage.Text -> text
 }
 
 private fun BrowseMessage.action(): MessageAction? = when (this) {
@@ -241,6 +254,10 @@ private fun BrowseMessage.action(): MessageAction? = when (this) {
     is BrowseMessage.DirectoryMoved,
     is BrowseMessage.DirectoryDeleted,
     BrowseMessage.DirectoryGone,
+    is BrowseMessage.LinkMoved,
+    is BrowseMessage.LinkDeleted,
+    BrowseMessage.LinkGone,
+    is BrowseMessage.Text,
     -> null
 }
 
@@ -254,8 +271,8 @@ private enum class ContentKind { Loading, SyncError, Tree }
  * to it, then subdirectories and links. Pull to refresh; while nothing is
  * cached, a loading indicator or the sync error with a way to fix it.
  *
- * Once a tree is cached, a FAB menu adds directories (and links, task 007)
- * here; it hides while scrolling down. A long press on a subdirectory opens
+ * Once a tree is cached, a FAB menu adds links and directories here; it
+ * hides while scrolling down. A long press on a subdirectory or a link opens
  * its actions. [BrowseUiState.dialog] is shown on top.
  */
 @Composable
@@ -404,9 +421,14 @@ private fun CreateMenu(
             }
         },
     ) {
-        // Task 007: add a "New link" FloatingActionButtonMenuItem here, above
-        // "New directory", that closes the menu and opens AddLinkSheet for
-        // this directory (a new BrowseAction and BrowseDialog variant).
+        FloatingActionButtonMenuItem(
+            onClick = {
+                onExpandedChange(false)
+                onAction(BrowseAction.ShowAddLink)
+            },
+            text = { Text(stringResource(R.string.browse_new_link)) },
+            icon = { Icon(painterResource(R.drawable.ic_add_link), contentDescription = null) },
+        )
         FloatingActionButtonMenuItem(
             onClick = {
                 onExpandedChange(false)
@@ -453,11 +475,8 @@ private fun BrowseDialogs(state: BrowseUiState, onAction: (BrowseAction) -> Unit
         )
         is BrowseDialog.MoveDirectory -> {
             val directory = dialog.directory
-            val pickerDirectories = remember(state.allDirectories) {
-                state.allDirectories.map { PickerDirectory(it.id, it.parentId, it.name) }
-            }
             DirectoryPicker(
-                directories = pickerDirectories,
+                directories = rememberPickerDirectories(state.allDirectories),
                 title = stringResource(R.string.directory_move_title, directory.name),
                 confirmLabel = stringResource(R.string.directory_move_confirm),
                 onConfirm = { onAction(BrowseAction.MoveDirectory(directory.id, it)) },
@@ -484,8 +503,55 @@ private fun BrowseDialogs(state: BrowseUiState, onAction: (BrowseAction) -> Unit
             isDeleting = state.isSaving,
             errorMessage = dialog.failure?.let { writeFailureText(it) },
         )
+        is BrowseDialog.AddLink -> AddLinkSheet(
+            directories = rememberPickerDirectories(state.allDirectories),
+            directoryId = state.directoryId,
+            onSave = { onAction(BrowseAction.CreateLink(it)) },
+            onDismiss = dismiss,
+            isSaving = state.isSaving,
+            failure = dialog.failure,
+        )
+        is BrowseDialog.LinkActions -> {
+            val link = dialog.link
+            LinkActionsSheet(
+                link = link,
+                onEdit = {
+                    dismiss()
+                    onAction(BrowseAction.EditLink(link.id))
+                },
+                onMove = { onAction(BrowseAction.ShowMoveLink(link)) },
+                onDelete = { onAction(BrowseAction.ShowDeleteLink(link)) },
+                onDismiss = dismiss,
+            )
+        }
+        is BrowseDialog.MoveLink -> {
+            val link = dialog.link
+            DirectoryPicker(
+                directories = rememberPickerDirectories(state.allDirectories),
+                title = stringResource(R.string.link_move_title, link.title.ifBlank { link.url }),
+                confirmLabel = stringResource(R.string.directory_move_confirm),
+                onConfirm = { onAction(BrowseAction.MoveLink(link.id, it)) },
+                onDismiss = dismiss,
+                subtitle = stringResource(R.string.link_move_subtitle),
+                currentDirectoryId = link.directoryId,
+                isSaving = state.isSaving,
+                errorMessage = dialog.failure?.let { writeFailureText(it) },
+            )
+        }
+        is BrowseDialog.DeleteLink -> ConfirmDeleteDialog(
+            title = stringResource(R.string.link_delete_title),
+            message = stringResource(R.string.link_delete_message, dialog.link.title.ifBlank { dialog.link.url }),
+            onConfirm = { onAction(BrowseAction.DeleteLink(dialog.link.id)) },
+            onDismiss = dismiss,
+            isDeleting = state.isSaving,
+            errorMessage = dialog.failure?.let { writeFailureText(it) },
+        )
     }
 }
+
+@Composable
+private fun rememberPickerDirectories(directories: List<DirectoryEntity>): List<PickerDirectory> =
+    remember(directories) { directories.map { PickerDirectory(it.id, it.parentId, it.name) } }
 
 /** Why a write failed, for a dialog that lets the user try again. */
 @Composable
@@ -588,12 +654,33 @@ private fun LazyListScope.directoryContents(
             key = { _, link -> "link-${link.id}" },
             contentType = { _, _ -> "link" },
         ) { index, link ->
+            val editLabel = stringResource(R.string.link_action_edit)
+            val moveLabel = stringResource(R.string.link_action_move)
+            val deleteLabel = stringResource(R.string.link_action_delete)
             LinkCard(
                 link = link,
                 onClick = { onAction(BrowseAction.OpenLink(link)) },
+                onLongClick = { onAction(BrowseAction.ShowLinkActions(link)) },
+                onLongClickLabel = stringResource(R.string.link_show_actions),
                 modifier = Modifier
                     .animateItem()
-                    .padding(bottom = if (index < state.links.size - 1) 8.dp else 0.dp),
+                    .padding(bottom = if (index < state.links.size - 1) 8.dp else 0.dp)
+                    .semantics {
+                        customActions = listOf(
+                            CustomAccessibilityAction(editLabel) {
+                                onAction(BrowseAction.EditLink(link.id))
+                                true
+                            },
+                            CustomAccessibilityAction(moveLabel) {
+                                onAction(BrowseAction.ShowMoveLink(link))
+                                true
+                            },
+                            CustomAccessibilityAction(deleteLabel) {
+                                onAction(BrowseAction.ShowDeleteLink(link))
+                                true
+                            },
+                        )
+                    },
             )
         }
     }

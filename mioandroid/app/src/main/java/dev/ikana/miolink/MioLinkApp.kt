@@ -8,6 +8,10 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -34,6 +38,8 @@ import dev.ikana.miolink.settings.SettingsScreen
 fun MioLinkApp(isConfigured: Boolean, modifier: Modifier = Modifier) {
     val backStack = rememberNavBackStack(if (isConfigured) Browse() else Settings)
     val navigateUp: () -> Unit = { if (backStack.size > 1) backStack.removeLastOrNull() }
+    // A message a closing screen leaves for the Browse entry below it.
+    var pendingMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
     LaunchedEffect(isConfigured) {
         if (isConfigured && backStack.toList() == listOf(Settings)) backStack[0] = Browse()
@@ -73,10 +79,23 @@ fun MioLinkApp(isConfigured: Boolean, modifier: Modifier = Modifier) {
                     onNavigateTo = { id -> ifOnTop { backStack.showDirectory(id) } },
                     onNavigateUp = { ifOnTop(navigateUp) },
                     onOpenSettings = { ifOnTop { backStack.add(Settings) } },
+                    onEditLink = { id -> ifOnTop { backStack.add(LinkEdit(id)) } },
+                    incomingMessage = pendingMessage.takeIf { backStack.lastOrNull() == key },
+                    onIncomingMessageShown = { pendingMessage = null },
                 )
             }
             entry<LinkEdit> { key ->
-                LinkEditScreen(linkId = key.linkId, onNavigateUp = navigateUp)
+                val ifOnTop: (() -> Unit) -> Unit = { if (backStack.lastOrNull() == key) it() }
+                LinkEditScreen(
+                    linkId = key.linkId,
+                    onClose = { message ->
+                        ifOnTop {
+                            pendingMessage = message
+                            navigateUp()
+                        }
+                    },
+                    onOpenSettings = { ifOnTop { backStack.add(Settings) } },
+                )
             }
             entry<Settings> {
                 SettingsScreen(onNavigateUp = navigateUp.takeIf { backStack.size > 1 })

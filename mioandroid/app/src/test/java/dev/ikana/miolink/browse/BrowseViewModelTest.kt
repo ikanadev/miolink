@@ -90,7 +90,29 @@ class BrowseViewModelTest {
 
     private class FakeLinks : LinkRepository {
         val viewed = mutableListOf<Long>()
+        val calls = mutableListOf<String>()
         var failure: ApiError? = null
+
+        private fun call(description: String) {
+            calls += description
+            failure?.let { throw ApiException(it) }
+        }
+
+        override suspend fun create(directoryId: Long, url: String): Long {
+            call("create $directoryId $url")
+            return 77
+        }
+
+        override suspend fun updateTitle(id: Long, title: String) = call("update $id $title")
+
+        override suspend fun move(id: Long, directoryId: Long) = call("move $id $directoryId")
+
+        override suspend fun delete(id: Long) = call("delete $id")
+
+        override suspend fun refreshMetadata(id: Long): Boolean {
+            call("refresh $id")
+            return true
+        }
 
         override suspend fun recordView(id: Long): Long {
             viewed += id
@@ -512,5 +534,126 @@ class BrowseViewModelTest {
         advanceUntilIdle()
 
         assertNull(viewModel.state.value.dialog)
+    }
+
+    // Links.
+
+    @Test
+    fun createLinkClosesTheSheetAndOpensTheEditScreen() = runTest(dispatcher) {
+        tree.directories.value = sampleTree
+        val viewModel = viewModel(2)
+        advanceUntilIdle()
+        viewModel.onAction(BrowseAction.ShowAddLink)
+
+        viewModel.onAction(BrowseAction.CreateLink("https://example.com"))
+        advanceUntilIdle()
+
+        val state = viewModel.state.value
+        assertEquals(listOf("create 2 https://example.com"), links.calls)
+        assertNull(state.dialog)
+        assertEquals(77L, state.editLinkId)
+        assertNull(state.message)
+
+        viewModel.onAction(BrowseAction.LinkEditOpened)
+        advanceUntilIdle()
+        assertNull(viewModel.state.value.editLinkId)
+    }
+
+    @Test
+    fun createLinkFailureStaysInTheSheet() = runTest(dispatcher) {
+        tree.directories.value = sampleTree
+        val viewModel = viewModel(2)
+        advanceUntilIdle()
+        viewModel.onAction(BrowseAction.ShowAddLink)
+        links.failure = ApiError.InvalidArgument("url must have a host")
+
+        viewModel.onAction(BrowseAction.CreateLink("https://"))
+        advanceUntilIdle()
+
+        val state = viewModel.state.value
+        assertEquals(BrowseDialog.AddLink(failure = ApiError.InvalidArgument("url must have a host")), state.dialog)
+        assertNull(state.editLinkId)
+    }
+
+    @Test
+    fun moveLinkReportsTheDestination() = runTest(dispatcher) {
+        tree.directories.value = sampleTree
+        val link = link(10, ROOT_DIRECTORY_ID, 0)
+        tree.allLinks.value = listOf(link)
+        val viewModel = viewModel(ROOT_DIRECTORY_ID)
+        advanceUntilIdle()
+        viewModel.onAction(BrowseAction.ShowMoveLink(link))
+
+        viewModel.onAction(BrowseAction.MoveLink(10, 5))
+        advanceUntilIdle()
+
+        assertEquals(listOf("move 10 5"), links.calls)
+        assertNull(viewModel.state.value.dialog)
+        assertEquals(BrowseMessage.LinkMoved("t10", "Home"), viewModel.state.value.message)
+    }
+
+    @Test
+    fun deleteLinkAsksThenDeletes() = runTest(dispatcher) {
+        tree.directories.value = sampleTree
+        val link = link(10, ROOT_DIRECTORY_ID, 0)
+        tree.allLinks.value = listOf(link)
+        val viewModel = viewModel(ROOT_DIRECTORY_ID)
+        advanceUntilIdle()
+
+        viewModel.onAction(BrowseAction.ShowDeleteLink(link))
+        advanceUntilIdle()
+        assertEquals(BrowseDialog.DeleteLink(link), viewModel.state.value.dialog)
+        viewModel.onAction(BrowseAction.DeleteLink(10))
+        advanceUntilIdle()
+
+        assertEquals(listOf("delete 10"), links.calls)
+        assertNull(viewModel.state.value.dialog)
+        assertEquals(BrowseMessage.LinkDeleted("t10"), viewModel.state.value.message)
+    }
+
+    @Test
+    fun linkWriteNotFoundRefreshesWithALinkMessage() = runTest(dispatcher) {
+        tree.directories.value = sampleTree
+        tree.refreshResult.complete(null)
+        val link = link(10, ROOT_DIRECTORY_ID, 0)
+        tree.allLinks.value = listOf(link)
+        val viewModel = viewModel(ROOT_DIRECTORY_ID)
+        advanceUntilIdle()
+        viewModel.onAction(BrowseAction.ShowDeleteLink(link))
+        links.failure = ApiError.NotFound
+
+        viewModel.onAction(BrowseAction.DeleteLink(10))
+        advanceUntilIdle()
+
+        assertNull(viewModel.state.value.dialog)
+        assertEquals(BrowseMessage.LinkGone, viewModel.state.value.message)
+        assertEquals(1, tree.refreshes)
+    }
+
+    @Test
+    fun linkActionsForALinkDeletedElsewhereClose() = runTest(dispatcher) {
+        tree.directories.value = sampleTree
+        val link = link(10, ROOT_DIRECTORY_ID, 0)
+        tree.allLinks.value = listOf(link)
+        val viewModel = viewModel(ROOT_DIRECTORY_ID)
+        viewModel.onAction(BrowseAction.ShowLinkActions(link))
+        advanceUntilIdle()
+        assertEquals(BrowseDialog.LinkActions(link), viewModel.state.value.dialog)
+
+        tree.allLinks.value = emptyList()
+        advanceUntilIdle()
+
+        assertNull(viewModel.state.value.dialog)
+    }
+
+    @Test
+    fun aMessageFromAnotherScreenIsShown() = runTest(dispatcher) {
+        tree.directories.value = sampleTree
+        val viewModel = viewModel(ROOT_DIRECTORY_ID)
+
+        viewModel.onAction(BrowseAction.ShowText("Deleted “x”"))
+        advanceUntilIdle()
+
+        assertEquals(BrowseMessage.Text("Deleted “x”"), viewModel.state.value.message)
     }
 }

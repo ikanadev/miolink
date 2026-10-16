@@ -49,6 +49,16 @@ sealed interface BrowseMessage {
 
     /** A write found its directory gone (`NOT_FOUND`); the cache is refreshing. */
     data object DirectoryGone : BrowseMessage
+
+    /** [destination] is the directory's name, empty for the root. */
+    data class LinkMoved(val title: String, val destination: String) : BrowseMessage
+    data class LinkDeleted(val title: String) : BrowseMessage
+
+    /** A write found its link gone (`NOT_FOUND`); the cache is refreshing. */
+    data object LinkGone : BrowseMessage
+
+    /** Shown as is: a message another screen left for this one. */
+    data class Text(val text: String) : BrowseMessage
 }
 
 /**
@@ -82,6 +92,22 @@ sealed interface BrowseDialog {
         val count: SubtreeCount,
         val failure: ApiError? = null,
     ) : BrowseDialog
+
+    /** `AddLinkSheet` for this directory. */
+    data class AddLink(val failure: ApiError? = null) : BrowseDialog
+
+    /** The long-press menu on a link: edit, move, delete. */
+    data class LinkActions(val link: LinkEntity) : BrowseDialog
+
+    data class MoveLink(
+        val link: LinkEntity,
+        val failure: ApiError? = null,
+    ) : BrowseDialog
+
+    data class DeleteLink(
+        val link: LinkEntity,
+        val failure: ApiError? = null,
+    ) : BrowseDialog
 }
 
 /** The directory a dialog acts on, if it acts on one. */
@@ -91,7 +117,21 @@ val BrowseDialog.directory: DirectoryEntity?
         is BrowseDialog.RenameDirectory -> directory
         is BrowseDialog.MoveDirectory -> directory
         is BrowseDialog.DeleteDirectory -> directory
-        is BrowseDialog.NewDirectory -> null
+        is BrowseDialog.NewDirectory,
+        is BrowseDialog.AddLink,
+        is BrowseDialog.LinkActions,
+        is BrowseDialog.MoveLink,
+        is BrowseDialog.DeleteLink,
+        -> null
+    }
+
+/** The link a dialog acts on, if it acts on one. */
+val BrowseDialog.link: LinkEntity?
+    get() = when (this) {
+        is BrowseDialog.LinkActions -> link
+        is BrowseDialog.MoveLink -> link
+        is BrowseDialog.DeleteLink -> link
+        else -> null
     }
 
 data class BrowseUiState(
@@ -121,6 +161,8 @@ data class BrowseUiState(
      * nearest ancestor that still does, to navigate to instead.
      */
     val redirectTo: Long? = null,
+    /** A link was just created here: open its edit screen, then [BrowseAction.LinkEditOpened]. */
+    val editLinkId: Long? = null,
 ) {
     val isRoot: Boolean get() = directoryId == ROOT_DIRECTORY_ID
 
@@ -165,12 +207,36 @@ sealed interface BrowseAction {
     data class RenameDirectory(val id: Long, val name: String) : BrowseAction
     data class MoveDirectory(val id: Long, val newParentId: Long) : BrowseAction
     data class DeleteDirectory(val id: Long) : BrowseAction
+
+    // Links.
+
+    /** Opens `LinkEditScreen`; handled by the screen. */
+    data class EditLink(val id: Long) : BrowseAction
+
+    /** The screen opened [BrowseUiState.editLinkId]. */
+    data object LinkEditOpened : BrowseAction
+
+    /** Another screen left a message to show here. */
+    data class ShowText(val text: String) : BrowseAction
+
+    data object ShowAddLink : BrowseAction
+
+    /** Creates a link to [url] (already checked) in this directory. */
+    data class CreateLink(val url: String) : BrowseAction
+
+    /** A long press on a link. */
+    data class ShowLinkActions(val link: LinkEntity) : BrowseAction
+    data class ShowMoveLink(val link: LinkEntity) : BrowseAction
+    data class ShowDeleteLink(val link: LinkEntity) : BrowseAction
+    data class MoveLink(val id: Long, val directoryId: Long) : BrowseAction
+    data class DeleteLink(val id: Long) : BrowseAction
 }
 
 /**
  * One directory's contents from the cached tree. Handles refreshes, the view
- * count of [BrowseAction.OpenLink], messages, and the directory dialogs and
- * writes; navigation actions belong to the screen.
+ * count of [BrowseAction.OpenLink], messages, and the directory and link
+ * dialogs and writes; navigation actions belong to the screen. A created
+ * link opens its edit screen through [BrowseUiState.editLinkId].
  *
  * A write keeps its dialog open until it finishes. `ALREADY_EXISTS` and
  * `INVALID_ARGUMENT` stay in the dialog (under the name field), as do
@@ -188,6 +254,7 @@ class BrowseViewModel(
         val message: BrowseMessage? = null,
         val dialog: BrowseDialog? = null,
         val isSaving: Boolean = false,
+        val editLinkId: Long? = null,
     )
 
     private val local = MutableStateFlow(Local())
@@ -236,10 +303,20 @@ class BrowseViewModel(
             is BrowseAction.RenameDirectory -> renameDirectory(action.id, action.name)
             is BrowseAction.MoveDirectory -> moveDirectory(action.id, action.newParentId)
             is BrowseAction.DeleteDirectory -> deleteDirectory(action.id)
+            BrowseAction.LinkEditOpened -> local.update { it.copy(editLinkId = null) }
+            is BrowseAction.ShowText -> post(BrowseMessage.Text(action.text))
+            BrowseAction.ShowAddLink -> showDialog(BrowseDialog.AddLink())
+            is BrowseAction.CreateLink -> createLink(action.url)
+            is BrowseAction.ShowLinkActions -> showDialog(BrowseDialog.LinkActions(action.link))
+            is BrowseAction.ShowMoveLink -> showDialog(BrowseDialog.MoveLink(action.link))
+            is BrowseAction.ShowDeleteLink -> showDialog(BrowseDialog.DeleteLink(action.link))
+            is BrowseAction.MoveLink -> moveLink(action.id, action.directoryId)
+            is BrowseAction.DeleteLink -> deleteLink(action.id)
             is BrowseAction.OpenDirectory,
             is BrowseAction.OpenAncestor,
             BrowseAction.NavigateUp,
             BrowseAction.OpenSettings,
+            is BrowseAction.EditLink,
             -> Unit
         }
     }
@@ -261,9 +338,12 @@ class BrowseViewModel(
         } else {
             null
         }
-        // A dialog about a directory deleted elsewhere has nothing left to act on.
+        // A dialog about a directory or link deleted (or moved away)
+        // elsewhere has nothing left to act on.
+        val linkIds = links.mapTo(HashSet()) { it.id }
         val dialog = local.dialog?.takeIf { dialog ->
-            local.isSaving || dialog.directory.let { it == null || it.id in byId }
+            local.isSaving ||
+                (dialog.directory.let { it == null || it.id in byId } && dialog.link.let { it == null || it.id in linkIds })
         }
         return BrowseUiState(
             directoryId = directoryId,
@@ -279,6 +359,7 @@ class BrowseViewModel(
             dialog = dialog,
             isSaving = local.isSaving,
             redirectTo = redirectTo,
+            editLinkId = local.editLinkId,
         )
     }
 
@@ -389,25 +470,62 @@ class BrowseViewModel(
         }
     }
 
+    private fun createLink(url: String) {
+        if (local.value.dialog !is BrowseDialog.AddLink) return
+        write(onFailure = { error -> BrowseDialog.AddLink(failure = error) }) {
+            val id = links.create(directoryId, url)
+            local.update { it.copy(editLinkId = id) }
+            null
+        }
+    }
+
+    /** Link [id], from the open dialog or else this directory's links. */
+    private fun linkById(id: Long): LinkEntity? =
+        local.value.dialog?.link?.takeIf { it.id == id } ?: state.value.links.firstOrNull { it.id == id }
+
+    private fun moveLink(id: Long, directoryId: Long) {
+        val link = linkById(id) ?: return
+        val destination = directoryById(directoryId)?.name.orEmpty()
+        write(
+            onFailure = { error -> BrowseDialog.MoveLink(link, failure = error) },
+            gone = BrowseMessage.LinkGone,
+        ) {
+            links.move(id, directoryId)
+            BrowseMessage.LinkMoved(link.title, destination)
+        }
+    }
+
+    private fun deleteLink(id: Long) {
+        val dialog = local.value.dialog as? BrowseDialog.DeleteLink ?: return
+        if (dialog.link.id != id) return
+        write(onFailure = { error -> dialog.copy(failure = error) }, gone = BrowseMessage.LinkGone) {
+            links.delete(id)
+            BrowseMessage.LinkDeleted(dialog.link.title)
+        }
+    }
+
     /**
      * Runs a write from the open dialog: marks it saving, then closes it with
-     * [block]'s message, or handles the failure (see the class comment);
-     * [onFailure] gives the dialog to show again for the failures it keeps.
+     * [block]'s message (if any), or handles the failure (see the class
+     * comment); [onFailure] gives the dialog to show again for the failures
+     * it keeps, and [gone] is the message for `NOT_FOUND`.
      */
-    private fun write(onFailure: (ApiError) -> BrowseDialog, block: suspend () -> BrowseMessage) {
+    private fun write(
+        onFailure: (ApiError) -> BrowseDialog,
+        gone: BrowseMessage = BrowseMessage.DirectoryGone,
+        block: suspend () -> BrowseMessage?,
+    ) {
         if (local.value.isSaving) return
         local.update { it.copy(isSaving = true) }
         viewModelScope.launch {
             try {
                 val message = block()
-                local.update { it.copy(isSaving = false, dialog = null, message = message) }
+                local.update { it.copy(isSaving = false, dialog = null, message = message ?: it.message) }
             } catch (e: ApiException) {
-                Log.w(TAG, "A directory write failed: ${e.error}")
+                Log.w(TAG, "A write failed: ${e.error}")
                 when (e.error) {
                     ApiError.NotFound -> {
-                        local.update {
-                            it.copy(isSaving = false, dialog = null, message = BrowseMessage.DirectoryGone)
-                        }
+                        local.update { it.copy(isSaving = false, dialog = null, message = gone) }
                         tree.refresh()
                     }
                     ApiError.Unauthenticated, ApiError.NotConfigured -> local.update {

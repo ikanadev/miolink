@@ -38,6 +38,8 @@
     <string name="browse_create_menu_open">Add a directory or link</string>
     <string name="browse_create_menu_close">Close menu</string>
     <string name="browse_new_directory">New directory</string>
+    <string name="browse_new_link">New link</string>
+    <string name="browse_link_moved">Moved “%1$s” to “%2$s”</string>
     <string name="browse_directory_created">Created “%1$s”</string>
     <string name="browse_directory_renamed">Renamed to “%1$s”</string>
     <string name="browse_directory_moved">Moved “%1$s” to “%2$s”</string>
@@ -93,10 +95,78 @@
         <item quantity="other">%1$d views</item>
     </plurals>
 
+    <string name="link_show_actions">Show actions</string>
+    <string name="link_action_edit">Edit</string>
+    <string name="link_action_move">Move</string>
+    <string name="link_action_delete">Delete</string>
+    <string name="link_url_label">URL</string>
+    <string name="link_url_placeholder">https://example.com</string>
+    <string name="link_url_supporting">A web address starting with https:// or http://</string>
+    <string name="link_url_clear">Clear URL</string>
+    <string name="link_url_paste">Paste from clipboard</string>
+    <string name="link_url_error_empty">Enter a URL</string>
+    <plurals name="link_url_error_too_long">
+        <item quantity="one">Use at most %1$d character</item>
+        <item quantity="other">Use at most %1$d characters</item>
+    </plurals>
+    <string name="link_url_error_not_web">Enter a web address, like https://example.com</string>
+    <string name="link_url_error_rejected">The server didn\'t accept this URL</string>
+    <string name="link_title_error_empty">Enter a title</string>
+    <plurals name="link_title_error_too_long">
+        <item quantity="one">Use at most %1$d character</item>
+        <item quantity="other">Use at most %1$d characters</item>
+    </plurals>
+    <string name="link_title_error_rejected">The server didn\'t accept this title</string>
+    <string name="link_write_unreachable">Couldn\'t reach the server. Check your connection and try again.</string>
+    <string name="link_write_unauthenticated">The server rejected the API key. Check it in Settings.</string>
+    <string name="link_write_not_configured">Connect a server in Settings first.</string>
+    <string name="link_write_failed">The server couldn\'t save this change. Try again in a moment.</string>
+    <string name="link_move_title">Move “%1$s”</string>
+    <string name="link_move_subtitle">Choose the directory to move it to.</string>
+    <string name="link_delete_title">Delete this link?</string>
+    <string name="link_delete_message">“%1$s” will be deleted. This can\'t be undone.</string>
+    <string name="link_deleted">Deleted “%1$s”</string>
+    <string name="link_gone">That link no longer exists</string>
+
+    <!-- Add link -->
+    <string name="link_add_title">Add link</string>
+    <string name="link_add_message">Mio Link fetches the page\'s title and preview image for you.</string>
+    <string name="link_add_save">Save</string>
+    <string name="link_add_fetching">Fetching the page…</string>
+    <string name="link_add_save_in">Save in</string>
+    <string name="link_add_change_directory">Change</string>
+    <string name="link_add_pick_directory_title">Save in</string>
+    <string name="link_add_pick_directory_confirm">Select</string>
+
     <!-- Link edit -->
     <string name="link_edit_title">Edit link</string>
-    <string name="link_edit_placeholder_title">Link editing is on its way</string>
-    <string name="link_edit_placeholder_message">Soon you\'ll be able to change this link\'s title, URL and directory here.</string>
+    <string name="link_save">Save</string>
+    <string name="link_loading">Loading the link</string>
+    <string name="link_title_label">Title</string>
+    <string name="link_title_clear">Clear title</string>
+    <plurals name="link_title_count_description">
+        <item quantity="one">%1$d of %2$d character</item>
+        <item quantity="other">%1$d of %2$d characters</item>
+    </plurals>
+    <string name="link_copy_url">Copy URL</string>
+    <string name="link_url_copied">Link copied</string>
+    <string name="link_open_failed">No browser found to open this link</string>
+    <string name="link_directory_label">Directory</string>
+    <string name="link_added_on">Added %1$s · %2$s</string>
+    <string name="link_refresh_metadata">Refresh title and thumbnail</string>
+    <string name="link_refresh_metadata_supporting">Fetches the page again and replaces the title, including your edits.</string>
+    <string name="link_refreshing_metadata">Refreshing the title and thumbnail</string>
+    <string name="link_metadata_refreshed">Updated the title and thumbnail</string>
+    <string name="link_metadata_unchanged">The title and thumbnail are already up to date</string>
+    <string name="link_refresh_unreachable">Couldn\'t reach the server</string>
+    <string name="link_refresh_failed">Couldn\'t refresh the title and thumbnail</string>
+    <string name="link_save_unreachable">Couldn\'t reach the server. The title wasn\'t saved.</string>
+    <string name="link_save_failed">Couldn\'t save the title</string>
+    <string name="link_moved_to">Moved to “%1$s”</string>
+    <string name="link_discard_title">Discard changes?</string>
+    <string name="link_discard_message">Your new title hasn\'t been saved.</string>
+    <string name="link_discard">Discard</string>
+    <string name="link_keep_editing">Keep editing</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
