@@ -1,0 +1,100 @@
+// Command miobackend runs the miolink API server.
+//
+// This is the only place that wires dependencies together: configuration,
+// database, interceptors and handlers.
+package main
+
+import (
+	"context"
+	"errors"
+	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"connectrpc.com/connect"
+	connectcors "connectrpc.com/cors"
+	"github.com/rs/cors"
+
+	"miobackend/gen/miolink/health/v1/healthv1connect"
+	"miobackend/internal/auth"
+	"miobackend/internal/config"
+	"miobackend/internal/database"
+	"miobackend/internal/health"
+)
+
+func main() {
+	if err := run(); err != nil {
+		slog.Error("server stopped", "error", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
+	cfg, err := config.Load()
+	if err != nil {
+		return err
+	}
+
+	db, err := database.Open(cfg.DatabasePath)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	interceptors := connect.WithInterceptors(auth.NewInterceptor(cfg.APIKeyHash))
+
+	mux := http.NewServeMux()
+	mux.Handle(healthv1connect.NewHealthServiceHandler(health.NewHandler(), interceptors))
+
+	// Connect over HTTP/1.1 and HTTP/2; unencrypted HTTP/2 (h2c) is for gRPC clients
+	// when TLS is terminated by a reverse proxy.
+	protocols := new(http.Protocols)
+	protocols.SetHTTP1(true)
+	protocols.SetUnencryptedHTTP2(true)
+
+	server := &http.Server{
+		Addr:              cfg.Addr,
+		Handler:           withCORS(mux, cfg.CORSOrigins),
+		Protocols:         protocols,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	errc := make(chan error, 1)
+	go func() {
+		slog.Info("listening", "addr", cfg.Addr, "database", cfg.DatabasePath)
+		errc <- server.ListenAndServe()
+	}()
+
+	select {
+	case err := <-errc:
+		return err
+	case <-ctx.Done():
+	}
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := server.Shutdown(shutdownCtx); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+	return nil
+}
+
+// withCORS allows the web app's origins to call the API from the browser.
+func withCORS(h http.Handler, origins []string) http.Handler {
+	if len(origins) == 0 {
+		return h
+	}
+	return cors.New(cors.Options{
+		AllowedOrigins: origins,
+		AllowedMethods: connectcors.AllowedMethods(),
+		AllowedHeaders: append(connectcors.AllowedHeaders(), "Authorization"),
+		ExposedHeaders: connectcors.ExposedHeaders(),
+		MaxAge:         7200,
+	}).Handler(h)
+}

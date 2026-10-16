@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package miolink.health.v1;
+
+// HealthService reports whether the backend is reachable.
+//
+// Clients also call Ping to validate an API key before storing it.
+service HealthService {
+  // Ping returns successfully when the server is up and the request is
+  // authenticated.
+  rpc Ping(PingRequest) returns (PingResponse) {}
+}
+
+// PingRequest is the request for HealthService.Ping.
+message PingRequest {}
+
+// PingResponse is the response for HealthService.Ping.
+message PingResponse {}

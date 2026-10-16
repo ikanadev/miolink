@@ -1,0 +1,10 @@
+# Local settings and secrets
+.env
+
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal
+
+# Build output
+bin/
