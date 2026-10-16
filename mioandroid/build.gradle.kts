@@ -1,5 +1,8 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
     alias(libs.plugins.android.application) apply false
+    // Not applied to any module (AGP has built-in Kotlin); declaring it here
+    // makes AGP use this Kotlin version instead of the older one it bundles.
+    alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlin.compose) apply false
 }
