@@ -10,7 +10,7 @@ directories, like a filesystem, and synced to every client.
 | `miobackend/tasks/` | Pending backend work, one task file per session |
 | `mioandroid/tasks/` | Pending Android work, one task file per session |
 | `mioandroid/` | Android client (Kotlin, Compose). Details and rules in `mioandroid/CLAUDE.md` |
-| `mioweb/` | Web client (not started) |
+| `mioweb/` | Web client (SolidJS, Ark UI, Material 3 components). Details and rules in `mioweb/CLAUDE.md` |
 
 `buf.yaml` and `buf.gen.yaml` live here, at the repository root, and `go.work`
 includes `miobackend`.
@@ -23,3 +23,4 @@ includes `miobackend`.
 
 @miobackend/CLAUDE.md
 @mioandroid/CLAUDE.md
+@mioweb/CLAUDE.md
