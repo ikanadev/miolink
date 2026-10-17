@@ -4,17 +4,24 @@ import {
   createProgressDriver,
   progressAria,
   progressFraction,
+  withVars,
+  type IndicatorColor,
   type ProgressFrame,
   type ProgressShape,
 } from '../shared/progress';
 import styles from './circular-progress.module.css';
 
-export type CircularProgressProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'children' | 'role'> & {
+export type CircularProgressProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'children' | 'role' | 'color'> & {
   /** Progress between 0 and `max`. Omit for an indeterminate indicator. */
   value?: number;
   /** Default 1. */
   max?: number;
-  /** Accessible name: the process and what it affects ("Refreshing page"). */
+  /**
+   * Accessible name: the process and what it affects ("Refreshing page").
+   * Without it (or `aria-label` / `aria-labelledby`) the indicator is
+   * decorative: `aria-hidden`, no progressbar role (e.g. inside a busy
+   * button that names the action).
+   */
   label?: string;
   /** Default `flat`. Use flat at very small sizes (inside small buttons). */
   shape?: ProgressShape;
@@ -24,6 +31,11 @@ export type CircularProgressProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'ch
   thickness?: number;
   /** Show the track. Default true; remove it inside buttons. */
   track?: boolean;
+  /**
+   * `current` draws the active indicator in `currentColor`, the button's
+   * label or icon color (M3 in-button use, with `track={false}`). Default `default`.
+   */
+  color?: IndicatorColor;
 };
 
 type Geometry = {
@@ -35,7 +47,7 @@ type Geometry = {
   wavelength: number;
 };
 
-/* [Compose] circular indeterminate cycle (progress-indicators.md §6.4). */
+/* Compose ProgressIndicator.kt circular indeterminate cycle. */
 const CYCLE = 6000;
 const KICK_EVERY = 1500;
 const KICK_DURATION = 300;
@@ -62,6 +74,7 @@ export const CircularProgress: Component<CircularProgressProps> = (props) => {
     'size',
     'thickness',
     'track',
+    'color',
     'class',
     'style',
   ]);
@@ -80,7 +93,7 @@ export const CircularProgress: Component<CircularProgressProps> = (props) => {
     g.active = readPx(cs, '--_active-thickness', 4);
     g.track = readPx(cs, '--_track-thickness', 4);
     g.gap = readPx(cs, '--_gap', 4);
-    // The waveform keeps its proportions at any size (derived, §4.2).
+    // The waveform keeps its proportions at any size (derived).
     const scale = g.size / 48;
     g.amplitude = readPx(cs, '--_amplitude', 1.6) * scale;
     g.wavelength = readPx(cs, '--_wavelength', 15) * scale;
@@ -123,7 +136,7 @@ export const CircularProgress: Component<CircularProgressProps> = (props) => {
     }
 
     // Gap between the active and track ends along the ring: the gap plus
-    // both round caps, as an angle (§4.2); it shrinks near 0.
+    // both round caps, as an angle; it shrinks near 0.
     const gapAngle = ((g.gap + (g.active + g.track) / 2) / (2 * Math.PI * radius)) * 360;
     const hasActive = f.indeterminate || f.progress > 0;
     const gap = hasActive ? Math.min(sweep, gapAngle) : 0;
@@ -143,7 +156,8 @@ export const CircularProgress: Component<CircularProgressProps> = (props) => {
     // around the ring (min 5) so they close seamlessly, one wave per second.
     const waves = Math.max(5, Math.round((2 * Math.PI * radius) / g.wavelength));
     const phase = 2 * Math.PI * f.waveSeconds;
-    const steps = Math.max(1, Math.ceil((sweep / 360) * waves * 12));
+    // At least 12 segments per wave, and one per 2px of arc so large rings stay smooth.
+    const steps = Math.max(1, Math.ceil((sweep / 360) * waves * 12), Math.ceil((sweep * toRad * radius) / 2));
     let d = '';
     for (let s = 0; s <= steps; s++) {
       const local = (sweep * s) / steps;
@@ -167,19 +181,22 @@ export const CircularProgress: Component<CircularProgressProps> = (props) => {
   return (
     <div
       {...rest}
-      {...progressAria(fraction(), local.label)}
+      {...progressAria(fraction(), props)}
       ref={root}
       class={local.class ? `${styles.root} ${local.class}` : styles.root}
       data-shape={local.shape ?? 'flat'}
       data-indeterminate={fraction() === undefined ? '' : undefined}
       data-no-track={local.track === false ? '' : undefined}
-      style={{
-        ...(size() ? { '--_size': `${size()}px` } : {}),
-        ...(local.thickness
-          ? { '--_active-thickness': `${local.thickness}px`, '--_track-thickness': `${local.thickness}px` }
-          : {}),
-        ...(typeof local.style === 'object' ? local.style : {}),
-      }}
+      data-color={local.color === 'current' ? 'current' : undefined}
+      style={withVars(
+        {
+          ...(size() ? { '--_size': `${size()}px` } : {}),
+          ...(local.thickness
+            ? { '--_active-thickness': `${local.thickness}px`, '--_track-thickness': `${local.thickness}px` }
+            : {}),
+        },
+        local.style,
+      )}
     >
       <svg ref={svg} class={styles.svg} aria-hidden="true">
         <path ref={trackPath} data-part="track" />

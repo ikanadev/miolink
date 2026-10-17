@@ -7,13 +7,12 @@
  * data-state ("on" | "off", from Ark ToggleGroup).
  *
  * Standard: gap per size; the pressed item grows 15% and its neighbours
- * shrink (ButtonGroup.tsx animates inline-size). Connected: 2px gap, equal
+ * shrink (ButtonGroup.tsx animates inline-size and padding). Connected: 2px gap, equal
  * widths filling the parent, outer corners full (round) or sized (square),
- * inner corners per size, pressed and selected (height / 2) overrides.
+ * inner corners per size, pressed and selected (the item's height / 2) overrides.
  */
 .root {
   /* ---- size: small (default) ---- */
-  --_bg-height: 40px;
   --_bg-gap: var(--md-sys-measurement-space150);
   --_bg-inner: var(--md-sys-shape-corner-value-small);
   --_bg-inner-pressed: var(--md-sys-shape-corner-value-extra-small);
@@ -25,30 +24,27 @@
 }
 
 .root[data-size='xsmall'] {
-  --_bg-height: 32px;
-  /* 18dp has no sys token (spec §11). */
+  /* 18dp has no sys token (md.comp.button-group.standard.xsmall.between-space). */
   --_bg-gap: 18px;
-  /* Token 8dp over the diagram's 4dp (spec §11). */
+  /* md.comp.button-group.connected.xsmall.inner-corner.corner-size is 8dp; the
+     M3 Specs caption says 4dp. The token is followed; unresolved in M3. */
   --_bg-inner: var(--md-sys-shape-corner-value-small);
   --_bg-inner-pressed: var(--md-sys-shape-corner-value-extra-small);
 }
 
 .root[data-size='medium'] {
-  --_bg-height: 56px;
   --_bg-gap: var(--md-sys-measurement-space100);
   --_bg-inner: var(--md-sys-shape-corner-value-small);
   --_bg-inner-pressed: var(--md-sys-shape-corner-value-extra-small);
 }
 
 .root[data-size='large'] {
-  --_bg-height: 96px;
   --_bg-gap: var(--md-sys-measurement-space100);
   --_bg-inner: var(--md-sys-shape-corner-value-large);
   --_bg-inner-pressed: var(--md-sys-shape-corner-value-medium);
 }
 
 .root[data-size='xlarge'] {
-  --_bg-height: 136px;
   --_bg-gap: var(--md-sys-measurement-space100);
   --_bg-inner: var(--md-sys-shape-corner-value-large-increased);
   --_bg-inner-pressed: var(--md-sys-shape-corner-value-large);
@@ -60,8 +56,8 @@
   gap: var(--_bg-gap);
 }
 
-/* Let neighbours shrink below their label while an item grows; the label
-   clips instead of wrapping. */
+/* Let neighbours shrink below their rest width while an item grows; the
+   bounce takes that width from their padding, so the label stays whole. */
 .root[data-variant='standard'] > * {
   min-inline-size: 0;
 }
@@ -77,7 +73,8 @@
 /* Two attribute selectors keep these above the items' own shape rules; the
    longhands replace their border-radius. */
 .root[data-variant='connected'][data-size] > * {
-  --_bg-outer: calc(var(--_bg-height) / 2);
+  /* The item's own height / 2, so an item with its own `size` stays round. */
+  --_bg-outer: var(--_full);
   --_bg-i: var(--_bg-inner);
 
   flex: 1 1 0;
@@ -88,12 +85,12 @@
   border-end-end-radius: var(--_bg-i);
 }
 
-/* XS and S: 48px wide items for the touch target (spec §4.2). */
+/* XS and S: 48px wide items for the touch target (M3 Specs). */
 .root[data-variant='connected']:is([data-size='xsmall'], [data-size='small']) > * {
   min-inline-size: 48px;
 }
 
-/* Square group: outer corners equal the inner ones at rest (spec §11). */
+/* Square group: outer corners equal the inner ones at rest. */
 .root[data-variant='connected'][data-shape='square'] > * {
   --_bg-outer: var(--_bg-inner);
 }
@@ -109,13 +106,13 @@
 }
 
 /* Selected: inner corners go to height / 2 (a pill); in a square group the
-   outer corners too (spec §4.2). */
+   outer corners too. */
 .root[data-variant='connected'][data-size] > [data-state='on'] {
-  --_bg-i: calc(var(--_bg-height) / 2);
+  --_bg-i: var(--_full);
 }
 
 .root[data-variant='connected'][data-shape='square'] > [data-state='on'] {
-  --_bg-outer: calc(var(--_bg-height) / 2);
+  --_bg-outer: var(--_full);
 }
 
 /* Pressed: only the inner corners change, and win over selected. */

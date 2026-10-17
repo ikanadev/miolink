@@ -26,7 +26,7 @@ export type TabsProps = Omit<ArkTabs.RootProps, 'asChild' | 'orientation' | 'onV
 /**
  * M3 tabs on Ark UI `Tabs`: holds the
  * selected value and connects a `TabList` to its `TabPanel`s. Manual
- * activation by default (spec §8): arrows, Home and End move focus, Space
+ * activation by default (M3 tabs Accessibility): arrows, Home and End move focus, Space
  * or Enter (or a click) selects.
  */
 export const Tabs: Component<TabsProps> = (props) => {
@@ -84,7 +84,7 @@ const indicatorOf = (trigger?: HTMLElement) =>
  * The tab bar: a full-width surface with the 1px divider, holding Ark's
  * `Tabs.List` (role="tablist"). Each tab draws its own indicator; when the
  * selection changes, the new one slides and stretches from the old one's
- * position (FLIP, fast spatial spring; spec §6), and in a scrollable bar
+ * position (FLIP, fast spatial spring; M3 tabs Motion), and in a scrollable bar
  * the selected tab scrolls into view.
  */
 export const TabList: Component<TabListProps> = (props) => {

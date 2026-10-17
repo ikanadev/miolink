@@ -2,11 +2,19 @@
  * Material Symbols Outlined (variable font, self-hosted from the
  * material-symbols package). Parents can set --md-icon-size (length),
  * --md-icon-optical-size (number, 20-48, match the size) and
- * --md-icon-weight.
+ * --md-icon-weight (100-700). Their defaults live on :root so they always
+ * exist and still inherit from a parent that sets them.
  */
+:global(:root) {
+  --md-icon-size: 24px;
+  --md-icon-optical-size: 24;
+  --md-icon-weight: 400;
+}
+
 .icon {
-  --_size: var(--md-icon-size, 24px);
+  --_size: var(--md-icon-size);
   --_fill: 0;
+  --_grade: 0;
 
   display: inline-block;
   flex-shrink: 0;
@@ -28,11 +36,28 @@
   -webkit-font-smoothing: antialiased;
   font-variation-settings:
     'FILL' var(--_fill),
-    'wght' var(--md-icon-weight, 400),
-    'GRAD' 0,
-    'opsz' var(--md-icon-optical-size, 24);
+    'wght' var(--md-icon-weight),
+    'GRAD' var(--_grade),
+    'opsz' var(--md-icon-optical-size);
   transition: font-variation-settings var(--md-sys-motion-spring-fast-effects-duration)
     var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+/* M3 Icons: grade 0 for dark icons on light backgrounds, -25 for light icons
+   on dark ones. Follows the theme, not each container's color. */
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme='light'])) .icon {
+    --_grade: -25;
+  }
+}
+
+:global([data-theme='dark']) .icon {
+  --_grade: -25;
+}
+
+/* Doubled class: beats the system-dark rule inside a forced-light subtree. */
+:global([data-theme='light']) .icon.icon {
+  --_grade: 0;
 }
 
 .icon[data-filled] {

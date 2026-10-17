@@ -5,7 +5,7 @@ import styles from './checkbox.module.css';
 
 export type { CheckboxCheckedState };
 
-/** Check and dash glyphs, drawn with 2px strokes in the 18px box (derived, spec §11). */
+/** Check and dash glyphs, drawn with 2px strokes in the 18px box (derived). */
 const Glyphs: Component = () => (
   <svg class={styles.glyphs} viewBox="0 0 18 18" aria-hidden="true">
     <path class={styles.check} pathLength="1" d="M3.5 9.5 7 13l7.5-7.5" />
@@ -47,7 +47,7 @@ export type CheckboxProps = Omit<
 export const Checkbox: Component<CheckboxProps> = (props) => {
   const [local, rest] = splitProps(props, ['children', 'label', 'onCheckedChange', 'error', 'class']);
   // Ark's press tracking is pointer-only; Space on the focused input marks
-  // the control as pressed so the pressed state layer shows (spec §5).
+  // the control as pressed so the pressed state layer shows.
   const [keyPressed, setKeyPressed] = createSignal(false);
 
   if (import.meta.env.DEV && local.children == null && !local.label) {

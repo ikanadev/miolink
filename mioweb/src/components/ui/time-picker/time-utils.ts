@@ -26,10 +26,12 @@ export const defaultLocale = () =>
   (typeof navigator !== 'undefined' && navigator.language) ||
   'en-US';
 
-/** The locale's clock: h11/h12 -> `h12`, h23/h24 -> `h23` (spec §9). */
+/** The locale's clock: h11/h12 -> `h12`, h23/h24 -> `h23`. */
 export const localeHourCycle = (locale: string): HourCycle => {
   try {
-    const cycle = new Intl.DateTimeFormat(locale, { hour: 'numeric' }).resolvedOptions().hourCycle;
+    const cycle = new Intl.DateTimeFormat(locale, {
+      hour: 'numeric',
+    }).resolvedOptions().hourCycle;
     return cycle === 'h11' || cycle === 'h12' ? 'h12' : 'h23';
   } catch {
     return 'h12';
@@ -38,7 +40,7 @@ export const localeHourCycle = (locale: string): HourCycle => {
 
 const utc = (minutes: number) => new Date(Date.UTC(2000, 0, 1, Math.floor(minutes / 60), minutes % 60));
 
-/** Localized AM/PM labels (`formatToParts` -> `dayPeriod`, spec §9). */
+/** Localized AM/PM labels (`formatToParts` -> `dayPeriod`). */
 export const dayPeriods = (locale: string): [string, string] => {
   const label = (minutes: number, fallback: string) => {
     try {
@@ -62,7 +64,10 @@ export const formatNumber = (n: number, locale: string, padded = false) => {
   const key = `${locale}|${padded}`;
   let f = numbers.get(key);
   if (!f) {
-    f = new Intl.NumberFormat(locale, { useGrouping: false, minimumIntegerDigits: padded ? 2 : 1 });
+    f = new Intl.NumberFormat(locale, {
+      useGrouping: false,
+      minimumIntegerDigits: padded ? 2 : 1,
+    });
     numbers.set(key, f);
   }
   return f.format(n);

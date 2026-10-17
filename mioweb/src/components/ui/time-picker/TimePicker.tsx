@@ -58,9 +58,9 @@ export type TimePickerLabels = {
   /** Dial value names ("7 hours", "30 minutes"). */
   hours: (value: string) => string;
   minutes: (value: string) => string;
-  /** Keyboard icon button on the dial (spec §8). */
+  /** Keyboard icon button on the dial. */
   switchToInput: string;
-  /** Clock icon button on the input (spec §8). */
+  /** Clock icon button on the input. */
   switchToDial: string;
   invalidTime: (pattern: string) => string;
   enterValidTime: string;
@@ -104,9 +104,10 @@ export type TimePickerProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'children
   /** Called when the user switches between the dial and the input. */
   onVariantChange?: (variant: TimePickerVariant) => void;
   /**
-   * Dial layout. Default `auto`: vertical when the viewport is at least
-   * 560px tall, horizontal when it's shorter but at least 400px tall and
-   * 600px wide, otherwise the input picker alone (spec §6, derived thresholds).
+   * Dial layout. Default `auto`: vertical when the viewport fits it (360x552px
+   * on compact widths, 568px tall from 600px wide), horizontal when it's
+   * shorter but at least 620x452px, otherwise the input picker alone, so the
+   * dial is never cropped (derived thresholds: picker size plus window margin).
    */
   orientation?: TimePickerOrientation;
   /** 12h (with AM/PM) or 24h. Default: from the locale. */
@@ -150,15 +151,20 @@ export type TimePickerProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'children
 type Unit = 'hour' | 'minute';
 const DAY = 24 * 60;
 
-/** Dial geometry (spec §4.2, derived from Compose): 256px face, rings at 101 / 69px. */
+/** Dial geometry (derived from Compose): 256px face, rings at 101 / 69px. */
 const DIAL_SIZE = 256;
 const OUTER_RADIUS = 101;
 const INNER_RADIUS = 69;
-/** 24h: a pointer closer than this to the center picks the inner ring (spec §9, derived midpoint). */
+/** 24h: a pointer closer than this to the center picks the inner ring (derived midpoint). */
 const RING_SPLIT = 85;
 
-const TALL_QUERY = '(min-height: 560px)';
-const WIDE_QUERY = '(min-height: 400px) and (min-width: 600px)';
+/*
+ * Picker sizes plus the positioner padding (16px below 600px wide, else 24px):
+ * vertical 328x520px, horizontal 572x404px.
+ */
+const TALL_QUERY =
+  '(min-width: 360px) and (max-width: 599.98px) and (min-height: 552px), (min-width: 600px) and (min-height: 568px)';
+const WIDE_QUERY = '(min-width: 620px) and (min-height: 452px)';
 
 const useMedia = (query: string) => {
   const [matches, setMatches] = createSignal(true);
@@ -262,7 +268,7 @@ export const TimePicker = (props: TimePickerProps) => {
     if (maxT() !== undefined && t > maxT()!) return maxT()!;
     return t;
   };
-  /** An hour with no selectable minute (derived for min/max, spec §5). */
+  /** An hour with no selectable minute (derived for min/max). */
   const hourDisabled = (h: number) =>
     (maxT() !== undefined && h * 60 > maxT()!) || (minT() !== undefined && h * 60 + 59 < minT()!);
 
@@ -292,8 +298,12 @@ export const TimePicker = (props: TimePickerProps) => {
   const wide = useMedia(WIDE_QUERY);
   const autoOrientation = () => (local.orientation ?? 'auto') === 'auto';
   const orientation = (): 'vertical' | 'horizontal' =>
-    autoOrientation() ? (!tall() && wide() ? 'horizontal' : 'vertical') : (local.orientation as 'vertical' | 'horizontal');
-  /** Spec §6/§8: when the dial can't fit, show the input picker alone. */
+    autoOrientation()
+      ? !tall() && wide()
+        ? 'horizontal'
+        : 'vertical'
+      : (local.orientation as 'vertical' | 'horizontal');
+  /** When the dial can't fit, show the input picker alone. */
   const dialFits = () => !autoOrientation() || tall() || wide();
 
   const [view, setView] = createSignal<TimePickerVariant>('dial');
@@ -387,7 +397,7 @@ export const TimePicker = (props: TimePickerProps) => {
 
   // ---- Surface and focus ----
   let surface: HTMLElement | undefined;
-  /** Spec §8: focus the hour selector (dial) / hour field (input). */
+  /** Focus the hour selector (dial) / hour field (input) first. */
   const initialFocus = () => surface?.querySelector<HTMLElement>('[data-hour-control]') ?? null;
   const focusSoon = () => requestAnimationFrame(() => initialFocus()?.focus());
 
@@ -487,7 +497,8 @@ export const TimePicker = (props: TimePickerProps) => {
 
   const errorId = createUniqueId();
 
-  const headline = () => local.headline ?? (shownView() === 'input' ? labels().enterTime : labels().selectTime);
+  const headline = () =>
+    local.headline ?? (shownView() === 'input' ? labels().enterTime : labels().selectTime);
 
   return (
     <div {...rest} class={local.class ? `${styles.root} ${local.class}` : styles.root}>
@@ -573,11 +584,7 @@ export const TimePicker = (props: TimePickerProps) => {
                 <Button color="text" onClick={cancel}>
                   {local.cancelLabel ?? 'Cancel'}
                 </Button>
-                <Button
-                  color="text"
-                  onClick={confirm}
-                  disabled={shownView() === 'input' && !!inputError()}
-                >
+                <Button color="text" onClick={confirm} disabled={shownView() === 'input' && !!inputError()}>
                   {local.confirmLabel ?? 'OK'}
                 </Button>
               </div>
@@ -625,6 +632,8 @@ const TimeSelector = (props: { ctx: Ctx }) => {
   const hourText = () => formatNumber(ctx.h12() ? to12(ctx.hour()) : ctx.hour(), ctx.locale(), true);
   const minuteText = () => formatNumber(ctx.minute(), ctx.locale(), true);
 
+  const unitLabel = (u: Unit) => (u === 'hour' ? ctx.labels().hour : ctx.labels().minute);
+
   const select = (u: Unit) => {
     ctx.setUnit(u);
     boxes[u]?.focus();
@@ -661,16 +670,23 @@ const TimeSelector = (props: { ctx: Ctx }) => {
     else bufferTimer = window.setTimeout(() => (buffer = ''), TYPE_AHEAD_MS);
   };
 
+  // Screen readers don't re-read a focused radio's changed label: announce it.
+  const [announcement, setAnnouncement] = createSignal('');
+  const announce = (u: Unit) =>
+    setAnnouncement(`${unitLabel(u)}, ${u === 'hour' ? hourText() : minuteText()}`);
+
   const onKeyDown = (u: Unit, e: KeyboardEvent) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     switch (e.key) {
       case 'ArrowUp':
         stepUnit(u, 1);
+        announce(u);
         break;
       case 'ArrowDown':
         stepUnit(u, -1);
+        announce(u);
         break;
-      // The row is always left-to-right (spec §11), so Left is the hour.
+      // The row is always left-to-right, so Left is the hour.
       case 'ArrowLeft':
         select('hour');
         break;
@@ -678,8 +694,9 @@ const TimeSelector = (props: { ctx: Ctx }) => {
         select('minute');
         break;
       default:
-        if (/^\d$/.test(e.key)) typeDigit(u, e.key);
-        else return;
+        if (!/^\d$/.test(e.key)) return;
+        typeDigit(u, e.key);
+        announce(u);
     }
     e.preventDefault();
   };
@@ -691,7 +708,7 @@ const TimeSelector = (props: { ctx: Ctx }) => {
       role="radio"
       class={styles.box}
       aria-checked={ctx.unit() === u}
-      aria-label={`${u === 'hour' ? ctx.labels().hour : ctx.labels().minute}, ${text()}`}
+      aria-label={`${unitLabel(u)}, ${text()}`}
       tabIndex={ctx.unit() === u ? 0 : -1}
       data-hour-control={u === 'hour' ? '' : undefined}
       onClick={() => ctx.setUnit(u)}
@@ -703,13 +720,18 @@ const TimeSelector = (props: { ctx: Ctx }) => {
   );
 
   return (
-    <div class={styles.time} role="radiogroup" aria-label={ctx.labels().editUnit} dir="ltr">
-      {box('hour', hourText)}
-      <span class={styles.separator} aria-hidden="true">
-        :
+    <>
+      <div class={styles.time} role="radiogroup" aria-label={ctx.labels().editUnit} dir="ltr">
+        {box('hour', hourText)}
+        <span class={styles.separator} aria-hidden="true">
+          :
+        </span>
+        {box('minute', minuteText)}
+      </div>
+      <span class={styles.visuallyHidden} aria-live="polite">
+        {announcement()}
       </span>
-      {box('minute', minuteText)}
-    </div>
+    </>
   );
 };
 
@@ -771,17 +793,25 @@ const Dial = (props: { ctx: Ctx }) => {
         inner: false,
         label: formatNumber(i * 5, loc, true),
         name: formatNumber(i * 5, loc),
-        disabled: !ctx.inRange(ctx.hour() * 60 + i * 5),
+        // Labels off the minuteStep grid can't be chosen, as with the pointer.
+        disabled: (i * 5) % ctx.step() !== 0 || !ctx.inRange(ctx.hour() * 60 + i * 5),
       }));
     }
     if (ctx.h12()) {
       return Array.from({ length: 12 }, (_, i) => {
         const h = i === 0 ? 12 : i;
         const value = to24(h, ctx.pm());
-        return { value, pos: i, inner: false, label: formatNumber(h, loc), name: formatNumber(h, loc), disabled: ctx.hourDisabled(value) };
+        return {
+          value,
+          pos: i,
+          inner: false,
+          label: formatNumber(h, loc),
+          name: formatNumber(h, loc),
+          disabled: ctx.hourDisabled(value),
+        };
       });
     }
-    // 24h: outer ring 00-11, inner ring 12-23 (spec §11).
+    // 24h: outer ring 00-11, inner ring 12-23.
     return Array.from({ length: 24 }, (_, h) => ({
       value: h,
       pos: h % 12,
@@ -802,16 +832,21 @@ const Dial = (props: { ctx: Ctx }) => {
     ),
   );
 
-  // Handle angle, unwrapped so the transition takes the shortest arc (spec §10d).
+  // Handle angle, unwrapped so the transition takes the shortest arc.
   const target = () => (ctx.unit() === 'hour' ? (ctx.hour() % 12) * 30 : ctx.minute() * 6);
-  const radius = () => (ctx.unit() === 'hour' && !ctx.h12() && ctx.hour() >= 12 ? INNER_RADIUS : OUTER_RADIUS);
+  const radius = () =>
+    ctx.unit() === 'hour' && !ctx.h12() && ctx.hour() >= 12 ? INNER_RADIUS : OUTER_RADIUS;
   const [angle, setAngle] = createSignal(untrack(target));
   createComputed(
-    on(target, (t) => {
-      const prev = untrack(angle);
-      const delta = ((((t - prev) % 360) + 540) % 360) - 180;
-      setAngle(prev + delta);
-    }, { defer: true }),
+    on(
+      target,
+      (t) => {
+        const prev = untrack(angle);
+        const delta = ((((t - prev) % 360) + 540) % 360) - 180;
+        setAngle(prev + delta);
+      },
+      { defer: true },
+    ),
   );
   const between = () => ctx.unit() === 'minute' && ctx.minute() % 5 !== 0;
 
@@ -872,8 +907,7 @@ const Dial = (props: { ctx: Ctx }) => {
   };
 
   // ---- Keyboard: listbox with a roving tab stop ----
-  const focusActive = () =>
-    list.querySelector<HTMLElement>(`[data-index="${active()}"]`)?.focus();
+  const focusActive = () => list.querySelector<HTMLElement>(`[data-index="${active()}"]`)?.focus();
 
   const onKeyDown = (e: KeyboardEvent) => {
     const opts = options();
@@ -881,7 +915,7 @@ const Dial = (props: { ctx: Ctx }) => {
     const i = active();
     const twoRings = n === 24;
     const ringStart = twoRings && i >= 12 ? 12 : 0;
-    const around = (d: number) => ringStart + (((i - ringStart + d) % 12) + 12) % 12;
+    const around = (d: number) => ringStart + ((((i - ringStart + d) % 12) + 12) % 12);
     let next = i;
     switch (e.key) {
       case 'ArrowRight':
@@ -955,7 +989,10 @@ const Dial = (props: { ctx: Ctx }) => {
       class={styles.dial}
       dir="ltr"
       data-dragging={dragging() ? '' : undefined}
-      style={{ '--_dial-angle': `${angle()}deg`, '--_dial-radius': `${radius()}px` }}
+      style={{
+        '--_dial-angle': `${angle()}deg`,
+        '--_dial-radius': `${radius()}px`,
+      }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -966,7 +1003,7 @@ const Dial = (props: { ctx: Ctx }) => {
       <div class={styles.track} aria-hidden="true" />
       <div class={styles.handle} data-between={between() ? '' : undefined} aria-hidden="true" />
       <div class={styles.center} aria-hidden="true" />
-      {/* Keyed by unit so the labels crossfade on hour <-> minute (spec §6). */}
+      {/* Keyed by unit so the labels crossfade on hour <-> minute. */}
       <For each={[ctx.unit()]}>
         {(u) => (
           <>

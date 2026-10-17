@@ -59,14 +59,14 @@ export type Snackbar = {
 export type CreateSnackbarOptions = {
   /**
    * Keys that move focus to the snackbar, as KeyboardEvent modifier
-   * properties and `code`s. Default Alt+G (spec 8). Document it for users.
+   * properties and `code`s. Default Alt+G (derived: M3 Accessibility asks for a shortcut but names none). Document it for users.
    */
   hotkey?: string[];
 };
 
 export type SnackbarMeta = { longAction: boolean };
 
-/* Spec 6: auto-dismiss after 4-10s. 4s is the default (Android's short duration; derived). */
+/* M3 Behavior: auto-dismiss after 4-10s. 4s is the default (Android's short duration; derived). */
 const MIN_DURATION = 4000;
 const MAX_DURATION = 10000;
 /* Exit transition: --md-sys-motion-duration-short4 (snackbar.module.css). */
@@ -78,7 +78,7 @@ const PRIORITY_QUEUED = 8;
 const durationFor = (options: SnackbarOptions) => {
   const { duration } = options;
   if (options.actionLabel) {
-    // Actionable snackbars persist (spec 6, 8); a finite duration gets the upper bound as its minimum (derived).
+    // Actionable snackbars persist (M3 Behavior and Accessibility); a finite duration gets the upper bound as its minimum (derived).
     return duration === undefined ? Infinity : Math.max(duration, MAX_DURATION);
   }
   if (duration === undefined) return MIN_DURATION;

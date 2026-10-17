@@ -106,6 +106,8 @@
   --md-sys-typescale-label-large-size: 0.875rem;
   --md-sys-typescale-label-large-line-height: 1.25rem;
   --md-sys-typescale-label-large-tracking: 0.00625rem;
+  /* Bolder weight M3 uses for active navigation labels. */
+  --md-sys-typescale-label-large-weight-prominent: var(--md-ref-typeface-weight-bold);
 
   /* label-medium: 12/16px, 500, tracking 0.5px */
   --md-sys-typescale-label-medium-font: var(--md-ref-typeface-plain);
@@ -113,6 +115,7 @@
   --md-sys-typescale-label-medium-size: 0.75rem;
   --md-sys-typescale-label-medium-line-height: 1rem;
   --md-sys-typescale-label-medium-tracking: 0.03125rem;
+  --md-sys-typescale-label-medium-weight-prominent: var(--md-ref-typeface-weight-bold);
 
   /* label-small: 11/16px, 500, tracking 0.5px */
   --md-sys-typescale-label-small-font: var(--md-ref-typeface-plain);

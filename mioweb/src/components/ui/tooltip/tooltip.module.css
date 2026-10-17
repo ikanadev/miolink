@@ -6,6 +6,8 @@
  * (top/right/bottom/left), data-instant when switching between tooltips.
  */
 .content {
+  --_enter-scale: 1 0.8;
+
   z-index: calc(1000 + var(--layer-index, 0));
   box-sizing: border-box;
   transform-origin: var(--transform-origin);
@@ -18,13 +20,13 @@
   --_container-shape: var(--md-sys-shape-corner-extra-small);
   --_text-color: var(--md-sys-color-inverse-on-surface);
 
-  /* One line, 24px tall; truncates rather than wrapping. Width isn't
-     specified: limited to the space the positioner reports. */
+  /* One line, 24px tall. M3 says to avoid wrapping, which is a content rule:
+     a label wider than the space the positioner reports wraps rather than
+     getting clipped. */
   min-block-size: 24px;
   max-inline-size: var(--available-width, 100vw);
   padding-block: 4px; /* derived: fits the 16px line height in 24px */
   padding-inline: 8px;
-  overflow: hidden;
   border-radius: var(--_container-shape);
   background: var(--_container-color);
   color: var(--_text-color);
@@ -33,8 +35,7 @@
   font-size: var(--md-sys-typescale-body-small-size);
   line-height: var(--md-sys-typescale-body-small-line-height);
   letter-spacing: var(--md-sys-typescale-body-small-tracking);
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
   pointer-events: none;
 }
 
@@ -57,6 +58,13 @@
   background: var(--_container-color);
   box-shadow: var(--_container-elevation);
   outline: none;
+}
+
+/* Derived: M3 gives one bottom padding (8dp, measured to a text button).
+   Below supporting text that looks cramped next to the 12dp top, so it uses
+   16dp, as Compose's RichTooltip does. */
+.content[data-variant='rich']:not(:has(.actions)) {
+  padding-block-end: 16px;
 }
 
 .subhead {
@@ -143,7 +151,7 @@
   --_state-layer-color: var(--md-sys-color-primary);
 }
 
-.action:active {
+.action:is(:active, [data-key-pressed]) {
   --_label-color: var(--md-sys-color-primary);
   --_state-layer-color: var(--md-sys-color-primary);
 }
@@ -178,7 +186,7 @@
 @keyframes enter {
   from {
     opacity: 0;
-    scale: var(--_enter-scale, 1 0.8);
+    scale: var(--_enter-scale);
   }
 }
 

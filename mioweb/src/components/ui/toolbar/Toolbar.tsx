@@ -147,7 +147,9 @@ const LOCAL = [
  * an optional FAB), standard or vibrant colors. `role="toolbar"` with a
  * roving tabindex: one Tab stop, Arrow keys (Left/Right, Up/Down when
  * vertical, mirrored in RTL) and Home/End move between items; arrows are
- * left to text fields. `ToolbarAction`s that don't fit move, from the end,
+ * left to text fields. M3 Accessibility also lists Tab between actions;
+ * this follows the ARIA toolbar pattern instead, which M3 asks for on the
+ * web (`role="toolbar"`). `ToolbarAction`s that don't fit move, from the end,
  * into an overflow menu in the trailing slot. Standard icon buttons and
  * text buttons inside take the toolbar's item colors; filled and tonal
  * ones keep their own for emphasis.
@@ -183,7 +185,7 @@ export const Toolbar: Component<ToolbarProps> = (props) => {
   const [focusInToolbar, setFocusInToolbar] = createSignal(false);
 
   const hidden = () =>
-    !focusInGroup() && (local.visible !== undefined ? !local.visible : behavior() === 'hide' && scrollHidden());
+    !(focusInGroup() || focusInToolbar()) && (local.visible !== undefined ? !local.visible : behavior() === 'hide' && scrollHidden());
   const collapsed = () =>
     floating() &&
     !focusInToolbar() &&
@@ -200,8 +202,8 @@ export const Toolbar: Component<ToolbarProps> = (props) => {
     const set = b === 'hide' ? setScrollHidden : setScrollCollapsed;
     let anchor = position();
     let frame = 0;
-    // Derived (spec §6): hide after one container height of downward
-    // scroll, show on any upward scroll and at either end.
+    // Derived (M3 gives no thresholds): hide after one container height of
+    // downward scroll, show on any upward scroll and at either end.
     const update = () => {
       frame = 0;
       const y = position();
@@ -309,7 +311,7 @@ export const Toolbar: Component<ToolbarProps> = (props) => {
     const keys = vertical() ? ['ArrowUp', 'ArrowDown'] : ['ArrowLeft', 'ArrowRight'];
     if (![...keys, 'Home', 'End'].includes(e.key)) return;
     const target = e.target as HTMLElement;
-    // Text fields keep the arrows for the caret; Tab leaves them (spec §8).
+    // Text fields keep the arrows for the caret; Tab leaves them (M3 Accessibility).
     if (target.matches(TEXT_INPUT)) return;
     const list = items();
     const index = list.indexOf(target);
@@ -333,6 +335,7 @@ export const Toolbar: Component<ToolbarProps> = (props) => {
   const onFocusIn: JSX.EventHandler<HTMLDivElement, FocusEvent> = (e) => {
     call(local.onFocusIn, e);
     setFocusInToolbar(true);
+    setScrollHidden(false);
     setScrollCollapsed(false);
     const target = e.target as HTMLElement;
     if (target !== active && items().includes(target)) {

@@ -17,8 +17,7 @@ export type SnackbarHostProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'childr
   align?: SnackbarAlign;
   /**
    * Extra distance above the bottom margin (CSS length), so the snackbar
-   * sits above a FAB, navigation bar or docked toolbar. Also settable with
-   * the --md-snackbar-bottom-offset custom property.
+   * sits above a FAB, navigation bar or docked toolbar.
    */
   bottomOffset?: string;
   /** Name of the notification region. Default "Notifications". */
@@ -134,7 +133,7 @@ export const SnackbarHost: Component<SnackbarHostProps> = (props) => {
         data-align={local.align ?? 'center'}
         style={{
           ...(typeof local.style === 'object' ? local.style : {}),
-          ...(local.bottomOffset ? { '--md-snackbar-bottom-offset': local.bottomOffset } : {}),
+          ...(local.bottomOffset ? { '--_bottom-offset': local.bottomOffset } : {}),
         }}
         onFocusIn={onFocusIn}
       >

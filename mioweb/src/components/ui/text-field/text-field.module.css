@@ -17,7 +17,7 @@
  * :where() so that order, not specificity, decides.
  */
 .root {
-  /* Layout (spec 4.2) */
+  /* Layout (M3 Specs: measurements) */
   --_height: 56px;
   --_pad-block: 8px;
   /* Resting label / unlabeled input top: (56 - 24) / 2. Derived. */
@@ -41,10 +41,10 @@
   --_leading: var(--_leading-enabled);
   --_trailing: var(--_trailing-enabled);
   --_supporting: var(--_supporting-enabled);
-  --_container: var(--_container-enabled, transparent);
+  --_container: var(--_container-enabled);
   --_caret: var(--_caret-enabled);
   /* Outlined has no state layer. */
-  --_state-layer-color: var(--_state-layer-color-enabled, transparent);
+  --_state-layer-color: var(--_state-layer-color-enabled);
 
   display: flex;
   flex-direction: column;
@@ -72,10 +72,11 @@
   --_placeholder: var(--md-sys-color-on-surface-variant);
   --_leading-size: 24px;
   --_trailing-size: 24px;
-  /* 2px per the height token; the 3px thickness token is the alternative (spec 4.2 note). */
   --_line-width-enabled: 1px;
   --_line-width-hover: 1px;
-  --_line-width-focus: 2px;
+  /* focus.active-indicator.thickness (3dp, the system focus indicator), not the
+     older focus.active-indicator.height (2dp), so it matches the outlined field. */
+  --_line-width-focus: var(--md-sys-state-focus-indicator-thickness);
   --_line-width-disabled: 1px;
   --_input-font: var(--md-sys-typescale-body-large-font);
   --_input-weight: var(--md-sys-typescale-body-large-weight);
@@ -176,6 +177,10 @@
 
 .root[data-variant='outlined'] {
   --_shape: var(--md-sys-shape-corner-extra-small);
+  --_container-enabled: transparent;
+  --_container-disabled: transparent;
+  --_state-layer-color-enabled: transparent;
+  --_state-layer-color-error: transparent;
   --_caret-enabled: var(--md-sys-color-primary);
   --_caret-error: var(--md-sys-color-error);
   --_prefix: var(--md-sys-color-on-surface-variant);
@@ -296,7 +301,7 @@
   --_text-end: calc(var(--_pad-inline-icon) + var(--_trailing-size) + var(--_icon-gap));
 }
 
-/* Opt-in density (spec 2: "never by default"). 48px is derived. */
+/* Opt-in density (M3 Guidelines: "never by default"). 48px is derived. */
 .root[data-dense] {
   --_height: 48px;
   --_pad-block: 4px;
@@ -335,7 +340,7 @@
   --_trailing: var(--_trailing-error);
   --_supporting: var(--_supporting-error);
   --_caret: var(--_caret-error);
-  --_state-layer-color: var(--_state-layer-color-error, transparent);
+  --_state-layer-color: var(--_state-layer-color-error);
 }
 
 @media (hover: hover) {
@@ -366,7 +371,7 @@
   --_leading: var(--_leading-disabled);
   --_trailing: var(--_trailing-disabled);
   --_supporting: var(--_supporting-disabled);
-  --_container: var(--_container-disabled, transparent);
+  --_container: var(--_container-disabled);
 }
 
 /* ---- Container ---- */
@@ -453,7 +458,7 @@
 }
 
 /* Filled with a label: the floated label takes the top line, input below it
-   (8 + 16 + 24 + 8 = 56, spec 4.2 derived). */
+   (8 + 16 + 24 + 8 = 56, derived from the M3 Specs measurements). */
 .root[data-variant='filled'][data-label] .body {
   padding-block: calc(var(--_pad-block) + var(--_label-populated-line-height)) var(--_pad-block);
 }
@@ -488,8 +493,7 @@ textarea.input {
   opacity: 1;
 }
 
-/* With a label, the placeholder shows only while focused and empty (spec 5,
-   derived): the resting label occupies its place otherwise. */
+/* With a label, the placeholder shows only while focused and empty (derived): the resting label occupies its place otherwise. */
 .root[data-label]:not([data-focused]) .input::placeholder {
   opacity: 0;
 }
@@ -523,7 +527,7 @@ textarea.input {
   color: var(--_input-disabled);
 }
 
-/* Prefix and suffix would collide with a resting label (spec 5, derived). */
+/* Prefix and suffix would collide with a resting label (derived). */
 .root[data-label]:not([data-floated]):not(:has(.input:autofill)) :is(.prefix, .suffix) {
   opacity: 0;
 }
@@ -546,7 +550,9 @@ textarea.input {
   white-space: nowrap;
   text-overflow: ellipsis;
   cursor: text;
-  /* Float motion: fast effects (no overshoot), ~150ms, per spec 6 (derived). */
+  /* Derived: M3 has no text field motion token. Position and size use the fast
+     effects spring on purpose, an exception to the spatial-spring rule, so the
+     label text never overshoots. */
   transition-property: inset-block-start, inset-inline-start, max-inline-size, font-size, line-height,
     color;
   transition-duration: var(--md-sys-motion-spring-fast-effects-duration);

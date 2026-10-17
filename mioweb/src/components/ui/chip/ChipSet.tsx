@@ -5,14 +5,14 @@ import styles from './chip.module.css';
 export type ChipSetProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'children' | 'onChange' | 'role'> & {
   /**
    * Accessible name of the set, e.g. "Filter results". Also a secondary
-   * indicator of interactivity (spec §8); show a visible label when you can
+   * indicator of interactivity (M3 Chips: Accessibility); show a visible label when you can
    * and point to it with `aria-labelledby` instead.
    */
   label?: string;
   /**
    * Default `none`. With `single` (a radiogroup) or `multi` (a group of
    * toggles), `FilterChip`s with a `value` are selected through the set.
-   * Keep every set on a page in the same mode (spec §7).
+   * Keep every set on a page in the same mode.
    */
   selection?: ChipSetSelection;
   /** With a selection mode: the last selected chip can't be deselected. */
@@ -34,10 +34,13 @@ export type ChipSetProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'children' |
 const FOCUSABLE = 'button, a[href]';
 
 /**
- * Roving tabindex (spec §8, web mapping): the set is one tab stop; the
- * chips and their trailing buttons are traversed in DOM order with the
- * arrow keys (Right/Down next, Left/Up previous, swapped in RTL, wrapping)
- * and Home/End. Tab lands on the last focused chip, else the first selected
+ * Roving tabindex (web mapping of M3 Chips: Accessibility keyboard table):
+ * the set is one tab stop; the chips and their trailing buttons are
+ * traversed in DOM order with the arrow keys (Right/Down next, Left/Up
+ * previous, swapped in RTL, wrapping) and Home/End. In a radiogroup, moving
+ * onto a radio also selects it, as ARIA radio groups do. Buttons marked
+ * `data-chip-pointer-only` (a remove button whose chip has no other action)
+ * are skipped. Tab lands on the last focused chip, else the first selected
  * one, else the first. Returns the cleanup.
  */
 function rovingFocus(root: HTMLElement): () => void {
@@ -48,6 +51,7 @@ function rovingFocus(root: HTMLElement): () => void {
       (el) =>
         el.closest('[data-chip-set]') === root &&
         !el.closest('[hidden]') &&
+        !el.hasAttribute('data-chip-pointer-only') &&
         !el.matches(':disabled, [aria-disabled="true"]'),
     );
 
@@ -97,7 +101,9 @@ function rovingFocus(root: HTMLElement): () => void {
         return;
     }
     e.preventDefault();
-    els[(next + els.length) % els.length].focus();
+    const target = els[(next + els.length) % els.length];
+    target.focus();
+    if (target.matches('[role="radio"]:not([aria-checked="true"])')) target.click();
   };
 
   sync();
@@ -118,7 +124,7 @@ function rovingFocus(root: HTMLElement): () => void {
 }
 
 /**
- * Chip set (spec §7, §9): the container chips always appear in. 8px gaps,
+ * Chip set: the container chips always appear in. 8px gaps,
  * wrapping rows or one scrolling row, one tab stop with arrow-key
  * navigation. `role="group"`, or `role="radiogroup"` for single selection.
  * Space/Enter activate or toggle the focused chip; Delete/Backspace remove

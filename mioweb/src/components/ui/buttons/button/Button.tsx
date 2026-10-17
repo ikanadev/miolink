@@ -73,9 +73,14 @@ export type ToggleButtonProps = Omit<Common, 'color'> &
     selectedIcon?: string;
     /**
      * Label when selected (keep a similar length). The label change then
-     * conveys the state, so aria-pressed is omitted (spec §8).
+     * conveys the state, so aria-pressed is omitted (M3 Accessibility).
      */
     selectedLabel?: JSX.Element;
+    /**
+     * Icon weight when selected (for example 600), for glyphs that have no
+     * filled version (M3 Accessibility: semibold, or bold if that's not enough).
+     */
+    selectedWeight?: number;
   };
 
 type AnyButtonProps = Common &
@@ -119,6 +124,7 @@ export const Button: Component<ButtonProps | LinkButtonProps | ToggleButtonProps
     'onSelectedChange',
     'selectedIcon',
     'selectedLabel',
+    'selectedWeight',
     'value',
     'type',
   ]);
@@ -150,11 +156,19 @@ export const Button: Component<ButtonProps | LinkButtonProps | ToggleButtonProps
     'data-full-width': local.fullWidth ? '' : undefined,
   });
 
-  const content = (label: JSX.Element, icon: string | undefined, filled: boolean) => (
+  const content = (label: JSX.Element, icon: string | undefined, filled: boolean, selected = false) => (
     <>
       <Ripple />
       <Show when={icon}>
-        {(name) => <Icon class={base.icon} name={name()} filled={filled} mirror={local.mirror} />}
+        {(name) => (
+          <Icon
+            class={base.icon}
+            name={name()}
+            filled={filled}
+            weight={selected ? local.selectedWeight : undefined}
+            mirror={local.mirror}
+          />
+        )}
       </Show>
       <span class={base.label}>{label}</span>
     </>
@@ -182,7 +196,12 @@ export const Button: Component<ButtonProps | LinkButtonProps | ToggleButtonProps
         >
           <GroupItemContent value={local.value as string}>
             {(selected) =>
-              content(local.children, selected ? (local.selectedIcon ?? local.icon) : local.icon, selected)
+              content(
+                local.children,
+                selected ? (local.selectedIcon ?? local.icon) : local.icon,
+                selected,
+                selected,
+              )
             }
           </GroupItemContent>
         </ToggleGroup.Item>
@@ -204,6 +223,7 @@ export const Button: Component<ButtonProps | LinkButtonProps | ToggleButtonProps
               content(
                 api().pressed ? (local.selectedLabel ?? local.children) : local.children,
                 api().pressed ? (local.selectedIcon ?? local.icon) : local.icon,
+                api().pressed,
                 api().pressed,
               )
             }

@@ -7,6 +7,7 @@
  *   multi-action     li.item > div.row.split > (a|button).action + trailing
  *   expandable       li.item (Collapsible root) > button.action.row + div.nested
  *   select list      div.item.row.option (Listbox item) inside div.list (Listbox content)
+ *   combobox option  div.item.row.option inside the host's listbox (Search)
  *
  * The item (li or option) holds colors and the morphing shape; children
  * inherit the radius. In split rows the action is position: static, so its
@@ -15,7 +16,8 @@
  *
  * Item attributes: data-variant, data-segmented, data-selectable,
  * data-lines, data-overline, data-selected, data-disabled, data-dragged,
- * data-highlighted (Listbox), data-state (Collapsible).
+ * data-highlighted (Listbox / combobox), data-focus-visible (options, last
+ * input was the keyboard), data-state (Collapsible).
  */
 .list {
   display: flex;
@@ -29,7 +31,6 @@
 
 .list[data-segmented] {
   gap: var(--md-sys-measurement-space25);
-  border-radius: var(--md-sys-shape-corner-large);
 }
 
 .listbox {
@@ -105,6 +106,11 @@
 }
 
 .item[data-variant='baseline'] {
+  /*
+   * M3 Lists baseline layout table: 24dp trailing padding. The newer common
+   * token list-item.trailing-space says 16dp; the baseline table wins here.
+   */
+  --_trailing-space: var(--md-sys-measurement-space300);
   --_shape: var(--md-sys-shape-corner-none);
   --_leading-icon-size: 24px;
   --_trailing-icon-size: 24px;
@@ -126,27 +132,32 @@
   --_supporting-lines: 2;
 }
 
-/* ---- Segmented: 16px outer corners on the first and last items ---- */
+/*
+ * ---- Expressive container: 16px outer corners on the first and last items ----
+ * md.comp.list.container.shape (corner.large). The list has no fill of its
+ * own, so the corners show on the items' fill and state layers, segmented
+ * or not.
+ */
 
-.item[data-segmented] {
-  --_container-color: var(--md-sys-color-surface);
-}
-
-.item[data-segmented]:first-child {
+.item[data-variant='expressive']:first-child {
   --_shape-top: max(var(--_outer-shape), var(--md-sys-shape-corner-large));
 }
 
-.item[data-segmented]:last-child {
+.item[data-variant='expressive']:last-child {
   --_shape-bottom: max(
     var(--_outer-shape),
     var(--md-sys-shape-corner-large)
   );
 }
 
-/* ---- Shape morph (expressive): hover 12, focus/pressed/dragged 16 ---- */
+/*
+ * ---- Shape morph (expressive): hover 12, focus/pressed/dragged/selected 16 ----
+ * Hover skips selected and dragged items so they keep 16px. Focus and
+ * pressed come after it at the same specificity, so they win over hover.
+ */
 
 @media (hover: hover) {
-  .item[data-variant='expressive']:not([data-disabled]):is(
+  .item[data-variant='expressive']:not([data-disabled], [data-selected], [data-dragged]):is(
       :has(> .action:hover, > .row > .action:hover),
       .option:hover
     ) {
@@ -156,15 +167,15 @@
 
 .item[data-variant='expressive']:not([data-disabled]):is(
     :has(> .action:focus-visible, > .row > .action:focus-visible),
-    [data-highlighted]
+    [data-highlighted][data-focus-visible]
   ) {
   --_shape: var(--md-sys-shape-corner-large);
   --_state-layer-color: var(--md-sys-color-on-surface);
 }
 
 .item[data-variant='expressive']:not([data-disabled]):is(
-    :has(> .action:active, > .row > .action:active),
-    .option:active
+    :has(> .action:is(:active, [data-key-pressed]), > .row > .action:is(:active, [data-key-pressed])),
+    .option:is(:active, [data-key-pressed])
   ) {
   --_shape: var(--md-sys-shape-corner-large);
   --_state-layer-color: var(--md-sys-color-on-surface);
@@ -222,9 +233,12 @@
 
 /* Selected + hover/focus/pressed: icons switch to on-surface. */
 .item[data-selected]:not([data-disabled]):is(
-    :has(> .action:is(:hover, :focus-visible, :active), > .row > .action:is(:hover, :focus-visible, :active)),
-    .option:is(:hover, :active),
-    [data-highlighted],
+    :has(
+        > .action:is(:hover, :focus-visible, :active, [data-key-pressed]),
+        > .row > .action:is(:hover, :focus-visible, :active, [data-key-pressed])
+      ),
+    .option:is(:hover, :active, [data-key-pressed]),
+    [data-highlighted][data-focus-visible],
     [data-dragged]
   ) {
   --_leading-icon-color: var(--md-sys-color-on-surface);
@@ -325,12 +339,16 @@
   margin-block-start: var(--_top-space);
 }
 
-/* Select lists: Ark keeps focus on the list; the highlighted option shows it. */
-.option[data-highlighted]::before {
+/*
+ * Select lists and combobox options: the listbox or the input keeps DOM
+ * focus, so the highlighted option shows the focus layer and ring. Only
+ * after keyboard input: a click or hover gets the hover state alone.
+ */
+.option[data-highlighted][data-focus-visible]::before {
   opacity: var(--md-sys-state-focus-state-layer-opacity);
 }
 
-.option[data-highlighted] {
+.option[data-highlighted][data-focus-visible] {
   outline: var(--md-sys-state-focus-indicator-thickness) solid
     var(--md-sys-color-secondary);
   outline-offset: var(--_focus-ring-offset);
@@ -341,7 +359,7 @@
 }
 
 @media (forced-colors: active) {
-  .option[data-highlighted],
+  .option[data-highlighted][data-focus-visible],
   .action:focus-visible {
     outline-color: Highlight;
   }
@@ -530,38 +548,46 @@
   rotate: 180deg;
 }
 
-/* Container transform along the block axis (derived: legacy enter/exit curves). */
+/*
+ * Container transform along the block axis (M3 only names the pattern).
+ * Size on the default spatial spring to expand and the fast one to collapse,
+ * opacity on the matching effects springs (derived).
+ */
 .nested {
   overflow: hidden;
 }
 
 .nested[data-state='open'] {
-  animation: expand var(--md-sys-motion-duration-medium4) var(--md-sys-motion-easing-emphasized-decelerate);
+  animation:
+    expand var(--md-sys-motion-spring-default-spatial-duration)
+      var(--md-sys-motion-spring-default-spatial-easing),
+    fade-in var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects-easing);
 }
 
 .nested[data-state='closed'] {
-  animation: collapse var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-emphasized-accelerate);
+  animation:
+    collapse var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial-easing),
+    fade-out var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
 }
 
 @keyframes expand {
   from {
     block-size: 0;
-    opacity: 0;
   }
   to {
     block-size: var(--height);
-    opacity: 1;
   }
 }
 
 @keyframes collapse {
   from {
     block-size: var(--height);
-    opacity: 1;
   }
   to {
     block-size: 0;
-    opacity: 0;
   }
 }
 
@@ -589,7 +615,19 @@
 
 /* ---- Divider ---- */
 
-/* Same line as Divider (divider.md); `inset` is its middle inset (16px both ends). */
+/* Same line as Divider; `inset` is its middle inset (16px both ends). */
+.dividerItem {
+  display: block;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
 .divider {
   composes: root from '../divider/divider.module.css';
+}
+
+/* Baseline layout table: the inset divider ends 24dp from the trailing edge, like the content. */
+.divider[data-variant='baseline'][data-inset='middle'] {
+  --_inset-end: var(--md-sys-measurement-space300);
 }

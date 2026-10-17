@@ -71,24 +71,58 @@ const LeadingIcon: Component<{ icon?: string; check?: boolean }> = (props) => (
 const isChip = (el: Element | null): el is HTMLElement =>
   el instanceof HTMLElement && el.hasAttribute('data-chip') && !el.hasAttribute('data-disabled');
 
+const siblings = (el: Element, dir: 'nextElementSibling' | 'previousElementSibling') => {
+  const out: Element[] = [];
+  for (let s = el[dir]; s; s = s[dir]) out.push(s);
+  return out;
+};
+
+const focusFirstAction = (chip: HTMLElement) =>
+  chip.querySelector<HTMLElement>('button:not(:disabled):not([data-chip-pointer-only]), a[href]')?.focus();
+
 /**
- * Calls `onRemove`, then, if the chip left the DOM while it had focus, moves
- * focus to the next chip, or the previous one if none follows (spec §8).
+ * Calls `onRemove`, then, once the chip leaves the DOM (now or later, after
+ * an exit animation or an async store update), moves focus to the next
+ * chip, else the previous one, else the chip set, if focus was in the chip
+ * and nothing else took it meanwhile.
  */
 const removeChip = (root: HTMLElement | null | undefined, onRemove: (() => void) | undefined) => {
   if (!onRemove) return;
   if (!root) return onRemove();
   const hadFocus = root.contains(document.activeElement);
-  let next: Element | null = root.nextElementSibling;
-  while (next && !isChip(next)) next = next.nextElementSibling;
-  if (!next) {
-    next = root.previousElementSibling;
-    while (next && !isChip(next)) next = next.previousElementSibling;
-  }
+  const candidates = [...siblings(root, 'nextElementSibling'), ...siblings(root, 'previousElementSibling')];
+  const set = root.closest<HTMLElement>('[data-chip-set]');
+  const parent = root.parentNode;
   onRemove();
+  if (!hadFocus || !parent) return;
+
+  const restore = () => {
+    const active = document.activeElement;
+    if (active && active !== document.body && !root.contains(active)) return;
+    const next = candidates.find((el): el is HTMLElement => el.isConnected && isChip(el));
+    if (next) return focusFirstAction(next);
+    if (set?.isConnected) {
+      if (!set.hasAttribute('tabindex')) set.tabIndex = -1;
+      set.focus();
+    }
+  };
+
+  const observer = new MutationObserver(() => {
+    if (root.isConnected) return;
+    stop();
+    restore();
+  });
+  const onFocusIn = (e: FocusEvent) => {
+    if (!root.contains(e.target as Node)) stop();
+  };
+  const stop = () => {
+    observer.disconnect();
+    document.removeEventListener('focusin', onFocusIn);
+  };
   queueMicrotask(() => {
-    if (!hadFocus || root.isConnected) return;
-    next?.querySelector<HTMLElement>('button:not(:disabled), a[href]')?.focus();
+    if (!root.isConnected) return restore();
+    observer.observe(set ?? parent, { childList: true, subtree: true });
+    document.addEventListener('focusin', onFocusIn);
   });
 };
 
@@ -99,6 +133,8 @@ const TrailingButton: Component<{
   label: string;
   disabled?: boolean;
   expanded?: boolean;
+  /** Not a tab or arrow stop: the chip's own key (Delete) does the same. */
+  pointerOnly?: boolean;
   onClick: (e: MouseEvent & { currentTarget: HTMLButtonElement }) => void;
 }> = (props) => (
   <button
@@ -108,17 +144,24 @@ const TrailingButton: Component<{
     aria-haspopup={props.kind === 'menu' ? 'menu' : undefined}
     aria-expanded={props.kind === 'menu' ? !!props.expanded : undefined}
     disabled={props.disabled}
+    tabIndex={props.pointerOnly ? -1 : undefined}
+    data-chip-pointer-only={props.pointerOnly ? '' : undefined}
     onClick={(e) => props.onClick(e)}
   >
     <Icon name={props.kind === 'remove' ? 'close' : 'arrow_drop_down'} />
   </button>
 );
 
-/** Delete or Backspace on a removable chip's primary action removes it (spec §8). */
+/** Calls a Solid event handler prop (a function or a bound `[fn, data]` pair). */
+const callHandler = <E,>(user: unknown, e: E) => {
+  if (typeof user === 'function') user(e);
+  else if (Array.isArray(user) && typeof user[0] === 'function') user[0](user[1], e);
+};
+
+/** Delete or Backspace on a removable chip's primary action removes it. */
 const removeKeyHandler =
   (onRemove: () => void, user: unknown) => (e: KeyboardEvent & { currentTarget: HTMLElement }) => {
-    if (typeof user === 'function') user(e);
-    else if (Array.isArray(user) && typeof user[0] === 'function') user[0](user[1], e);
+    callHandler(user, e);
     if (e.defaultPrevented) return;
     if (e.key === 'Delete' || e.key === 'Backspace') {
       e.preventDefault();
@@ -147,7 +190,7 @@ export type LinkAssistChipProps = ChipCommon &
   };
 
 /**
- * Assist chip (spec §2): a smart or automated action such as "Add to
+ * Assist chip: a smart or automated action such as "Add to
  * calendar". The label usually starts with a verb. A native `<button>`, or
  * a link with `href`. Other props go on that button or link; `class` and
  * `style` go on the chip's container.
@@ -217,7 +260,7 @@ export type SuggestionChipProps = ChipCommon &
   };
 
 /**
- * Suggestion chip (spec §2): a product-generated suggestion such as a quick
+ * Suggestion chip: a product-generated suggestion such as a quick
  * reply. A native `<button>`; other props go on it, `class` and `style` on
  * the chip's container.
  */
@@ -264,9 +307,9 @@ export type FilterChipProps = ChipCommon &
      */
     value?: string;
     /**
-     * Optional trailing action (medium and expanded windows, spec §6):
-     * `remove` (calls `onRemove`; Delete/Backspace on the chip too) or
-     * `menu` (a dropdown arrow that calls `onMenuClick`).
+     * Optional trailing action (medium and expanded windows): `remove`
+     * (calls `onRemove`; Delete/Backspace on the chip too) or `menu` (a
+     * dropdown arrow that calls `onMenuClick`).
      */
     trailing?: 'remove' | 'menu';
     onRemove?: () => void;
@@ -277,10 +320,18 @@ export type FilterChipProps = ChipCommon &
     menuExpanded?: boolean;
     /** Accessible name of the menu button. Default "{label} options". */
     menuLabel?: string;
+    /**
+     * With `trailing="menu"`: `arrow` (default) toggles selection on the chip
+     * and opens the menu from the arrow; `chip` makes the whole chip the menu
+     * button (a drop-down chip whose label is the chosen option; use it in
+     * compact windows). The chip then calls `onMenuClick`, has no toggle
+     * semantics, shows `selected` as given, and the arrow is decorative.
+     */
+    menuTrigger?: 'arrow' | 'chip';
   };
 
 /**
- * Filter chip (spec §2): filters a collection. Selecting it fills the
+ * Filter chip: filters a collection. Selecting it fills the
  * container and shows a leading checkmark. An Ark UI `Toggle`
  * (aria-pressed); inside a single-select `ChipSet` it's a radio
  * (aria-checked). Other props go on that button, `class` and `style` on the
@@ -305,9 +356,11 @@ export const FilterChip: Component<FilterChipProps> = (props) => {
     'onMenuClick',
     'menuExpanded',
     'menuLabel',
+    'menuTrigger',
     'onKeyDown',
   ]);
   const set = useChipSet();
+  const chipMenu = () => local.trailing === 'menu' && local.menuTrigger === 'chip';
   const inSet = () => !!set && set.selection() !== 'none' && local.value !== undefined;
   const single = () => inSet() && set?.selection() === 'single';
   const [inner, setInner] = createSignal(local.defaultSelected ?? false);
@@ -325,7 +378,7 @@ export const FilterChip: Component<FilterChipProps> = (props) => {
     <ChipRoot
       variant="filter"
       elevated={local.elevated}
-      selected={selected()}
+      selected={chipMenu() ? !!local.selected : selected()}
       disabled={local.disabled}
       dragged={local.dragged}
       leading={local.icon ? 'icon' : 'check'}
@@ -333,31 +386,58 @@ export const FilterChip: Component<FilterChipProps> = (props) => {
       class={local.class}
       style={local.style}
     >
-      <Toggle.Root
-        {...rest}
-        ref={(el: HTMLButtonElement) => {
-          primary = el;
-          if (typeof rest.ref === 'function') (rest.ref as (el: HTMLButtonElement) => void)(el);
-        }}
-        class={styles.primary}
-        type="button"
-        disabled={local.disabled}
-        pressed={selected()}
-        onPressedChange={change}
-        role={single() ? 'radio' : undefined}
-        aria-checked={single() ? selected() : undefined}
-        // Ark always sets aria-pressed; null removes it on radios.
-        aria-pressed={single() ? (null as unknown as undefined) : undefined}
-        onKeyDown={
-          local.trailing === 'remove'
-            ? removeKeyHandler(remove, local.onKeyDown)
-            : (local.onKeyDown as JSX.EventHandlerUnion<HTMLButtonElement, KeyboardEvent>)
+      <Show
+        when={!chipMenu()}
+        fallback={
+          <button
+            {...rest}
+            ref={(el) => {
+              primary = el;
+              if (typeof rest.ref === 'function') (rest.ref as (el: HTMLButtonElement) => void)(el);
+            }}
+            class={styles.primary}
+            type="button"
+            disabled={local.disabled}
+            aria-haspopup="menu"
+            aria-expanded={!!local.menuExpanded}
+            onKeyDown={local.onKeyDown}
+            onClick={(e) => {
+              callHandler(rest.onClick, e);
+              if (!e.defaultPrevented) local.onMenuClick?.(e);
+            }}
+          >
+            <Ripple />
+            <LeadingIcon icon={local.icon} check />
+            <Label text={local.label} />
+          </button>
         }
       >
-        <Ripple />
-        <LeadingIcon icon={local.icon} check />
-        <Label text={local.label} />
-      </Toggle.Root>
+        <Toggle.Root
+          {...rest}
+          ref={(el: HTMLButtonElement) => {
+            primary = el;
+            if (typeof rest.ref === 'function') (rest.ref as (el: HTMLButtonElement) => void)(el);
+          }}
+          class={styles.primary}
+          type="button"
+          disabled={local.disabled}
+          pressed={selected()}
+          onPressedChange={change}
+          role={single() ? 'radio' : undefined}
+          aria-checked={single() ? selected() : undefined}
+          // Ark always sets aria-pressed; null removes it on radios.
+          aria-pressed={single() ? (null as unknown as undefined) : undefined}
+          onKeyDown={
+            local.trailing === 'remove'
+              ? removeKeyHandler(remove, local.onKeyDown)
+              : (local.onKeyDown as JSX.EventHandlerUnion<HTMLButtonElement, KeyboardEvent>)
+          }
+        >
+          <Ripple />
+          <LeadingIcon icon={local.icon} check />
+          <Label text={local.label} />
+        </Toggle.Root>
+      </Show>
       <Switch>
         <Match when={local.trailing === 'remove'}>
           <TrailingButton
@@ -366,6 +446,11 @@ export const FilterChip: Component<FilterChipProps> = (props) => {
             disabled={local.disabled}
             onClick={remove}
           />
+        </Match>
+        <Match when={chipMenu()}>
+          <span class={styles.trailing} data-decorative="" aria-hidden="true">
+            <Icon name="arrow_drop_down" />
+          </span>
         </Match>
         <Match when={local.trailing === 'menu'}>
           <TrailingButton
@@ -399,10 +484,12 @@ export type InputChipProps = ChipCommon &
   };
 
 /**
- * Input chip (spec §2): a discrete piece of user-entered information, such
+ * Input chip: a discrete piece of user-entered information, such
  * as a contact. Flat only, always removable. The chip is a native
  * `<button>` (its `onClick` can open details or edit) followed by a
  * separate remove button; after a removal focus moves to the next chip.
+ * Without `onClick` the chip is one focus stop (Delete/Backspace removes it)
+ * and the remove button is for pointers only.
  * For chips typed into a text field, use `InputChipField`.
  */
 export const InputChip: Component<InputChipProps> = (props) => {
@@ -444,6 +531,7 @@ export const InputChip: Component<InputChipProps> = (props) => {
         class={styles.primary}
         type={local.type ?? 'button'}
         disabled={local.disabled}
+        aria-keyshortcuts="Delete"
         onKeyDown={removeKeyHandler(remove, local.onKeyDown)}
       >
         <Ripple />
@@ -466,6 +554,7 @@ export const InputChip: Component<InputChipProps> = (props) => {
         kind="remove"
         label={local.removeLabel ?? `Remove ${local.label}`}
         disabled={local.disabled}
+        pointerOnly={rest.onClick == null}
         onClick={remove}
       />
     </ChipRoot>

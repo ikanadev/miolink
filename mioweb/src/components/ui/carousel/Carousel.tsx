@@ -105,7 +105,7 @@ export type CarouselProps = Omit<JSX.HTMLAttributes<HTMLElement>, 'children'> & 
  * items (no morph, no parallax). Every item is a tab stop; arrows move
  * between items, Home/End jump to the ends, and the cross-axis arrows leave
  * the carousel. Give the carousel a block size (default 220px; full-screen
- * 100dvh). On scrolling pages, add a "Show all" button below it (spec §7).
+ * 100dvh). On scrolling pages, add a "Show all" button below it (M3 Carousel, Accessibility).
  */
 export const Carousel: Component<CarouselProps> = (props) => {
   const [local, rest] = splitProps(props, [
@@ -207,7 +207,7 @@ export const Carousel: Component<CarouselProps> = (props) => {
 
     if (keylineMode()) {
       const center = local.align === 'center';
-      // Hero default (derived, spec §4.2): the available width minus one small item and its gap(s).
+      // Hero default (derived from M3 Carousel, Specs): the available width minus one small item and its gap(s).
       const heroMax = W - (center ? 2 : 1) * (gap + SMALL_MAX);
       const Lmax = local.largeItemMaxWidth ?? (layout() === 'hero' ? heroMax : DEFAULT_LARGE_MAX);
       model = buildModel({ Wc, ps, pe, gap, Lmax, n: list.length, kind: layout() as KeylineKind, center });
@@ -228,8 +228,8 @@ export const Carousel: Component<CarouselProps> = (props) => {
     root.style.removeProperty('--_large');
     let itemSize = local.largeItemMaxWidth ?? DEFAULT_LARGE_MAX;
     if (isKeyline()) {
-      // Reduced motion (spec §6): same-size items. Hero leaves 24px for the
-      // next item to peek (derived, spec blueprint).
+      // Reduced motion (M3 Carousel, Accessibility): same-size items reaching
+      // the trailing edge. Hero leaves 24px for the next item to peek (derived).
       itemSize = layout() === 'hero' ? Math.max(1, W - 24) : Math.max(1, Math.min(itemSize, W));
     }
     root.style.setProperty('--_item-size', `${itemSize}px`);
@@ -321,7 +321,7 @@ export const Carousel: Component<CarouselProps> = (props) => {
     const last = items().length - 1;
     const prevKey = vertical() ? 'ArrowUp' : rtl ? 'ArrowRight' : 'ArrowLeft';
     const nextKey = vertical() ? 'ArrowDown' : rtl ? 'ArrowLeft' : 'ArrowRight';
-    // Cross-axis arrows leave the carousel (spec §8; vertical for full-screen, derived).
+    // Cross-axis arrows leave the carousel (M3 Carousel, Accessibility; vertical for full-screen, derived).
     const outBack = vertical() ? (rtl ? 'ArrowRight' : 'ArrowLeft') : 'ArrowUp';
     const outForward = vertical() ? (rtl ? 'ArrowLeft' : 'ArrowRight') : 'ArrowDown';
     let handled = true;
@@ -351,7 +351,7 @@ export const Carousel: Component<CarouselProps> = (props) => {
   };
 
   // The focused item scrolls to its snap position, large and fully visible
-  // (spec §8). Not on pointer focus: tapping an inactive item activates it.
+  // (M3 Carousel, Accessibility). Not on pointer focus: tapping an inactive item activates it.
   const onFocusIn = (e: FocusEvent) => {
     if (pointerFocus) return;
     const i = indexOf(e.target);
@@ -468,7 +468,8 @@ export const Carousel: Component<CarouselProps> = (props) => {
           onPointerDown={onPointerDown}
           onDragStart={(e) => e.preventDefault()}
         >
-          <ul class={styles.track} role="list">
+          {/* Presentational: each item's name already says "i of n", list semantics would repeat it. */}
+          <ul class={styles.track} role="none">
             {local.children}
           </ul>
           <For each={snaps()}>
@@ -547,7 +548,7 @@ export const CarouselItem: Component<CarouselItemProps> = (props) => {
 
   const index = () => carousel.items().indexOf(record);
   const accessibleName = () => {
-    const name = local['aria-label'] ?? local.title ?? local.label;
+    const name = local['aria-label'] ?? ([local.title, local.label].filter(Boolean).join(', ') || undefined);
     const i = index();
     const position = i >= 0 ? `${i + 1} of ${carousel.items().length}` : '';
     return [position, name].filter(Boolean).join(', ');
@@ -591,7 +592,7 @@ export const CarouselItem: Component<CarouselItemProps> = (props) => {
   );
 
   return (
-    <li ref={li} class={styles.item} data-size="large">
+    <li ref={li} class={styles.item} role="none" data-size="large">
       <Show
         when={local.href !== undefined}
         fallback={

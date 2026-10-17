@@ -26,7 +26,7 @@
   --_item-trailing: var(--md-sys-measurement-space300);
   --_item-between: var(--md-sys-measurement-space50);
   /* Window margin above the stack when it scrolls: 16px, 24px in large and
-     extra-large windows (spec §4.2). */
+     extra-large windows (M3 Specs: FAB menu). */
   --_margin: 16px;
   --_fab-size: 56px;
 
@@ -38,6 +38,7 @@
   --_item-content: var(--md-sys-color-on-primary-container);
   --_item-elevation-hover: var(--md-sys-elevation-level4);
   --_item-elevation-focus: var(--md-sys-elevation-level3);
+  --_item-elevation-pressed: var(--md-sys-elevation-level3);
 
   position: relative;
   display: inline-block;
@@ -68,6 +69,7 @@
   --_item-content: var(--md-sys-color-on-secondary-container);
   --_item-elevation-hover: var(--md-sys-elevation-level4);
   --_item-elevation-focus: var(--md-sys-elevation-level3);
+  --_item-elevation-pressed: var(--md-sys-elevation-level3);
 }
 
 .root[data-color='tertiary'] {
@@ -78,12 +80,13 @@
   --_item-content: var(--md-sys-color-on-tertiary-container);
   --_item-elevation-hover: var(--md-sys-elevation-level4);
   --_item-elevation-focus: var(--md-sys-elevation-level3);
+  --_item-elevation-pressed: var(--md-sys-elevation-level3);
 }
 
 /* ---- Toggle: the FAB, then the close button ---- */
 
 /* `.root >` lifts these above the Fab's own rules. Size and corners: fast
-   spatial spring; colors: fast effects (derived, spec §6). */
+   spatial spring; colors: fast effects (derived). */
 .root > .toggle {
   --_transition-extra:
     inline-size var(--md-sys-motion-spring-fast-spatial-duration)
@@ -146,7 +149,7 @@
 /* ---- Items ---- */
 
 /* The stack's bottom is the close button's bottom; its bottom padding keeps
-   the items above the button, and they scroll behind it (spec §6). The 8px
+   the items above the button, and they scroll behind it (M3 Specs: FAB menu). The 8px
    inline padding leaves room for focus rings and shadows (derived). */
 .list {
   position: absolute;
@@ -172,8 +175,10 @@
 
 /* Enter: fade, grow from 0.8 and rise 8px from the trailing bottom corner,
    25ms apart starting next to the close button. Exit: fade and shrink, all
-   at once (derived, spec §6). */
+   at once (derived). --_i-from-bottom is set inline per item from JS. */
 .listItem {
+  --_i-from-bottom: 0;
+
   transform-origin: bottom right;
   transition:
     opacity var(--md-sys-motion-spring-fast-effects-duration)
@@ -182,7 +187,7 @@
       var(--md-sys-motion-spring-default-spatial-easing),
     translate var(--md-sys-motion-spring-default-spatial-duration)
       var(--md-sys-motion-spring-default-spatial-easing);
-  transition-delay: calc(var(--_i-from-bottom, 0) * 25ms);
+  transition-delay: calc(var(--_i-from-bottom) * 25ms);
 }
 
 .listItem:dir(rtl) {
@@ -235,8 +240,9 @@
     var(--md-sys-motion-spring-fast-effects-easing);
 }
 
-/* Items have no shadow at rest and rise on interaction (spec §4.4). */
-.item:is(:focus-visible, :active) {
+/* Items have no shadow at rest and rise on interaction. Pressed comes after
+   hover so a mouse press shows the pressed level. */
+.item:focus-visible {
   box-shadow: var(--_item-elevation-focus);
 }
 
@@ -244,6 +250,10 @@
   .item:hover {
     box-shadow: var(--_item-elevation-hover);
   }
+}
+
+.item:is(:active, [data-key-pressed]) {
+  box-shadow: var(--_item-elevation-pressed);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,7 +1,8 @@
-import { createSignal, For, type Component, type JSX } from 'solid-js';
+import { createSignal, For, Show, type Component, type JSX } from 'solid-js';
 import { Button } from '../../components/ui/buttons/button';
 import { IconButton } from '../../components/ui/buttons/icon-button';
 import { Menu } from '../../components/ui/menu';
+import { TextField } from '../../components/ui/text-field';
 import {
   Toolbar,
   ToolbarAction,
@@ -54,9 +55,12 @@ const Formatting = (props: { color: ToolbarColor }) => (
 const ToolbarDemo: Component = () => {
   const [last, setLast] = createSignal('—');
   const [collapsed, setCollapsed] = createSignal(false);
+  const [keyCollapsed, setKeyCollapsed] = createSignal(false);
+  const [fixed, setFixed] = createSignal(false);
   const [scroller, setScroller] = createSignal<HTMLElement>();
   const [scroller2, setScroller2] = createSignal<HTMLElement>();
   const [scroller3, setScroller3] = createSignal<HTMLElement>();
+  const [scroller4, setScroller4] = createSignal<HTMLElement>();
 
   const act = (name: string) => () => setLast(name);
 
@@ -113,6 +117,60 @@ const ToolbarDemo: Component = () => {
           <ToolbarAction icon="bookmark" label="Bookmark" toggle />
         </Toolbar>
       </Stage>
+
+      <p class={g.label}>
+        Collapsed without a FAB (controlled): only the key action shows. The folded actions stay in the Tab order;
+        tabbing or arrowing onto one expands the toolbar
+      </p>
+      <div class={g.row}>
+        <Button toggle color="tonal" selected={keyCollapsed()} onSelectedChange={setKeyCollapsed}>
+          Collapsed
+        </Button>
+      </div>
+      <Stage>
+        <Toolbar label="Reply actions" collapsed={keyCollapsed()}>
+          <ToolbarAction icon="archive" label="Archive" onClick={act('Archive')} />
+          <ToolbarAction icon="delete" label="Delete" onClick={act('Delete')} />
+          <ToolbarAction icon="reply" label="Reply" color="filled" keyAction onClick={act('Reply')} />
+          <ToolbarAction icon="forward" label="Forward" onClick={act('Forward')} />
+        </Toolbar>
+      </Stage>
+
+      <p class={g.label}>
+        Text field slot: Left/Right move the caret inside the field; Tab leaves it. Right to left below
+      </p>
+      <Stage>
+        <Toolbar label="Find in page">
+          <TextField label="Find" dense />
+          <ToolbarAction icon="keyboard_arrow_up" label="Previous match" />
+          <ToolbarAction icon="keyboard_arrow_down" label="Next match" />
+          <ToolbarAction icon="close" label="Close" />
+        </Toolbar>
+      </Stage>
+      <Stage>
+        <div dir="rtl">
+          <Toolbar label="أدوات التنسيق">
+            <ToolbarAction icon="arrow_back" label="رجوع" mirror />
+            <ToolbarAction toggle icon="format_bold" label="غامق" />
+            <ToolbarAction toggle icon="format_italic" label="مائل" />
+            <ToolbarAction icon="arrow_forward" label="التالي" mirror />
+          </Toolbar>
+        </div>
+      </Stage>
+
+      <p class={g.label}>Fixed placement: bottom center of the window, 16px from the edge</p>
+      <div class={g.row}>
+        <Button toggle color="tonal" selected={fixed()} onSelectedChange={setFixed}>
+          Show fixed toolbar
+        </Button>
+      </div>
+      <Show when={fixed()}>
+        <Toolbar label="Fixed actions" fixed fab={<ToolbarFab icon="add" label="Add" onClick={act('Add')} />}>
+          <ToolbarAction icon="search" label="Search" onClick={act('Search')} />
+          <ToolbarAction icon="share" label="Share" onClick={act('Share')} />
+          <ToolbarAction icon="close" label="Hide fixed toolbar" onClick={() => setFixed(false)} />
+        </Toolbar>
+      </Show>
 
       <p class={g.label}>
         Overflow: drag the corner. Trailing actions move into the menu (toggles become checkbox items), plus fixed menu
@@ -203,13 +261,17 @@ const ToolbarDemo: Component = () => {
         </Toolbar>
       </div>
 
-      <p class={g.label}>Scroll behavior: docked hides, floating hides, floating collapses into the FAB</p>
+      <p class={g.label}>
+        Scroll behavior: docked hides, floating hides, floating collapses into the FAB or to its key action. Scroll down,
+        then Tab into a hidden toolbar: it comes back
+      </p>
       <div class={g.row} style={{ 'align-items': 'stretch' }}>
         <For
           each={[
             { name: 'Docked, hide', ref: setScroller },
             { name: 'Floating, hide', ref: setScroller2 },
             { name: 'Floating, collapse', ref: setScroller3 },
+            { name: 'Floating, collapse to key action', ref: setScroller4 },
           ]}
         >
           {(frame, i) => (
@@ -252,6 +314,16 @@ const ToolbarDemo: Component = () => {
                       >
                         <ToolbarAction icon="arrow_back" label="Back" mirror />
                         <ToolbarAction icon="search" label="Search" />
+                        <ToolbarAction icon="share" label="Share" />
+                      </Toolbar>
+                    ) : i() === 3 ? (
+                      <Toolbar
+                        label="Floating, collapses to its key action"
+                        scrollBehavior="collapse"
+                        scrollTarget={scroller4()}
+                      >
+                        <ToolbarAction icon="arrow_back" label="Back" mirror />
+                        <ToolbarAction icon="edit" label="Edit" color="filled" keyAction />
                         <ToolbarAction icon="share" label="Share" />
                       </Toolbar>
                     ) : (

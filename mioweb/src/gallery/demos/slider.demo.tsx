@@ -82,6 +82,14 @@ const SliderDemo: Component = () => {
         <Slider label="Vertical XL" orientation="vertical" size="xlarge" icon="volume_up" defaultValue={[50]} />
       </div>
 
+      <p class={g.label}>Right to left (minimum on the right): standard with stops, centered, range, M with icon</p>
+      <div style={column} dir="rtl">
+        <Slider label="RTL brightness" step={10} stops labeled defaultValue={[30]} />
+        <Slider label="RTL balance" variant="centered" min={-10} max={10} step={2} stops defaultValue={[-4]} labeled />
+        <Slider label="RTL hours" variant="range" min={0} max={24} step={2} stops labeled defaultValue={[8, 18]} />
+        <Slider label="RTL volume" size="medium" icon="volume_up" iconMin="volume_off" defaultValue={[60]} />
+      </div>
+
       <p class={g.label}>Disabled: standard, stops, centered, range, M with icon</p>
       <div style={column}>
         <Slider label="Disabled" disabled defaultValue={[40]} />

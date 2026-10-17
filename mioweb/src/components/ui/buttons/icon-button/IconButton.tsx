@@ -1,6 +1,7 @@
 import { Toggle } from '@ark-ui/solid/toggle';
 import { ToggleGroup, useToggleGroupContext } from '@ark-ui/solid/toggle-group';
-import { Match, splitProps, Switch, type Component, type JSX } from 'solid-js';
+import { useTooltipContext } from '@ark-ui/solid/tooltip';
+import { Match, Show, splitProps, Switch, type Component, type JSX } from 'solid-js';
 import { Icon } from '../../icon/Icon';
 import { Ripple } from '../../shared/Ripple';
 import { Tooltip } from '../../tooltip';
@@ -28,9 +29,13 @@ type Common = {
   /** Mirror the glyph in RTL (directional icons such as arrow_back). */
   mirror?: boolean;
   /**
-   * Show `label` in a plain tooltip on hover and focus (spec §1: icon
-   * buttons on the web). Default false; leave it off when the button already
-   * sits in a `Tooltip` or `RichTooltip`.
+   * Show `label` in a plain tooltip on hover and focus (M3: icon buttons on
+   * the web show one). Default true, except when the button is the trigger
+   * of another Ark component (`{...p()}` from a `Tooltip`, `Menu`, ...
+   * `asChild`), the element child of a `Tooltip`, or an item of a selectable
+   * `ButtonGroup` (Ark ToggleGroup item). Pass `false` when it is
+   * the element child of a `RichTooltip`, or when the visible context already
+   * names the action.
    */
   tooltip?: boolean;
   disabled?: boolean;
@@ -69,6 +74,11 @@ export type ToggleIconButtonProps = Common &
     onSelectedChange?: (selected: boolean) => void;
     /** Glyph when selected; defaults to `icon`. Selected glyphs are filled, unselected outlined. */
     selectedIcon?: string;
+    /**
+     * Glyph weight when selected (for example 600), for glyphs that have no
+     * filled version (M3 Accessibility: semibold, or bold if that's not enough).
+     */
+    selectedWeight?: number;
   };
 
 type AnyIconButtonProps = Common &
@@ -112,6 +122,7 @@ export const IconButton: Component<IconButtonProps | LinkIconButtonProps | Toggl
     'defaultSelected',
     'onSelectedChange',
     'selectedIcon',
+    'selectedWeight',
     'value',
   ]);
   const group = useButtonGroup();
@@ -136,12 +147,13 @@ export const IconButton: Component<IconButtonProps | LinkIconButtonProps | Toggl
     'aria-label': local.label,
   });
 
-  const content = (selected: boolean) => (
+  const content = (selected: boolean, selectable = true) => (
     <>
       <Ripple />
       <Icon
         name={selected ? (local.selectedIcon ?? local.icon) : local.icon}
         filled={selected}
+        weight={selected && selectable ? local.selectedWeight : undefined}
         mirror={local.mirror}
       />
     </>
@@ -156,7 +168,7 @@ export const IconButton: Component<IconButtonProps | LinkIconButtonProps | Toggl
           disabled={local.disabled}
         >
           {/* Default icon buttons use the filled glyph. */}
-          {content(true)}
+          {content(true, false)}
         </button>
       }
     >
@@ -166,7 +178,7 @@ export const IconButton: Component<IconButtonProps | LinkIconButtonProps | Toggl
           value={local.value as string}
           disabled={local.disabled}
         >
-          <GroupItemIcon value={local.value as string}>{content}</GroupItemIcon>
+          <GroupItemIcon value={local.value as string}>{(selected) => content(selected)}</GroupItemIcon>
         </ToggleGroup.Item>
       </Match>
       <Match when={local.toggle}>
@@ -188,15 +200,28 @@ export const IconButton: Component<IconButtonProps | LinkIconButtonProps | Toggl
           role={local.disabled ? 'link' : undefined}
           aria-disabled={local.disabled ? 'true' : undefined}
         >
-          {content(true)}
+          {content(true, false)}
         </a>
       </Match>
     </Switch>
   );
 
-  return local.tooltip ? (
-    <Tooltip label={local.label} disabled={local.disabled} asChild={(trigger) => render(trigger)} />
-  ) : (
-    render((attrs) => attrs)
+  // Another Ark part on the same element (an outer tooltip, a menu trigger,
+  // a toggle group item) needs its own id and data-scope, which the tooltip
+  // trigger props would replace, so the tooltip is off by default there.
+  const insideTooltip = (() => {
+    try {
+      return !!useTooltipContext();
+    } catch {
+      return false;
+    }
+  })();
+  const isOtherTrigger = () => (rest as Record<string, unknown>)['data-scope'] !== undefined;
+  const withTooltip = () => local.tooltip ?? !(insideTooltip || isOtherTrigger() || isGroupItem());
+
+  return (
+    <Show when={withTooltip()} fallback={render((attrs) => attrs)}>
+      <Tooltip label={local.label} disabled={local.disabled} asChild={(trigger) => render(trigger)} />
+    </Show>
   );
 };

@@ -9,7 +9,7 @@
  * ::before state layer, its Ripple and its 48px `target` resolve against
  * the root and cover the whole chip, trailing area included. The focus ring
  * is drawn on the root when the primary is focused; the trailing button has
- * its own circular ring (spec §5).
+ * its own circular ring.
  *
  * Attributes on .root: data-variant (assist | filter | input | suggestion),
  * data-elevated, data-selected, data-disabled, data-dragged,
@@ -17,7 +17,7 @@
  * Ark TagsInput items add data-highlighted (shown as selected).
  */
 .root {
-  /* Size and layout (spec §4.2) */
+  /* Size and layout (M3 Specs: measurements) */
   --_height: 32px;
   --_icon-size: 18px;
   --_avatar-size: 24px;
@@ -27,10 +27,11 @@
   --_leading-size: 0px;
   --_leading-gap: 0px;
 
-  /* Color: suggestion defaults (spec §4.1) */
+  /* Color: suggestion defaults */
   --_container: transparent;
   --_outline-width: 1px;
-  --_outline-color: var(--md-sys-color-outline-variant);
+  --_outline-rest: var(--md-sys-color-outline-variant);
+  --_outline-color: var(--_outline-rest);
   --_outline-focus: var(--md-sys-color-on-surface-variant);
   --_label-color: var(--md-sys-color-on-surface-variant);
   --_leading-color: var(--md-sys-color-primary);
@@ -40,6 +41,7 @@
   --_elevation: var(--md-sys-elevation-level0);
   --_elevation-hover: var(--_elevation);
   --md-icon-size: var(--_icon-size);
+  /* Derived (web mapping): the closest Material Symbols opsz for an 18px glyph. */
   --md-icon-optical-size: 20;
 
   position: relative;
@@ -121,7 +123,7 @@
   outline: none;
 }
 
-/* Pressed uses its own state-layer color (the filter tokens swap it, §4.1). */
+/* Pressed uses its own state-layer color (the filter chip tokens swap it). */
 .primary:is(:active, [data-key-pressed]) {
   --_state-layer-color: var(--_pressed-color);
 }
@@ -204,12 +206,19 @@
     var(--md-sys-motion-spring-fast-effects-easing);
 }
 
+/* The drop-down arrow of a chip that is itself the menu button: clicks pass
+   through to the primary's target. */
+.trailing[data-decorative] {
+  cursor: inherit;
+  pointer-events: none;
+}
+
 .trailing:focus-visible {
   outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
   outline-offset: var(--md-sys-state-focus-indicator-outer-offset);
 }
 
-/* ---- Padding by content (spec §4.2) ---- */
+/* ---- Padding by content ---- */
 
 .root:is([data-leading='icon'], [data-leading='check'][data-selected]) {
   --_pad-start: var(--_gap);
@@ -223,7 +232,7 @@
 
 .root[data-trailing] {
   --_pad-end: 0px;
-  /* Two 48px targets that don't overlap (spec §4.2). */
+  /* Two 48px targets that don't overlap. */
   min-inline-size: 88px;
 }
 
@@ -231,7 +240,7 @@
   min-inline-size: 42px;
 }
 
-/* ---- Variants (spec §4.1) ---- */
+/* ---- Variants ---- */
 
 .root[data-variant='assist'] {
   --_label-color: var(--md-sys-color-on-surface);
@@ -267,7 +276,7 @@
 }
 
 .root[data-variant='filter'][data-selected] {
-  /* Token swap (spec §4.1, §11). */
+  /* md.comp.filter-chip.selected.pressed.state-layer.color is on-surface-variant. */
   --_pressed-color: var(--md-sys-color-on-surface-variant);
 }
 
@@ -280,7 +289,7 @@
   scale: 1;
 }
 
-/* The checkmark replaces a custom icon in place (spec §11). */
+/* The checkmark replaces a custom icon in place. */
 .root[data-variant='filter'][data-selected] .icon {
   opacity: 0;
 }
@@ -296,9 +305,14 @@
     box-shadow: var(--_elevation-hover);
   }
 
-  .root:not([data-disabled]):hover > .primary::before {
+  .root:not([data-disabled], [data-dragged]):hover > .primary::before {
     opacity: var(--md-sys-state-hover-state-layer-opacity);
   }
+}
+
+/* Pressed returns to the resting elevation (level1 elevated, level0 flat). */
+.root:not([data-dragged]):has(> :is(.primary, .trailing):is(:active, [data-key-pressed])) {
+  box-shadow: var(--_elevation);
 }
 
 .root:has(> .primary:focus-visible) {
@@ -308,18 +322,21 @@
   outline-offset: var(--md-sys-state-focus-indicator-outer-offset);
 }
 
-/* Pressing the trailing action drives the chip's state layer (spec §5). */
+/* Pressing the trailing action drives the chip's state layer. */
 .root:not([data-disabled]):has(> .trailing:active) > .primary::before {
   background: var(--_pressed-color);
   opacity: var(--md-sys-state-pressed-state-layer-opacity);
 }
 
 /* Input leading icon: primary on hover, focus and press (unselected tokens). */
-.root[data-variant='input']:not([data-disabled]):is(:hover, :has(> :focus-visible), :has(> :active)) {
+.root[data-variant='input']:not([data-disabled], [data-dragged]):is(:hover, :has(> :focus-visible), :has(> :active)) {
   --_leading-color: var(--md-sys-color-primary);
 }
 
 .root[data-dragged] {
+  /* Derived: M3 gives flat chips no dragged container color; the elevated
+     container keeps content behind the lifted chip from showing through. */
+  --_container: var(--md-sys-color-surface-container-low);
   --_elevation: var(--md-sys-elevation-level4);
   --_elevation-hover: var(--md-sys-elevation-level4);
 
@@ -335,9 +352,10 @@
   --_trailing-color: var(--md-sys-color-primary);
 }
 
-/* ---- Disabled (spec §4.1, §5) ---- */
+/* ---- Disabled ----
+   [data-variant] raises these above the selected, input and dragged rules. */
 
-.root[data-disabled] {
+.root[data-disabled][data-variant] {
   --_label-color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
   --_leading-color: var(--_label-color);
   --_trailing-color: var(--_label-color);
@@ -346,7 +364,7 @@
   --_elevation-hover: var(--md-sys-elevation-level0);
 }
 
-.root[data-disabled]:is([data-elevated], [data-selected]) {
+.root[data-disabled]:is([data-elevated], [data-selected], [data-highlighted]) {
   --_container: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
 }
 
@@ -391,74 +409,142 @@
   max-inline-size: none;
 }
 
-/* Theme options (spec §4.1 theming notes, §8): `outline` for a 3:1 stroke,
-   `on-surface-variant` for lower-emphasis leading icons. */
+/* Theme options (M3 Chips: Specs, theming and Accessibility): `outline` for
+   a 3:1 stroke, `on-surface-variant` for lower-emphasis leading icons. */
 .set[data-outline='strong'] .root {
-  --_outline-color: var(--md-sys-color-outline);
+  --_outline-rest: var(--md-sys-color-outline);
 }
 
-.set[data-icon-color='neutral'] .root:not([data-selected], [data-highlighted]) {
+.set[data-icon-color='neutral'] .root:not([data-selected], [data-highlighted], [data-disabled]) {
   --_leading-color: var(--md-sys-color-on-surface-variant);
-}
-
-.set[data-outline='strong'] .root[data-disabled] {
-  --_outline-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
 }
 
 /* ---- Input chip field (Ark TagsInput) ---- */
 
-/* Derived (web mapping): the spec has no field tokens; this follows the
-   outlined text field's container (outline, extra-small corners, body-large). */
+/* Derived (web mapping): M3 has no input chip field tokens. The shell
+   follows the outlined text field (md.comp.outlined-text-field.*): outline,
+   extra-small corners, populated label in a notch, and its hover, focus,
+   error and disabled colors. The label always floats because the chips sit
+   on the input row. States in order: hover < focus < error < error hover <
+   error focus < disabled. */
 .field {
+  --_field-outline: var(--md-sys-color-outline);
+  --_field-outline-width: 1px;
+  --_field-label: var(--md-sys-color-on-surface-variant);
+
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 4px;
   min-inline-size: 0;
 }
 
+@media (hover: hover) {
+  .field:not([data-disabled], [data-focus]):hover {
+    --_field-outline: var(--md-sys-color-on-surface);
+    --_field-label: var(--md-sys-color-on-surface);
+  }
+}
+
+.field[data-focus] {
+  --_field-outline: var(--md-sys-color-primary);
+  --_field-outline-width: 2px;
+  --_field-label: var(--md-sys-color-primary);
+}
+
+.field[data-invalid] {
+  --_field-outline: var(--md-sys-color-error);
+  --_field-label: var(--md-sys-color-error);
+}
+
+@media (hover: hover) {
+  .field[data-invalid]:not([data-disabled], [data-focus]):hover {
+    --_field-outline: var(--md-sys-color-on-error-container);
+    --_field-label: var(--md-sys-color-on-error-container);
+  }
+}
+
+.field[data-invalid][data-focus] {
+  --_field-outline: var(--md-sys-color-error);
+  --_field-label: var(--md-sys-color-error);
+}
+
+.field[data-disabled] {
+  --_field-outline: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
+  --_field-outline-width: 1px;
+  --_field-label: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+}
+
+/* Sits on the top outline, inside the notch the legend below cuts. */
 .fieldLabel {
-  color: var(--md-sys-color-on-surface-variant);
+  position: absolute;
+  z-index: 1;
+  inset-block-start: 0;
+  inset-inline-start: 12px;
+  box-sizing: border-box;
+  max-inline-size: calc(100% - 24px);
+  padding-inline: 4px;
+  overflow: hidden;
+  translate: 0 -50%;
+  color: var(--_field-label);
   font-family: var(--md-sys-typescale-body-small-font);
   font-weight: var(--md-sys-typescale-body-small-weight);
   font-size: var(--md-sys-typescale-body-small-size);
   line-height: var(--md-sys-typescale-body-small-line-height);
   letter-spacing: var(--md-sys-typescale-body-small-tracking);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
 }
 
 .control {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   box-sizing: border-box;
   min-block-size: 56px;
-  padding-block: 11px;
-  padding-inline: 12px;
-  border: 1px solid var(--md-sys-color-outline);
-  border-radius: var(--md-sys-shape-corner-extra-small);
+  padding: 12px;
   cursor: text;
-  transition:
-    border-color var(--md-sys-motion-spring-fast-effects-duration)
-      var(--md-sys-motion-spring-fast-effects-easing),
-    box-shadow var(--md-sys-motion-spring-fast-effects-duration)
-      var(--md-sys-motion-spring-fast-effects-easing);
 }
 
-@media (hover: hover) {
-  .control:not([data-disabled]):hover {
-    border-color: var(--md-sys-color-on-surface);
-  }
-}
-
-/* 2px focused outline without moving the content. */
-.control[data-focus] {
-  border-color: var(--md-sys-color-primary);
-  box-shadow: inset 0 0 0 1px var(--md-sys-color-primary);
-}
-
-.control[data-disabled] {
-  border-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
+.field[data-disabled] .control {
   cursor: default;
+}
+
+/* A fieldset/legend outline: the browser cuts the notch for the label. The
+   hidden legend repeats the label at the label's size; the fieldset starts
+   half a label line higher so its top border runs through the legend's middle. */
+.outline {
+  position: absolute;
+  inset: calc(var(--md-sys-typescale-body-small-line-height) / -2) 0 0;
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  padding-inline: 8px;
+  border: var(--_field-outline-width) solid var(--_field-outline);
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  pointer-events: none;
+  transition: border-color var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.outline > legend {
+  display: block;
+  box-sizing: border-box;
+  max-inline-size: calc(100% - 8px);
+  block-size: var(--md-sys-typescale-body-small-line-height);
+  padding: 0;
+  padding-inline: 4px;
+  overflow: hidden;
+  visibility: hidden;
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-weight: var(--md-sys-typescale-body-small-weight);
+  font-size: var(--md-sys-typescale-body-small-size);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  letter-spacing: var(--md-sys-typescale-body-small-tracking);
+  white-space: nowrap;
 }
 
 .fieldItem {
@@ -487,6 +573,10 @@
 
 .fieldChip[data-leading] > .label {
   padding-inline-start: 0;
+}
+
+.fieldChip:not([data-trailing]) > .label {
+  padding-inline-end: var(--_pad-end);
 }
 
 .fieldChip > :is(.leading, .avatar) {
@@ -521,7 +611,7 @@
   color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
 }
 
-/* Edit mode: the chip reverts to plain text (spec §6). */
+/* Edit mode: the chip reverts to plain text. */
 .itemInput {
   flex: 0 1 auto;
   field-sizing: content;
@@ -531,7 +621,7 @@
   display: none;
 }
 
-/* ---- Reduced motion: size and padding change instantly (spec §6) ---- */
+/* ---- Reduced motion: size and padding change instantly ---- */
 
 @media (prefers-reduced-motion: reduce) {
   .primary,
@@ -545,7 +635,7 @@
   }
 }
 
-/* ---- Forced colors (spec §10e) ---- */
+/* ---- Forced colors ---- */
 
 @media (forced-colors: active) {
   .root {

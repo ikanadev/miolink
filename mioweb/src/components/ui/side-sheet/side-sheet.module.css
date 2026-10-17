@@ -18,7 +18,9 @@
 .scrim {
   position: fixed;
   inset: 0;
-  z-index: calc(var(--z-index, 1000) - 1);
+  /* Zag sets --layer-index (and --z-index) on the backdrop and positioner too;
+     the scrim sits one step below its own layer's content. */
+  z-index: calc(999 + var(--layer-index, 0));
   /* Scrim role at 32% (guidelines, Scrim / modal layer recipe). */
   background: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
 }
@@ -36,8 +38,10 @@
 
 .positioner {
   --_margin: 0px;
-  /* Spec §9: min(width, 400px, 100vw - margins); the component caps --_width at 400px. */
-  --_inline-size: min(var(--_width, 256px), 100vw - 2 * var(--_margin));
+  /* Set inline from the `width` prop (capped at 400px). */
+  --_width: 256px;
+  /* M3 Specs: min(width, 400px, 100vw - margins). */
+  --_inline-size: min(var(--_width), 100vw - 2 * var(--_margin));
 
   display: flex;
   box-sizing: border-box;
@@ -45,14 +49,14 @@
 }
 
 .positioner[data-detached] {
-  /* Spec: detached sheets sit 16px from the window edges. */
+  /* M3 Specs: detached sheets sit 16px from the window edges. */
   --_margin: var(--md-sys-measurement-space200);
 }
 
 .positioner[data-variant='modal'] {
   position: fixed;
   inset: 0;
-  z-index: var(--z-index, 1000);
+  z-index: calc(1000 + var(--layer-index, 0));
   justify-content: flex-end;
 }
 
@@ -98,11 +102,11 @@
   --_headline-color: var(--md-sys-color-on-surface-variant);
   /* Derived: content color not specified; on-surface-variant like the headline and bottom sheet. */
   --_content-color: var(--md-sys-color-on-surface-variant);
-  /* Spec §11: the divider token is outline (the color diagram says outline-variant). */
+  /* md.comp.sheet.side.docked.divider.color is outline (the color diagram says outline-variant). */
   --_divider-color: var(--md-sys-color-outline);
   --_padding-inline: var(--md-sys-measurement-space300);
   /* Off-screen offset for enter/exit: the sheet's width plus the detached margin, toward its edge. */
-  --_offscreen: calc(100% + var(--_margin, 0px));
+  --_offscreen: calc(100% + var(--_margin));
 
   position: relative;
   z-index: calc(1000 + var(--layer-index, 0));
@@ -136,7 +140,7 @@
 
   /* Not an overlay: no stacking above the page. */
   z-index: auto;
-  margin-inline: var(--_margin, 0px);
+  margin-inline: var(--_margin);
 }
 
 .container[data-detached] {
@@ -167,13 +171,13 @@
   align-items: center;
   gap: var(--md-sys-measurement-space150);
   box-sizing: border-box;
-  /* Derived (spec §11): 72px row = 48px icon-button targets + 12px block padding. */
+  /* Derived: 72px row = 48px icon-button targets + 12px block padding. */
   min-block-size: var(--md-sys-measurement-space900);
   padding-block: var(--md-sys-measurement-space150);
   padding-inline: var(--_padding-inline);
 }
 
-/* Spec: 16px start padding with a back button. */
+/* M3 Specs: 16px start padding with a back button. */
 .container[data-back] .header {
   padding-inline-start: var(--md-sys-measurement-space200);
 }
@@ -188,7 +192,7 @@
   font-size: var(--md-sys-typescale-title-large-size);
   line-height: var(--md-sys-typescale-title-large-line-height);
   letter-spacing: var(--md-sys-typescale-title-large-tracking);
-  /* Derived (spec §11): one line with an ellipsis; the full text is the title attribute / accessible name. */
+  /* Derived: one line with an ellipsis; the full text is the title attribute / accessible name. */
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -241,12 +245,12 @@
   flex-shrink: 0;
   flex-wrap: wrap;
   align-items: center;
-  /* Spec: start-aligned. */
+  /* M3 Specs: start-aligned. */
   justify-content: flex-start;
-  /* Derived (spec §11): 8px between action buttons. */
+  /* Derived: 8px between action buttons. */
   gap: var(--md-sys-measurement-space100);
   box-sizing: border-box;
-  /* Spec: 72px area, 16px top / 24px bottom padding (padding wins with 40px buttons, §11). */
+  /* M3 Specs: 72px area, 16px top / 24px bottom padding (the padding wins with 40px buttons). */
   min-block-size: var(--md-sys-measurement-space900);
   padding: var(--md-sys-measurement-space200) var(--_padding-inline) var(--md-sys-measurement-space300);
 }
@@ -254,9 +258,9 @@
 /* ---- Motion ---- */
 
 /*
- * Enter/exit beyond bounds, without overshoot (spec §6: common transitions
+ * Enter/exit beyond bounds, without overshoot (M3 Motion: common transitions
  * don't bounce): emphasized decelerate 400ms in, emphasized accelerate
- * 200ms out (derived from the legacy table, as the spec suggests). Ark
+ * 200ms out (derived from the legacy table, as M3 suggests). Ark
  * unmounts on the container's exit animation end.
  *
  * Modal: the container slides from its edge. --_slide is +1 toward the

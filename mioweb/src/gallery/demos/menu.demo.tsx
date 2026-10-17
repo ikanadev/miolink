@@ -66,7 +66,7 @@ const MenuDemo: Component = () => {
   return (
     <div style={{ display: 'grid', gap: '16px' }}>
       <p class={g.label}>
-        Standard and vibrant: icons, trailing text, supporting text, disabled, divider, submenus. Last
+        Standard and vibrant: icons, trailing text, supporting text, disabled (focusable, not selectable), divider, submenus. Last
         selected: {last()}
       </p>
       <div class={g.row}>
@@ -111,7 +111,10 @@ const MenuDemo: Component = () => {
         </Overflow>
       </div>
 
-      <p class={g.label}>Groups: section labels with dividers (web), gap layout, links</p>
+      <p class={g.label}>
+        Groups: section labels with dividers, links. The gap layout is Android parity only: M3 says gaps
+        aren't available on web, use a divider.
+      </p>
       <div class={g.row}>
         <Overflow label="Account" icon="account_circle">
           <Menu.Group label="Links">
@@ -132,7 +135,7 @@ const MenuDemo: Component = () => {
             </Menu.Item>
           </Menu.Group>
         </Overflow>
-        <Overflow label="Folder (gap layout)" icon="folder" layout="gap">
+        <Overflow label="Folder (gap layout, Android parity only)" icon="folder" layout="gap">
           <Menu.Group>
             <Menu.Item value="open" leadingIcon="folder_open">
               Open

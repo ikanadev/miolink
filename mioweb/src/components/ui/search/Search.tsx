@@ -34,6 +34,8 @@ export type SearchCloseReason = 'back' | 'escape' | 'outside' | 'select' | 'hist
 const WIDE_QUERY = '(min-width: 600px)';
 /** The bar's inline margins shrink from 24px to 12px when focused: it grows 12px per side. */
 const GROW = 12;
+const MIN_DOCKED_WIDTH = 360;
+const MAX_DOCKED_WIDTH = 720;
 
 export type SearchProps = Omit<
   JSX.HTMLAttributes<HTMLElement>,
@@ -211,8 +213,8 @@ export const Search: Component<SearchProps> = (props) => {
         fromY: r.top - GROW,
       };
     }
-    // Docked: 12px wider per side, at least 360px, inside the window.
-    const width = Math.min(vw, Math.max(360, r.width + GROW * 2));
+    // Docked: 12px wider per side, 360–720px (M3 Specs: docked container), inside the window.
+    const width = Math.min(vw, MAX_DOCKED_WIDTH, Math.max(MIN_DOCKED_WIDTH, r.width + GROW * 2));
     const left = Math.min(Math.max(0, r.left - (width - r.width) / 2), vw - width);
     return {
       top: r.top,

@@ -92,7 +92,7 @@ const LOCAL = [
 ] as const;
 
 const ITEM_SELECTOR = '[data-drawer-item]';
-/** Swipe toward the start edge: distance (share of the width) or speed (px/ms) that closes the modal (derived, spec §10f). */
+/** Swipe toward the start edge: distance (share of the width) or speed (px/ms) that closes the modal (derived). */
 const SWIPE_CLOSE_RATIO = 0.5;
 const SWIPE_CLOSE_VELOCITY = 0.5;
 /** Movement before a touch counts as a horizontal drag or a vertical scroll. */
@@ -254,7 +254,7 @@ export const NavigationDrawer: Component<NavigationDrawerProps> = (props) => {
           setInnerValue(next);
           local.onValueChange?.(next);
         }
-        // Navigation completes the modal's task (spec §2).
+        // Navigation completes the modal's task (M3 nav drawer guidelines).
         if (where === 'modal' && (local.closeOnSelect ?? true)) setOpen(false, 'select');
       },
     };
@@ -418,4 +418,8 @@ export const NavigationDrawerSection: Component<NavigationDrawerSectionProps> = 
 };
 
 /** A full-width divider between groups of destinations (never between single items). */
-export const NavigationDrawerDivider: Component = () => <li class={styles.divider} role="separator" />;
+export const NavigationDrawerDivider: Component = () => (
+  <li class={styles.dividerItem} role="none">
+    <div class={styles.divider} role="separator" />
+  </li>
+);

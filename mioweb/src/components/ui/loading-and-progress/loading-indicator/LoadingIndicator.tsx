@@ -1,13 +1,16 @@
 import { createEffect, on, splitProps, type Component, type JSX } from 'solid-js';
 import { createFrameLoop, prefersReducedMotion, springAt } from '../shared/motion';
+import { progressAria, withVars, type IndicatorColor } from '../shared/progress';
 import { morphPath } from './shapes';
 import styles from './loading-indicator.module.css';
 
-export type LoadingIndicatorProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'children' | 'role'> & {
+export type LoadingIndicatorProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'children' | 'role' | 'color'> & {
   /**
    * Accessible name describing what is loading ("Loading news article",
-   * "Refreshing page"). Omit it only when the indicator sits inside a
-   * control that already says it's busy.
+   * "Refreshing page"). Without it (or `aria-label` / `aria-labelledby`)
+   * the indicator is decorative: `aria-hidden`, no progressbar role. Omit
+   * it only when the indicator sits inside a control that already says
+   * it's busy.
    */
   label?: string;
   /** Circular primary-container container, for use over other content. Default false. */
@@ -16,10 +19,15 @@ export type LoadingIndicatorProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'ch
   size?: number;
   /** Stops the animation (the indicator stays on its current frame). */
   paused?: boolean;
+  /**
+   * `current` draws the shape in `currentColor`, the label or icon color
+   * of the button it sits in. Default `default`.
+   */
+  color?: IndicatorColor;
 };
 
 const SHAPES = 7;
-/* [Compose] values (loading-indicator.md §6.2), not md.sys.motion tokens. */
+/* Compose LoadingIndicator.kt values, not md.sys.motion tokens. */
 const MORPH_INTERVAL = 650;
 const MORPH_STIFFNESS = 200;
 const MORPH_DAMPING = 0.6;
@@ -31,14 +39,14 @@ const ROTATION_PERIOD = 4666;
  * short indeterminate waits (200ms-5s). Default (uncontained) or contained;
  * 24-240px.
  *
- * Exposed as an indeterminate progressbar (no value). The morph runs on one
- * shared requestAnimationFrame loop and stops while the indicator is off
- * screen or `paused`. With reduced motion it holds the first shape and only
- * spins slowly (CSS). Recolor it with `style={{ '--_color': 'currentColor' }}`
- * (e.g. inside a button).
+ * Exposed as an indeterminate progressbar (no value) when named, decorative
+ * otherwise. The morph runs on one shared requestAnimationFrame loop and
+ * stops while the indicator is off screen or `paused`. With reduced motion
+ * it holds the first shape and only spins slowly (CSS). Inside a button use
+ * `color="current"`.
  */
 export const LoadingIndicator: Component<LoadingIndicatorProps> = (props) => {
-  const [local, rest] = splitProps(props, ['label', 'contained', 'size', 'paused', 'class', 'style']);
+  const [local, rest] = splitProps(props, ['label', 'contained', 'size', 'paused', 'color', 'class', 'style']);
   let root: HTMLDivElement | undefined;
   let path: SVGPathElement | undefined;
   let start: number | undefined;
@@ -90,15 +98,13 @@ export const LoadingIndicator: Component<LoadingIndicatorProps> = (props) => {
     <div
       {...rest}
       ref={root}
-      role="progressbar"
-      aria-label={local.label}
+      {...progressAria(undefined, props)}
       class={local.class ? `${styles.root} ${local.class}` : styles.root}
       data-contained={local.contained ? '' : undefined}
       data-reduced={reduced() ? '' : undefined}
-      style={{
-        ...(size() ? { '--_size': `${size()}px` } : {}),
-        ...(typeof local.style === 'object' ? local.style : {}),
-      }}
+      data-paused={local.paused ? '' : undefined}
+      data-color={local.color === 'current' ? 'current' : undefined}
+      style={withVars(size() ? { '--_size': `${size()}px` } : {}, local.style)}
     >
       <svg class={styles.indicator} viewBox="0 0 100 100" aria-hidden="true">
         <path ref={path} class={styles.shape} />

@@ -121,6 +121,11 @@ const DatePickerDemo: Component = () => (
           defaultValue={[isoOffset(7), isoOffset(10)]}
           min={today}
         />
+        <Example
+          title="Modal range, no limits (scrolls both ways)"
+          variant="modal"
+          range
+        />
         <Example title="Modal input range" variant="modal-input" range />
         <ButtonLaunched />
       </div>

@@ -4,6 +4,7 @@ import { createMemo, createUniqueId, onMount, Show, splitProps, type Component, 
 import { Dynamic } from 'solid-js/web';
 import { Icon } from '../icon/Icon';
 import { Ripple } from '../shared/Ripple';
+import { setPointerModality, useKeyboardModality } from './focus-modality';
 import { useListContext } from './List';
 import styles from './list.module.css';
 
@@ -99,6 +100,7 @@ const LOCAL = [
 export const ListItem: Component<ListItemProps> = (props) => {
   const [local, rest] = splitProps(props, LOCAL);
   const ctx = useListContext();
+  const keyboardModality = useKeyboardModality();
 
   const lines = () =>
     local.lines ?? (local.overline && local.supportingText ? 3 : local.overline || local.supportingText ? 2 : 1);
@@ -171,11 +173,14 @@ export const ListItem: Component<ListItemProps> = (props) => {
         aria-disabled={local.disabled ? 'true' : undefined}
         data-disabled={local.disabled ? '' : undefined}
         data-highlighted={highlighted() ? '' : undefined}
+        data-focus-visible={keyboardModality() ? '' : undefined}
         class={`${itemAttrs().class} ${styles.row} ${styles.option}`}
         // Clicking an option must not move focus out of the input.
         onMouseDown={(e) => e.preventDefault()}
         onPointerMove={() => {
-          if (!local.disabled && !highlighted()) option.highlight(id);
+          if (local.disabled) return;
+          setPointerModality();
+          if (!highlighted()) option.highlight(id);
         }}
         onClick={(e) => {
           callHandler(rest.onClick, e);
@@ -215,6 +220,7 @@ export const ListItem: Component<ListItemProps> = (props) => {
         {...itemAttrs()}
         ref={el}
         item={item()}
+        data-focus-visible={keyboardModality() ? '' : undefined}
         class={`${itemAttrs().class} ${styles.row} ${styles.option}`}
       >
         <Ripple />

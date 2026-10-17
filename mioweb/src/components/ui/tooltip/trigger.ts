@@ -10,7 +10,7 @@ import { spread } from 'solid-js/web';
 
 export type TooltipPlacement = NonNullable<NonNullable<UseTooltipProps['positioning']>['placement']>;
 
-/** Why a tooltip closed (spec §9 events). */
+/** Why a tooltip closed. */
 export type TooltipCloseReason =
   | 'pointerleave'
   | 'blur'
@@ -35,13 +35,13 @@ type TriggerAttrs = Omit<JSX.HTMLAttributes<HTMLElement>, 'ref'> & {
 /** Props for the trigger. Call it (optionally with your own props) and spread the result. */
 export type TooltipTriggerProps = (userProps?: TriggerAttrs) => TriggerAttrs;
 
-/** Default show delay on hover (derived: spec §6 suggests ~500ms on web). */
+/** Default show delay on hover (derived: M3 gives no value; ~500ms is the common web delay). */
 export const SHOW_DELAY = 500;
-/** Hide delay after the pointer or focus leaves (spec §5: 1.5s). */
+/** Hide delay after the pointer or focus leaves (M3 Tooltips, Behavior: 1.5s). */
 export const HIDE_DELAY = 1500;
 /** Touch hold before a transient tooltip shows (derived: platform long-press timeout). */
 export const LONG_PRESS_MS = 500;
-/** Viewport padding used when shifting and flipping (spec §4.2: 8px increments). */
+/** Viewport padding used when shifting and flipping (M3 Tooltips, Placement: 8px increments). */
 export const OVERFLOW_PADDING = 8;
 
 // ---- One at a time ----------------------------------------------------------
@@ -49,7 +49,7 @@ export const OVERFLOW_PADDING = 8;
 type Entry = { close: (reason: TooltipCloseReason) => void };
 let current: Entry | null = null;
 
-/** Registers `entry` as the open tooltip and closes the previous one (spec §5). */
+/** Registers `entry` as the open tooltip and closes the previous one (M3: one tooltip at a time). */
 export const claimOpen = (entry: Entry) => {
   if (current && current !== entry) current.close('other-tooltip');
   current = entry;
@@ -109,7 +109,7 @@ export const renderTrigger = (
 // ---- Long press -------------------------------------------------------------
 
 /**
- * Touch long-press for transient tooltips (spec §5). `onOpen` runs after the
+ * Touch long-press for transient tooltips (M3 Tooltips, Behavior). `onOpen` runs after the
  * hold; `onRelease` when the finger lifts after a long press. `pressed()`
  * stays true until the next pointerdown, so the click that follows a long
  * press can be ignored.

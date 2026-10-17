@@ -20,7 +20,7 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  /* Spec §4.2: label row min-height 48px. */
+  /* M3 Specs: label row min-height 48px. */
   min-block-size: 48px;
   color: var(--md-sys-color-on-surface);
   cursor: pointer;
@@ -33,8 +33,8 @@
 }
 
 .label {
-  /* Derived (spec §4.3): body-large for standalone labels. The label sits
-     right after the 48px target, no extra gap (spec §4.2, derived). */
+  /* Derived: body-large for standalone labels. The label sits
+     right after the 48px target, no extra gap. */
   font-family: var(--md-sys-typescale-body-large-font);
   font-weight: var(--md-sys-typescale-body-large-weight);
   font-size: var(--md-sys-typescale-body-large-size);
@@ -43,7 +43,7 @@
   padding-inline-end: 4px; /* derived: keeps the text off the next control */
 }
 
-/* Derived (spec §11): disabled label is on-surface @ 0.38. */
+/* Derived: disabled label is on-surface @ 0.38. */
 .label[data-disabled] {
   color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
 }
@@ -67,7 +67,7 @@
   --_selected-fill: var(--md-sys-color-primary);
   --_icon-color: var(--md-sys-color-on-primary);
   /* State layer: on-surface when unselected; pressed shows the color of the
-     state being moved to (spec §4.1). */
+     state being moved to. */
   --_state-layer-color: var(--md-sys-color-on-surface);
   --_pressed-color: var(--md-sys-color-primary);
 }
@@ -95,7 +95,7 @@
   --_pressed-color: var(--md-sys-color-error);
 }
 
-/* Disabled wins over error (spec §5). Container opacity 0.38 through
+/* Disabled wins over error. Container opacity 0.38 through
    color-mix, so the surface check mark stays opaque. */
 :is(.control, .icon)[data-disabled],
 .root:has(> input:user-invalid) .control[data-disabled] {
@@ -132,7 +132,7 @@
   opacity: var(--md-sys-state-focus-state-layer-opacity);
 }
 
-/* Focus ring around the state layer circle (spec §3, derived). */
+/* Focus ring around the state layer circle (derived). */
 .control[data-focus-visible] {
   outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
   outline-offset: var(--md-sys-state-focus-indicator-outer-offset);
@@ -156,12 +156,12 @@
   box-sizing: border-box;
   inline-size: 18px;
   block-size: 18px;
-  /* 2px raw value: the spec has no sys shape token for it (spec §4.2). */
+  /* 2px raw value: the spec has no sys shape token for it. */
   border-radius: 2px;
   background-color: var(--_fill);
   /* Inset shadow instead of a border, so the glyph box stays fixed. */
   box-shadow: inset 0 0 0 var(--_outline-width) var(--_outline-color);
-  /* Derived (spec §6): fast effects spring for the fill and outline. */
+  /* Derived: fast effects spring for the fill and outline. */
   transition:
     background-color var(--md-sys-motion-spring-fast-effects-duration)
       var(--md-sys-motion-spring-fast-effects-easing),
@@ -181,10 +181,10 @@
   fill: none;
   stroke: var(--_icon-color);
   stroke-width: 2px; /* derived: matches the outline width */
-  /* Not mirrored in RTL: the check mark isn't directional (spec §6). */
+  /* Not mirrored in RTL: the check mark isn't directional. */
 }
 
-/* Hidden by default; leaving a selected state is instant (spec §6). */
+/* Hidden by default; leaving a selected state is instant. */
 .check {
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
@@ -197,7 +197,7 @@
   opacity: 0;
 }
 
-/* Check in: drawn from the short leg to the long leg (derived, spec §6). */
+/* Check in: drawn from the short leg to the long leg (derived). */
 :is(.control, .icon)[data-state='checked'] .check {
   stroke-dashoffset: 0;
   opacity: 1;
@@ -207,7 +207,7 @@
     opacity var(--md-sys-motion-duration-short1) linear;
 }
 
-/* Dash in: grows from the center (derived, spec §6). */
+/* Dash in: grows from the center (derived). */
 :is(.control, .icon)[data-state='indeterminate'] .dash {
   transform: scaleX(1);
   opacity: 1;
@@ -217,7 +217,7 @@
     opacity var(--md-sys-motion-duration-short1) linear;
 }
 
-/* Check <-> dash: 50ms cross-fade, no morph and no redraw (spec §6). */
+/* Check <-> dash: 50ms cross-fade, no morph and no redraw. */
 :is(.control, .icon)[data-state='indeterminate'] .check {
   stroke-dashoffset: 0;
   transition: opacity var(--md-sys-motion-duration-short1) linear;
@@ -233,7 +233,7 @@
     transition-duration: var(--md-sys-motion-duration-short1);
   }
 
-  /* No stroke draw: color changes only (spec §6). */
+  /* No stroke draw: color changes only. */
   .check,
   .dash,
   :is(.control, .icon)[data-state] .check,

@@ -1,5 +1,5 @@
 import { TagsInput, type TagsInputRootProps } from '@ark-ui/solid/tags-input';
-import { Index, Match, Show, splitProps, Switch, type Component } from 'solid-js';
+import { Index, Match, splitProps, Switch, type Component } from 'solid-js';
 import { Icon } from '../icon/Icon';
 import { Ripple } from '../shared/Ripple';
 import styles from './chip.module.css';
@@ -16,12 +16,14 @@ export type InputChipFieldProps = Omit<TagsInputRootProps, 'children' | 'asChild
 };
 
 /**
- * A text field whose entries become input chips (spec §6, §7, §9), built on
+ * A text field whose entries become input chips, built on
  * Ark UI `TagsInput`. Enter or the delimiter adds a chip; with the caret at
  * the start, Backspace (or ArrowLeft) selects the previous chip and a
  * second Backspace or Delete removes it; Enter or a double click on a chip
  * edits it as plain text. Focus stays in the text input, so the selected
- * chip is shown with the selected style instead of a focus ring.
+ * chip is shown with the selected style instead of a focus ring. The shell
+ * follows the outlined `TextField` (notched label; hover, focus, `invalid`
+ * and `disabled` colors).
  */
 export const InputChipField: Component<InputChipFieldProps> = (props) => {
   const [local, rest] = splitProps(props, ['label', 'icon', 'avatar', 'removeLabel', 'class', 'disabled']);
@@ -40,6 +42,9 @@ export const InputChipField: Component<InputChipFieldProps> = (props) => {
           <>
             <TagsInput.Label class={styles.fieldLabel}>{local.label}</TagsInput.Label>
             <TagsInput.Control class={styles.control}>
+              <fieldset class={styles.outline} aria-hidden="true">
+                <legend>{local.label}</legend>
+              </fieldset>
               <Index each={api().value}>
                 {(value, index) => {
                   const avatar = () => local.avatar?.(value());
@@ -51,7 +56,7 @@ export const InputChipField: Component<InputChipFieldProps> = (props) => {
                         data-chip=""
                         data-variant="input"
                         data-leading={avatar() ? 'avatar' : icon() ? 'icon' : undefined}
-                        data-trailing={local.disabled ? undefined : 'remove'}
+                        data-trailing="remove"
                         data-disabled={local.disabled ? '' : undefined}
                       >
                         <Ripple />
@@ -66,11 +71,9 @@ export const InputChipField: Component<InputChipFieldProps> = (props) => {
                           </Match>
                         </Switch>
                         <TagsInput.ItemText class={styles.label}>{value()}</TagsInput.ItemText>
-                        <Show when={!local.disabled}>
-                          <TagsInput.ItemDeleteTrigger class={styles.trailing}>
-                            <Icon name="close" />
-                          </TagsInput.ItemDeleteTrigger>
-                        </Show>
+                        <TagsInput.ItemDeleteTrigger class={styles.trailing}>
+                          <Icon name="close" />
+                        </TagsInput.ItemDeleteTrigger>
                       </TagsInput.ItemPreview>
                       <TagsInput.ItemInput class={styles.itemInput} />
                     </TagsInput.Item>

@@ -27,7 +27,7 @@ export type BottomSheetDetent = number | `${number}px` | `${number}rem`;
 
 const cx = (...classes: (string | undefined | false)[]) => classes.filter(Boolean).join(' ');
 
-/** Spec: a modal sheet opens at no more than 50% of the screen height. */
+/** M3: a modal sheet opens at no more than 50% of the screen height. */
 const DEFAULT_DETENTS: BottomSheetDetent[] = [0.5, 1];
 
 type ResolvedDetent = { value: BottomSheetDetent; height: number };
@@ -237,7 +237,11 @@ export type BottomSheetContentProps = Omit<Drawer.ContentProps, 'title' | 'child
   minimized?: boolean;
   /** Max width in px. Default 640. */
   maxWidth?: number;
-  /** Accessible name of the drag handle. Default "Resize sheet" (or "Close sheet" with a single detent). */
+  /**
+   * Accessible name of the drag handle. Default "Resize sheet", or "Close
+   * sheet" when the next press closes it (a single detent, or a standard
+   * sheet at its tallest detent).
+   */
   handleLabel?: string;
   /** Full-height modal sheets: accessible name of the close button. Default "Close". */
   closeLabel?: string;
@@ -306,17 +310,27 @@ export const BottomSheetContent = (props: BottomSheetContentProps) => {
     api().setOpen(false);
   };
 
-  /** Spec: selecting the handle cycles the preset heights, or closes with only one. */
+  /*
+   * M3: selecting the handle cycles the preset heights, or closes with only
+   * one. A standard sheet has no scrim and doesn't close on Escape, so after
+   * its tallest detent the handle closes it, giving a way to close it without
+   * dragging (M3 Behavior and Accessibility).
+   */
+  const closesNext = () => {
+    const points = resolved();
+    if (points.length <= 1) return true;
+    return !modal() && sheet.dismissible() && currentIndex(points) === points.length - 1;
+  };
   const onHandleClick = () => {
     if (sheet.dragged()) {
       sheet.resetDragged();
       return;
     }
-    const points = resolved();
-    if (points.length <= 1) {
+    if (closesNext()) {
       close('handle');
       return;
     }
+    const points = resolved();
     const next = points[(currentIndex(points) + 1) % points.length];
     api().setSnapPoint(next.value);
   };
@@ -380,7 +394,7 @@ export const BottomSheetContent = (props: BottomSheetContentProps) => {
               <button
                 type="button"
                 class={styles.handle}
-                aria-label={local.handleLabel ?? (single() ? 'Close sheet' : 'Resize sheet')}
+                aria-label={local.handleLabel ?? (closesNext() ? 'Close sheet' : 'Resize sheet')}
                 aria-describedby={heightText() ? descriptionId : undefined}
                 aria-disabled={single() && !sheet.dismissible() ? 'true' : undefined}
                 onPointerDown={() => sheet.resetDragged()}

@@ -9,18 +9,18 @@
  * data-icon-place ("active" | "inactive" | "none").
  *
  * .control (Slider.Control) is the hit area: the whole track box, at least
- * 48px across (spec §4.2). .track (Slider.Track) holds the .segment spans
+ * 48px across. .track (Slider.Track) holds the .segment spans
  * (data-pos picks their extent, data-active their color), the .stop dots
  * (data-state "active" | "inactive" | "hidden", data-end at the extremes)
  * and the inset .icon. .handle (Slider.Thumb, data-index) is the focusable
  * role="slider" pill, positioned by Ark, holding the .valueIndicator.
  *
  * No state layer and no ripple: the handle width change and the value
- * indicator are the interaction feedback (spec §4.1).
+ * indicator are the interaction feedback (M3 Specs).
  */
 
 .root {
-  /* Size set (XS default, spec §4.2). */
+  /* Size set (XS default, M3 Specs). */
   --_track: 16px;
   --_outer: 8px;
   --_handle-h: 44px;
@@ -32,7 +32,7 @@
   --_hw0: 4px;
   --_hw1: 4px;
   --_c0: var(--slider-thumb-offset-0);
-  --_c1: var(--slider-thumb-offset-1, 100%);
+  --_c1: var(--slider-thumb-offset-1);
 
   --_active-color: var(--md-sys-color-primary);
   --_inactive-color: var(--md-sys-color-secondary-container);
@@ -46,7 +46,7 @@
     var(--md-sys-motion-spring-fast-effects-easing);
 
   display: block;
-  /* Derived (spec §11): minimum track length. */
+  /* Derived: minimum track length. */
   min-inline-size: 120px;
   -webkit-tap-highlight-color: transparent;
 }
@@ -60,7 +60,7 @@
 .root[data-size='medium'] {
   --_track: 40px;
   --_outer: 12px;
-  /* Spec §4.2 conflict: measurement table 52px over the 44px token. */
+  /* M3 Specs conflict: the measurements table gives 52px, md.comp.slider.medium.active.handle.height 44dp. */
   --_handle-h: 52px;
 }
 
@@ -78,7 +78,7 @@
   --_icon-pad: 8px;
 }
 
-/* Focused or pressed handle narrows to 2px (spec §4.2); the gap stays 6px
+/* Focused or pressed handle narrows to 2px; the gap stays 6px
    from its edge, so the tracks lengthen by 1px. */
 .root[data-narrow='0'] {
   --_hw0: 2px;
@@ -141,8 +141,7 @@
 }
 
 /*
- * Each segment spans [--_start, --_end] along the axis (spec §4.2 "Derived
- * geometry"), with --_r-start / --_r-end for its two ends: the outer radius
+ * Each segment spans [--_start, --_end] along the axis (derived geometry), with --_r-start / --_r-end for its two ends: the outer radius
  * at a track end, 2px next to a handle. Radii larger than a short segment
  * are clamped by the browser, so its shape adjusts near the edge.
  */
@@ -193,7 +192,7 @@
 }
 
 /* Centered: active from the middle to the handle's gap edge, drawn over the
-   inactive track with no gap at the middle (spec §11, derived). */
+   inactive track with no gap at the middle (derived). */
 .segment[data-pos='center'] {
   --_start: min(50%, calc(var(--_c0) + var(--_hw0) / 2 + var(--_gap)));
   --_end: max(50%, calc(var(--_c0) - var(--_hw0) / 2 - var(--_gap)));
@@ -218,7 +217,7 @@
 .stop {
   position: absolute;
   inset-block-start: 50%;
-  /* Same travel as the handle centers (spec §4.2). */
+  /* Same travel as the handle centers. */
   inset-inline-start: calc(2px + var(--_p) * (100% - 4px));
   translate: -50% -50%;
   inline-size: 4px;
@@ -236,12 +235,12 @@
   background-color: var(--_stop-active-color);
 }
 
-/* Stops under a handle and its gaps are hidden (spec §4.2). */
+/* Stops under a handle and its gaps are hidden. */
 .stop[data-state='hidden'] {
   visibility: hidden;
 }
 
-/* Extreme stops: 4px from the track end to the dot's edge (spec §4.2). */
+/* Extreme stops: 4px from the track end to the dot's edge. */
 .stop[data-end] {
   translate: 0 -50%;
 }
@@ -276,7 +275,7 @@
   top: var(--md-sys-measurement-space50);
 }
 
-/* ---- Inset icon (standard M/L/XL only, spec §7) ---- */
+/* ---- Inset icon (standard M/L/XL only) ---- */
 
 .icon {
   --md-icon-size: var(--_icon-size);
@@ -286,7 +285,8 @@
   inset-block-start: 50%;
   translate: 0 -50%;
   inset-inline-start: var(--_icon-pad);
-  /* Derived (spec §4.1): on-primary on the active track. */
+  /* Derived: the stop colors, on-primary on the active track. M3 has no
+     disabled inset icon color, so it takes the disabled stop colors too. */
   color: var(--_stop-active-color);
   pointer-events: none;
   transition:
@@ -306,11 +306,6 @@
 
 .root[data-icon-place='none'] .icon {
   visibility: hidden;
-}
-
-.root[data-disabled] .icon {
-  /* Derived (spec §4.1): disabled icons match the disabled stops at 38%. */
-  opacity: 0.38;
 }
 
 .track[data-orientation='vertical'] .icon {
@@ -364,14 +359,14 @@
     background-color var(--_effects);
 }
 
-/* Derived (spec §5): system focus ring around the handle pill. */
+/* Derived: system focus ring around the handle pill. */
 .handle:focus-visible {
   outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
   outline-offset: var(--md-sys-state-focus-indicator-outer-offset);
 }
 
 /* During a pointer drag positions follow the pointer 1:1; widths still
-   animate (spec §6). */
+   animate. */
 .root[data-moving] .segment,
 .root[data-moving] .icon {
   transition: background-color var(--_effects), color var(--_effects);
@@ -393,22 +388,23 @@
 
 .valueIndicator {
   position: absolute;
-  /* Spec §4.2: 12px between the handle's top and the container. */
+  /* M3 Specs: 12px between the handle's top and the container. */
   bottom: calc(100% + var(--md-sys-measurement-space150));
   left: 50%;
   translate: -50% 0;
   display: grid;
   place-items: center;
   box-sizing: border-box;
-  /* Derived (spec §4.3): grows past 48px for long values. */
+  /* Derived: grows past 48px for long values. */
   min-inline-size: 48px;
   block-size: 44px;
-  padding-inline: 4px;
-  /* Derived (spec §4.2): pill. */
+  padding-inline: 4px; /* derived */
+  /* Derived: pill. */
   border-radius: var(--md-sys-shape-corner-full);
   background-color: var(--md-sys-color-inverse-surface);
   color: var(--md-sys-color-inverse-on-surface);
-  /* Spec §4.3: label-large font/size/line-height, body-large weight/tracking. */
+  /* md.comp.slider.value-indicator.label.label-text: label-large font/size/line-height,
+     body-large weight/tracking. */
   font-family: var(--md-sys-typescale-label-large-font);
   font-weight: var(--md-sys-typescale-body-large-weight);
   font-size: var(--md-sys-typescale-label-large-size);
@@ -425,7 +421,7 @@
     scale var(--_effects);
 }
 
-/* Derived (spec §10a): beside the handle, on the inline-start side. */
+/* Derived: beside the handle, on the left. */
 .handle[data-orientation='vertical'] .valueIndicator {
   bottom: auto;
   left: auto;
@@ -435,14 +431,14 @@
   transform-origin: right center;
 }
 
-/* Only the pressed or keyboard-focused handle shows its value (spec §5). */
+/* Only the pressed or keyboard-focused handle shows its value. */
 .root[data-labeled]:not([data-disabled])[data-narrow='0'] .handle[data-index='0'] .valueIndicator,
 .root[data-labeled]:not([data-disabled])[data-narrow='1'] .handle[data-index='1'] .valueIndicator {
   opacity: 1;
   scale: 1;
 }
 
-/* ---- Reduced motion (spec §6) ---- */
+/* ---- Reduced motion ---- */
 
 @media (prefers-reduced-motion: reduce) {
   /* No position or width animation; overrides the per-orientation and

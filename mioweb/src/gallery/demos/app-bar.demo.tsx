@@ -17,6 +17,15 @@ const Actions = () => (
 );
 
 /** A scrolling frame with an app bar at the top of its content. */
+const Logo = () => (
+  <svg width="96" height="32" viewBox="0 0 96 32" role="img" aria-label="miolink">
+    <rect width="32" height="32" rx="8" fill="currentColor" />
+    <text x="40" y="22" fill="currentColor" font-size="16" font-weight="500">
+      miolink
+    </text>
+  </svg>
+);
+
 const Frame: Component<{ label: string; bar: (target: HTMLElement | undefined) => JSX.Element }> = (
   props,
 ) => {
@@ -90,7 +99,7 @@ const AppBarDemo: Component = () => (
         title: 'Hides on scroll',
         scrollBehavior: 'enter-always',
         leading: <Menu />,
-        trailing: <IconButton color="standard" icon="more_vert" label="More options" />,
+        trailing: <IconButton color="standard" icon="share" label="Share" />,
       })}
     />
     <Frame
@@ -111,6 +120,43 @@ const AppBarDemo: Component = () => (
         centered: true,
         searchLeading: <Icon name="search" />,
         onSearchOpen: () => console.log('search open'),
+      })}
+    />
+    <Frame
+      label="Small, long title (clips to one line)"
+      bar={bar({
+        title: 'A very long title that does not fit in a small app bar',
+        subtitle: 'And a subtitle that is also far too long to fit',
+        leading: <Back />,
+        trailing: <Actions />,
+      })}
+    />
+    <Frame
+      label="Small, centered, long title"
+      bar={bar({
+        title: 'A very long centered title that does not fit',
+        centered: true,
+        leading: <Back />,
+        trailing: <Actions />,
+      })}
+    />
+    <Frame label="Small, logo" bar={bar({ image: <Logo />, leading: <Menu />, trailing: <Actions /> })} />
+    <Frame
+      label="Medium flexible, logo"
+      bar={bar({
+        variant: 'medium-flexible',
+        image: <Logo />,
+        title: 'Title under a logo',
+        leading: <Back />,
+      })}
+    />
+    <Frame
+      label="Small, transparent on scroll (buttons get a fill)"
+      bar={bar({
+        title: 'Transparent',
+        transparentOnScroll: true,
+        leading: <Back />,
+        trailing: <Actions />,
       })}
     />
     <Frame

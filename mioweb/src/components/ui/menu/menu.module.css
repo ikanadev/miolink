@@ -5,7 +5,8 @@
  * (standard | vibrant), data-layout (list | gap), data-density (0 to -3),
  * data-instant, data-focus-visible (last input was the keyboard), and Ark's
  * data-state, data-side and data-has-nested (one of its submenus is open).
- * Item state: data-highlighted (hover or keyboard), data-disabled,
+ * Item state: data-highlighted (hover or keyboard), aria-disabled (still
+ * focusable, so not Ark's data-disabled),
  * aria-checked / data-selected, aria-expanded (submenu open).
  *
  * The content sets the role variables (--_label-color, ...); each item maps
@@ -153,7 +154,8 @@
   --_density: -3;
 }
 
-/* ---- Layout: gap (each group its own segment; not recommended on web) ---- */
+/* ---- Layout: gap (each group its own segment). M3: gaps aren't available on
+   web, use a divider; this exists for parity with the Android client. ---- */
 
 .content[data-layout='gap']:not([data-variant='baseline']) {
   --_background: transparent;
@@ -370,7 +372,7 @@
   outline-offset: var(--_focus-ring-offset);
 }
 
-.content[data-focus-visible] .item[data-highlighted]::before {
+.content[data-focus-visible] .item[data-highlighted]:not([aria-disabled='true'])::before {
   opacity: var(--md-sys-state-focus-state-layer-opacity);
 }
 
@@ -398,7 +400,7 @@
   --_shape-bottom: var(--_item-selected-shape);
 }
 
-.item[data-disabled] {
+.item[aria-disabled='true'] {
   --_item-label: color-mix(in srgb, var(--_disabled-color) 38%, transparent);
   --_item-supporting: var(--_item-label);
   --_item-trailing-text: var(--_item-label);
@@ -407,7 +409,7 @@
 }
 
 /* Vibrant gives no selected + disabled container opacity; derived: the standard 0.38. */
-.item[data-disabled]:is([aria-checked='true'], [data-selected]) {
+.item[aria-disabled='true']:is([aria-checked='true'], [data-selected]) {
   --_item-background: color-mix(in srgb, var(--_selected-container-color) 38%, transparent);
   --_item-label: color-mix(in srgb, var(--_selected-color) 38%, transparent);
 }

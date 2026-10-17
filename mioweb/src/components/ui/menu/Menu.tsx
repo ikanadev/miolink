@@ -63,8 +63,8 @@ export type MenuRootProps = ArkMenu.RootProps & {
   variant?: MenuVariant;
   /**
    * Default `list`: one surface, groups separated by `Menu.Divider` (the web
-   * recommendation). `gap`: each `Menu.Group` is its own segment, 2px apart.
-   * Use at most 1-2 gaps and never in a scrolling menu.
+   * recommendation). `gap`: each `Menu.Group` is its own segment, 2px apart,
+   * for parity with Android only; M3 says gaps aren't available on web.
    */
   layout?: MenuLayout;
   /** Default 0. Each step removes 4px from the item height. */
@@ -118,6 +118,23 @@ export const MenuContextTrigger = (props: MenuContextTriggerProps) => <ArkMenu.C
 
 // ---- Content ----
 
+/*
+ * Disabled items take aria-disabled instead of Ark's `disabled`: Ark leaves
+ * disabled items out of arrow keys, Home/End and typeahead, but M3 says they
+ * stay focusable. Clicks on them (also Ark's click on Enter/Space) stop here,
+ * before Ark selects the item or closes the menu.
+ */
+const blockDisabledSelect = (e: MouseEvent) => {
+  const item = (e.target as Element | null)?.closest?.('[role^="menuitem"]');
+  if (item?.getAttribute('aria-disabled') !== 'true') return;
+  e.preventDefault();
+  e.stopPropagation();
+};
+
+const disabledAttrs = (disabled: boolean | undefined) => ({
+  'aria-disabled': disabled ? ('true' as const) : undefined,
+});
+
 export type MenuContentProps = ArkMenu.ContentProps;
 
 /** The menu surface, rendered in a portal and positioned against its trigger. */
@@ -138,6 +155,7 @@ export const MenuContent = (props: MenuContentProps) => {
           data-instant={style()?.instant ? '' : undefined}
           data-focus-visible={modality() === 'keyboard' ? '' : undefined}
           aria-orientation="vertical"
+          {...({ 'oncapture:click': blockDisabledSelect } as JSX.HTMLAttributes<HTMLDivElement>)}
         >
           {local.children}
         </ArkMenu.Content>
@@ -247,8 +265,8 @@ export type MenuItemProps = ItemSlots &
 
 /**
  * An action. `onSelect` runs on click, Enter or Space; `closeOnSelect={false}`
- * keeps the menu open; `valueText` sets the typeahead text; disabled items
- * stay visible.
+ * keeps the menu open; `valueText` sets the typeahead text; `disabled` items
+ * stay visible and focusable but can't be selected.
  */
 export const MenuItem = (props: MenuItemProps) => {
   const [slots, local, rest] = splitProps(props, SLOTS, [
@@ -258,6 +276,7 @@ export const MenuItem = (props: MenuItemProps) => {
     'rel',
     'selected',
     'valueText',
+    'disabled',
   ]);
   const label = resolveChildren(() => slots.children);
   const body = () => (
@@ -269,6 +288,7 @@ export const MenuItem = (props: MenuItemProps) => {
     class: cx(styles.item, local.class),
     valueText: local.valueText ?? textOf(label()),
     'data-selected': local.selected ? '' : undefined,
+    ...disabledAttrs(local.disabled),
   });
   return (
     <Show
@@ -299,11 +319,12 @@ export type MenuCheckboxItemProps = ItemSlots & Omit<ArkMenu.CheckboxItemProps, 
  * 12px corners and show a check. Keeps the menu open by default.
  */
 export const MenuCheckboxItem = (props: MenuCheckboxItemProps) => {
-  const [slots, local, rest] = splitProps(props, SLOTS, ['class', 'closeOnSelect', 'valueText']);
+  const [slots, local, rest] = splitProps(props, SLOTS, ['class', 'closeOnSelect', 'valueText', 'disabled']);
   const label = resolveChildren(() => slots.children);
   return (
     <ArkMenu.CheckboxItem
       {...rest}
+      {...disabledAttrs(local.disabled)}
       closeOnSelect={local.closeOnSelect ?? false}
       valueText={local.valueText ?? textOf(label())}
       class={cx(styles.item, local.class)}
@@ -317,11 +338,12 @@ export type MenuRadioItemProps = ItemSlots & Omit<ArkMenu.RadioItemProps, 'child
 
 /** Single-select item (role menuitemradio) inside a `Menu.RadioGroup`. Closes the menu by default. */
 export const MenuRadioItem = (props: MenuRadioItemProps) => {
-  const [slots, local, rest] = splitProps(props, SLOTS, ['class', 'valueText']);
+  const [slots, local, rest] = splitProps(props, SLOTS, ['class', 'valueText', 'disabled']);
   const label = resolveChildren(() => slots.children);
   return (
     <ArkMenu.RadioItem
       {...rest}
+      {...disabledAttrs(local.disabled)}
       valueText={local.valueText ?? textOf(label())}
       class={cx(styles.item, local.class)}
     >

@@ -5,7 +5,7 @@
  * then .control, the 52x32 track (Switch.Control), and a visually hidden
  * native input (role="switch") that takes focus. Inside the track,
  * .handleContainer is a 32x32 box at the inline start, moved 20px to the
- * end when checked (spec §4.2), holding the 40px .stateLayer (with the
+ * end when checked, holding the 40px .stateLayer (with the
  * Ripple) and the .handle (Switch.Thumb). Root, Control, Label and Thumb
  * carry Ark's data-state ("checked" | "unchecked"), data-hover,
  * data-focus-visible, data-active and data-disabled. data-key-pressed (set
@@ -24,9 +24,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
-  /* Derived (spec §11): 16px between the text and the switch. */
+  /* Derived: 16px between the text and the switch. */
   gap: 16px;
-  /* Spec §3: 48px tall target. */
+  /* M3 Specs: 48px tall target. */
   min-block-size: 48px;
   color: var(--md-sys-color-on-surface);
   cursor: pointer;
@@ -44,7 +44,7 @@
   min-inline-size: 0;
 }
 
-/* Derived (spec §4.3): body-large label, body-medium supporting text. */
+/* Derived: body-large label, body-medium supporting text. */
 .label {
   font-family: var(--md-sys-typescale-body-large-font);
   font-weight: var(--md-sys-typescale-body-large-weight);
@@ -62,7 +62,7 @@
   letter-spacing: var(--md-sys-typescale-body-medium-tracking);
 }
 
-/* Derived (spec §10c): disabled text is on-surface @ 0.38. */
+/* Derived: disabled text is on-surface @ 0.38. */
 :is(.label, .supporting)[data-disabled] {
   color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
 }
@@ -83,7 +83,7 @@
   --_outline-color: var(--md-sys-color-outline);
   --_handle-color: var(--md-sys-color-outline);
   --_icon-color: var(--md-sys-color-surface-container-highest);
-  /* Spec §4.1: the pressed layer keeps the current selection's color. */
+  /* M3 Specs: the pressed layer keeps the current selection's color. */
   --_state-layer-color: var(--md-sys-color-on-surface);
   --_handle-size: 16px;
   --_offset: 0px;
@@ -95,7 +95,7 @@
 
 .control[data-state='checked'] {
   --_track-color: var(--md-sys-color-primary);
-  /* Derived (spec §4.1): no visible outline when selected. */
+  /* Derived: no visible outline when selected. */
   --_outline-color: var(--md-sys-color-primary);
   --_handle-color: var(--md-sys-color-on-primary);
   --_icon-color: var(--md-sys-color-primary);
@@ -105,7 +105,7 @@
   --_offset: 20px;
 }
 
-/* Hover, focus and pressed change the handle color (spec §5). */
+/* Hover, focus and pressed change the handle color. */
 .control:is([data-hover], [data-focus-visible], [data-active], [data-key-pressed]) {
   --_handle-color: var(--md-sys-color-on-surface-variant);
 }
@@ -114,12 +114,12 @@
   --_handle-color: var(--md-sys-color-primary-container);
 }
 
-/* Pressed wins over every other size (spec §4.2). */
+/* Pressed wins over every other size. */
 .control:is([data-active], [data-key-pressed]):not([data-disabled]) {
   --_handle-size: 28px;
 }
 
-/* Disabled: opacities through color-mix, not on the elements (spec §4.1). */
+/* Disabled: opacities through color-mix, not on the elements. */
 .control[data-disabled] {
   --_track-color: color-mix(in srgb, var(--md-sys-color-surface-container-highest) 12%, transparent);
   --_outline-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
@@ -155,7 +155,7 @@
 }
 
 /* Focus lives on the hidden input; the ring follows the track pill
-   (spec §3, derived). */
+   (derived). */
 .control[data-focus-visible] {
   outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
   outline-offset: var(--md-sys-state-focus-indicator-outer-offset);
@@ -170,7 +170,7 @@
 .handleContainer {
   position: absolute;
   inset-block: 0;
-  /* Logical offset, so RTL starts at the right and slides left (spec §6). */
+  /* Logical offset, so RTL starts at the right and slides left. */
   inset-inline-start: var(--_offset);
   display: grid;
   place-items: center;
@@ -182,7 +182,7 @@
 .stateLayer {
   composes: interactive from '../shared/interaction.module.css';
   position: absolute;
-  /* 40px circle centered on the 32px container (spec §4.2). */
+  /* 40px circle centered on the 32px container. */
   inset: -4px;
   border-radius: var(--md-sys-shape-corner-full);
 }
@@ -217,7 +217,7 @@
   block-size: var(--_handle-size);
   border-radius: var(--md-sys-shape-corner-full);
   background-color: var(--_handle-color);
-  /* Spec §6: fast spatial spring for size, fast effects for color. */
+  /* M3 Motion: fast spatial spring for size, fast effects for color. */
   transition:
     inline-size var(--md-sys-motion-spring-fast-spatial-duration)
       var(--md-sys-motion-spring-fast-spatial-easing),
@@ -231,7 +231,7 @@
   grid-area: 1 / 1;
   color: var(--_icon-color);
   opacity: 0;
-  /* Derived (spec §6): icons scale in from 0.5. */
+  /* Derived: icons scale in from 0.5. */
   scale: 0.5;
   transition:
     opacity var(--md-sys-motion-spring-fast-effects-duration)
@@ -249,7 +249,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* Spec §6: snap position and size, keep short color changes. motion.css
+  /* Snap position and size, keep short color changes. motion.css
      already shortens the springs; this removes the overshoot entirely. */
   .handleContainer,
   .handle {

@@ -76,13 +76,25 @@ const ExtendedFabDemo: Component = () => {
           <ExtendedFab icon="send" mirror label="إرسال" />
         </div>
       </div>
-      <p class={g.label}>Baseline (not recommended): primary container, surface, branded, lowered</p>
+      <p class={g.label}>Baseline (not recommended): primary container with and without icon, surface, branded, lowered</p>
       <div class={g.row}>
         <ExtendedFab size="baseline" icon="edit" label="Compose" />
+        <ExtendedFab size="baseline" label="Compose" />
         <ExtendedFab size="baseline" color="surface" icon="edit" label="Compose" />
         <ExtendedFab size="baseline" color="surface" lowered icon="edit" label="Compose" />
         <ExtendedFab size="baseline" color="branded" icon="edit" label="Compose" />
         <ExtendedFab size="baseline" color="branded" lowered icon="edit" label="Compose" />
+      </div>
+      <p class={g.label}>Surface and branded always use the baseline size, whatever `size` says</p>
+      <div class={g.row}>
+        <ExtendedFab size="large" color="surface" icon="edit" label="Compose" />
+        <ExtendedFab
+          color="branded"
+          icon="edit"
+          label="Compose"
+          extended={extended()}
+          onClick={() => setExtended((v) => !v)}
+        />
       </div>
     </div>
   );

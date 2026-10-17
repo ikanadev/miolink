@@ -2,9 +2,10 @@
  * Extended FAB.
  *
  * Host, elevation and enter/exit come from the shared FAB base. Attributes:
- * data-size (small | medium | large | baseline), data-color, data-lowered
- * (surface/branded only), data-extended ("true" | "false"; collapsed only
- * when there is an icon), data-visible. No disabled state.
+ * data-size (small | medium | large | baseline; always baseline for surface
+ * and branded, the only size their tokens define), data-color, data-lowered
+ * (surface/branded only), data-icon, data-extended ("true" | "false";
+ * collapsed only when there is an icon), data-visible. No disabled state.
  */
 .root {
   composes: base from '../shared/fab-base.module.css';
@@ -17,11 +18,11 @@
   --_leading-space: var(--md-sys-measurement-space200);
   --_icon-label-space: var(--md-sys-measurement-space100);
   --_trailing-space: var(--md-sys-measurement-space200);
-  /* Derived: never narrower than a FAB of the same height (spec §4.2). */
+  /* Derived: never narrower than a FAB of the same height. */
   --_min-width: var(--_height);
   --_font: var(--md-sys-typescale-title-medium-font);
   --_weight: var(--md-sys-typescale-title-medium-weight);
-  --_size: var(--md-sys-typescale-title-medium-size);
+  --_label-size: var(--md-sys-typescale-title-medium-size);
   --_line-height: var(--md-sys-typescale-title-medium-line-height);
   --_tracking: var(--md-sys-typescale-title-medium-tracking);
 
@@ -34,7 +35,7 @@
   --_padding-start: var(--_leading-space);
   --_padding-end: var(--_trailing-space);
   --_gap: var(--_icon-label-space);
-  /* Collapse/expand geometry: default spatial spring (derived, spec §6). */
+  /* Collapse/expand geometry: default spatial spring (derived). */
   --_transition-extra:
     padding var(--md-sys-motion-spring-default-spatial-duration)
       var(--md-sys-motion-spring-default-spatial-easing),
@@ -47,14 +48,14 @@
   padding-inline: var(--_padding-start) var(--_padding-end);
   font-family: var(--_font);
   font-weight: var(--_weight);
-  font-size: var(--_size);
+  font-size: var(--_label-size);
   line-height: var(--_line-height);
   letter-spacing: var(--_tracking);
 }
 
 /* A one-column grid whose track animates 1fr <-> 0fr, so the width follows
    the label's own width without measuring it. The text stays in the DOM
-   when collapsed and keeps naming the button (spec §8). */
+   when collapsed and keeps naming the button (M3 Accessibility). */
 .labelWrap {
   display: grid;
   grid-template-columns: 1fr;
@@ -103,7 +104,7 @@
   --_trailing-space: 26px;
   --_font: var(--md-sys-typescale-title-large-font);
   --_weight: var(--md-sys-typescale-title-large-weight);
-  --_size: var(--md-sys-typescale-title-large-size);
+  --_label-size: var(--md-sys-typescale-title-large-size);
   --_line-height: var(--md-sys-typescale-title-large-line-height);
   --_tracking: var(--md-sys-typescale-title-large-tracking);
 }
@@ -118,7 +119,7 @@
   --_trailing-space: 28px;
   --_font: var(--md-sys-typescale-headline-small-font);
   --_weight: var(--md-sys-typescale-headline-small-weight);
-  --_size: var(--md-sys-typescale-headline-small-size);
+  --_label-size: var(--md-sys-typescale-headline-small-size);
   --_line-height: var(--md-sys-typescale-headline-small-line-height);
   --_tracking: var(--md-sys-typescale-headline-small-tracking);
 }
@@ -127,6 +128,7 @@
 .root[data-size='baseline'] {
   --_height: 56px;
   --_icon-size: 24px;
+  --_icon-optical-size: 24;
   --_shape: var(--md-sys-shape-corner-large);
   --_leading-space: var(--md-sys-measurement-space200);
   --_icon-label-space: var(--md-sys-measurement-space150);
@@ -134,9 +136,16 @@
   --_min-width: 80px;
   --_font: var(--md-sys-typescale-label-large-font);
   --_weight: var(--md-sys-typescale-label-large-weight);
-  --_size: var(--md-sys-typescale-label-large-size);
+  --_label-size: var(--md-sys-typescale-label-large-size);
   --_line-height: var(--md-sys-typescale-label-large-line-height);
   --_tracking: var(--md-sys-typescale-label-large-tracking);
+}
+
+/* Without an icon the tokens still give 16/20, which puts the label 4px off
+   center; 20/20 (the trailing space on both sides) keeps it centered, as
+   M3's earlier Android implementation did (derived). */
+.root[data-size='baseline']:not([data-icon]) {
+  --_leading-space: var(--md-sys-measurement-space250);
 }
 
 /* Collapsed baseline is a 56px FAB, not an 80px-wide one. */
@@ -213,13 +222,17 @@
   --_icon-color: var(--md-sys-color-primary);
 }
 
-/* The source lists no branded icon color; primary, like surface (derived). */
+/* The tokens list no branded icon color; primary, like surface (derived).
+   md.comp.extended-fab.branded.icon.size is 36dp, a slot sized for a
+   multicolor brand logo. */
 .root[data-color='branded'] {
   --_label-color: var(--md-sys-color-on-surface);
   --_icon-color: var(--md-sys-color-primary);
+  --_icon-size: 36px;
+  --_icon-optical-size: 36;
 }
 
-.root[data-color='branded']:is(:focus-visible, :active) {
+.root[data-color='branded']:is(:focus-visible, :active, [data-key-pressed]) {
   --_label-color: var(--md-sys-color-primary);
 }
 

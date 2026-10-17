@@ -22,9 +22,15 @@ export type ExtendedFabProps = Omit<
   icon?: string;
   /** Mirror the glyph in RTL (directional icons such as send). */
   mirror?: boolean;
-  /** Default `small` (56px). `baseline` is not recommended in M3 Expressive. */
+  /**
+   * Default `small` (56px). `baseline` is not recommended in M3 Expressive.
+   * Ignored for `surface` and `branded`, which always use `baseline`.
+   */
   size?: ExtendedFabSize;
-  /** Default `primary-container`. `surface` and `branded` are baseline styles, not recommended. */
+  /**
+   * Default `primary-container`. `surface` and `branded` are baseline styles,
+   * not recommended, and only come in the baseline size.
+   */
   color?: ExtendedFabColor;
   /** Surface/branded only: lowered container (surface-container-low, level 1). */
   lowered?: boolean;
@@ -71,15 +77,18 @@ export const ExtendedFab: Component<ExtendedFabProps> = (props) => {
 
   const extended = () => local.icon === undefined || (local.extended ?? true);
   const visible = () => local.visible ?? true;
+  const size = (): ExtendedFabSize =>
+    local.color === 'surface' || local.color === 'branded' ? 'baseline' : (local.size ?? 'small');
 
   const rootProps = () => ({
     ...rest,
     type: local.href === undefined ? ('button' as const) : undefined,
     href: local.href,
     class: local.class ? `${styles.root} ${local.class}` : styles.root,
-    'data-size': local.size ?? 'small',
+    'data-size': size(),
     'data-color': local.color ?? 'primary-container',
     'data-lowered': local.lowered ? '' : undefined,
+    'data-icon': local.icon ? '' : undefined,
     'data-extended': String(extended()),
     'data-visible': String(visible()),
     'aria-hidden': visible() ? undefined : ('true' as const),
@@ -89,7 +98,7 @@ export const ExtendedFab: Component<ExtendedFabProps> = (props) => {
   return (
     <Tooltip
       label={local.label}
-      // No tooltip while the label is visible (spec §8).
+      // No tooltip while the label is visible (M3 Accessibility).
       disabled={extended() || !visible()}
       asChild={(trigger) => (
         <Dynamic

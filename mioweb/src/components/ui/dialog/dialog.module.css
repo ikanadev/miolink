@@ -17,7 +17,9 @@
 .scrim {
   position: fixed;
   inset: 0;
-  z-index: calc(var(--z-index, 1000) - 1);
+  /* Zag sets --layer-index (and --z-index) on the backdrop and positioner too;
+     the scrim sits one step below its own layer's content. */
+  z-index: calc(999 + var(--layer-index, 0));
   /* Scrim role at 32% (guidelines, Elevation). */
   background: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
 }
@@ -36,7 +38,7 @@
 .positioner {
   position: fixed;
   inset: 0;
-  z-index: var(--z-index, 1000);
+  z-index: calc(1000 + var(--layer-index, 0));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -73,7 +75,8 @@
   --_headline-color: var(--md-sys-color-on-surface);
   --_supporting-text-color: var(--md-sys-color-on-surface-variant);
   --_action-color: var(--md-sys-color-primary);
-  /* Derived: dividers are not tokenized; standard M3 divider color. */
+  /* md.comp.dialog.with-divider.divider.color (deprecated) is outline; this
+     uses outline-variant, the current M3 divider color. */
   --_divider-color: var(--md-sys-color-outline-variant);
   --_padding: var(--md-sys-measurement-space300);
   --_headline-font: var(--md-sys-typescale-headline-small-font);
@@ -186,8 +189,11 @@
   /* Scrolling never chains to the (locked) page. */
   overscroll-behavior: contain;
   padding-inline: var(--_padding);
-  /* Transparent until shown, so dividers don't shift the layout. */
+  /* Transparent until shown, so dividers don't shift the layout. The -1px
+     margins put each border inside the neighbor's padding, so the spec gaps
+     (16 headline to body, 24 body to actions) stay exact. */
   border-block: 1px solid transparent;
+  margin-block: -1px;
   outline: none;
 }
 
@@ -222,6 +228,7 @@
 .container[data-layout='full-screen'] .body {
   padding: var(--_padding);
   border-block: 0;
+  margin-block: 0;
 }
 
 /* ---- Basic: actions (pinned at the bottom) ---- */
@@ -242,9 +249,9 @@
   --_icon-color: var(--_action-color);
 }
 
-/* Stacked: confirming above dismissive, at the trailing edge. */
+/* Stacked: confirming above dismissive (first in the DOM), at the trailing edge. */
 .container[data-stacked] .actions {
-  flex-direction: column-reverse;
+  flex-direction: column;
   align-items: flex-end;
 }
 
@@ -295,6 +302,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: var(--md-sys-measurement-space100);
+  box-sizing: border-box;
   min-block-size: 56px;
   /* Derived: same side padding as the content. */
   padding-inline: var(--_padding);
@@ -316,18 +324,16 @@
   opacity: 0;
 }
 
-/* Derived: a circular indeterminate indicator until a loading indicator component exists. */
+/* Circular indicator in the action color (the busy button itself is marked
+   disabled), centered over the hidden label. */
 .progress {
   position: absolute;
+  color: var(--_action-color);
   inset: 0;
-  box-sizing: border-box;
-  inline-size: 20px;
-  block-size: 20px;
-  margin: auto;
-  border: 2px solid var(--_action-color, var(--md-sys-color-primary));
-  border-block-start-color: transparent;
-  border-radius: var(--md-sys-shape-corner-full);
-  animation: spin 1s linear infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
 }
 
 /* ---- Motion ---- */
@@ -370,10 +376,6 @@
 
   .container[data-layout][data-state='closed'] {
     animation: fade-out var(--md-sys-motion-duration-short3) var(--md-sys-motion-easing-linear);
-  }
-
-  .progress {
-    animation-duration: 2s;
   }
 }
 
@@ -421,19 +423,8 @@
   }
 }
 
-@keyframes spin {
-  to {
-    rotate: 1turn;
-  }
-}
-
 @media (forced-colors: active) {
   .container {
     border: 1px solid CanvasText;
-  }
-
-  .progress {
-    border-color: ButtonText;
-    border-block-start-color: transparent;
   }
 }

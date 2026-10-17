@@ -10,7 +10,8 @@
 .group {
   /* Layout margins: 16px compact, 24px medium and up (guidelines, Layout). */
   --_margin: var(--md-sys-measurement-space200);
-  --_bottom-offset: var(--md-snackbar-bottom-offset, 0px);
+  /* Set inline from SnackbarHost's `bottomOffset`. */
+  --_bottom-offset: 0px;
 
   /* Ark sets the maximum z-index inline; overlays use the shared layer scale. */
   z-index: calc(1000 + var(--layer-index, 0)) !important;
@@ -36,12 +37,12 @@
   --_text-tracking: var(--md-sys-typescale-body-medium-tracking);
   --_action-color: var(--md-sys-color-inverse-primary);
   --_close-color: var(--md-sys-color-inverse-on-surface);
-  /* Paddings aren't in the spec (4.2, derived): 16 start, 8 end with buttons,
+  /* Paddings aren't in the M3 specs (derived): 16 start, 8 end with buttons,
      14 above and below the text, so two lines make the 68px token height. */
   --_leading-space: var(--md-sys-measurement-space200);
   --_trailing-space: var(--md-sys-measurement-space200);
   --_text-block-space: var(--md-sys-measurement-space175);
-  /* Enter: a short rise from the bottom edge (derived, spec 6). */
+  /* Enter: a short rise from the bottom edge (derived, M3 Behavior). */
   --_enter-distance: var(--md-sys-measurement-space100);
 
   display: flex;
@@ -93,12 +94,16 @@
   align-items: center;
   gap: var(--md-sys-measurement-space50);
   margin-inline-start: auto;
-  /* The secondary focus ring has too little contrast on inverse-surface
-     (spec 5, derived): use inverse-primary inside the snackbar. */
-  --md-sys-color-secondary: var(--md-sys-color-inverse-primary);
 }
 
-/* ---- Longer action: on its own line, at the end (spec 2) ---- */
+/* The secondary focus ring has too little contrast on inverse-surface
+   (derived; md.comp.snackbar has no focus indicator token): use
+   inverse-primary inside the snackbar. */
+.actions :is(button, a):focus-visible {
+  outline-color: var(--md-sys-color-inverse-primary);
+}
+
+/* ---- Longer action: on its own line, at the end (M3 Guidelines) ---- */
 
 .root[data-long-action] {
   flex-direction: column;
@@ -116,7 +121,7 @@
 
 /* ---- Width: compact fills the width; wider windows fit the text ---- */
 
-/* 344-672px, as common M3 web implementations (derived; spec 4.2 gives no values). */
+/* 344-672px, as common M3 web implementations (derived; M3 gives no values). */
 @media (min-width: 600px) {
   .root {
     inset-inline: 0 auto;
@@ -138,7 +143,7 @@
   outline-offset: var(--md-sys-state-focus-indicator-outer-offset);
 }
 
-/* ---- Enter and exit (spec 6; legacy enter/exit tokens) ---- */
+/* ---- Enter and exit (M3 Behavior; legacy enter/exit tokens) ---- */
 
 .root[data-mounted][data-state='open'] {
   opacity: 1;

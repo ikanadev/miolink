@@ -1,4 +1,9 @@
 .ripple {
+  /* Set inline by Ripple.tsx on press. */
+  --_x: 50%;
+  --_y: 50%;
+  --_size: 0px;
+
   position: absolute;
   inset: 0;
   z-index: -1;
@@ -10,12 +15,12 @@
 .ripple::after {
   content: '';
   position: absolute;
-  left: calc(var(--_x, 50%) - var(--_size, 0px) / 2);
-  top: calc(var(--_y, 50%) - var(--_size, 0px) / 2);
-  width: var(--_size, 0px);
-  height: var(--_size, 0px);
+  left: calc(var(--_x) - var(--_size) / 2);
+  top: calc(var(--_y) - var(--_size) / 2);
+  width: var(--_size);
+  height: var(--_size);
   border-radius: 50%;
-  background: var(--_state-layer-color, currentColor);
+  background: var(--_state-layer-color);
   opacity: 0;
   scale: 0.2;
 }

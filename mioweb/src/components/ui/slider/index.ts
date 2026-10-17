@@ -1,5 +1,6 @@
 export {
   Slider,
+  type SliderDir,
   type SliderOrientation,
   type SliderProps,
   type SliderSize,

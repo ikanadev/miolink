@@ -46,8 +46,9 @@ export type CardProps = JSX.HTMLAttributes<HTMLElement> & {
  * - Directly actionable: put one `CardAction` (link with `href`, or button)
  *   inside, usually around the headline text. It stretches over the whole
  *   card, which then gets the state layer, ripple, focus ring and hover
- *   elevation. Other controls stay outside the action in the DOM (never
- *   nested) and sit above it.
+ *   elevation. M3 keeps other actions off an actionable surface; a single
+ *   overflow menu button is the allowed exception. It stays outside the
+ *   action in the DOM (never nested) and sits above it.
  */
 export const Card: Component<CardProps> = (props) => {
   const [local, rest] = splitProps(props, [
@@ -232,7 +233,11 @@ export const CardSupportingText: Component<CardTextProps> = (props) => {
   );
 };
 
-/** Row of buttons or icon buttons at the end of the card. Only in non-actionable cards, or beside a `CardAction`. */
+/**
+ * Row of buttons or icon buttons at the end of the card, for non-actionable
+ * cards. M3 keeps actions off an actionable surface; the one exception is a
+ * single overflow menu button beside a `CardAction`.
+ */
 export const CardActions: Component<DivProps> = (props) => {
   const [local, rest] = splitProps(props, ['class']);
   return <div {...rest} class={merge(styles.actions, local.class)} />;

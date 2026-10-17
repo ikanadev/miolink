@@ -17,12 +17,13 @@ import styles from './slider.module.css';
 /**
  * `standard`: one value, active track from the minimum. `centered`: one
  * value, active track from the middle. `range`: two handles, active track
- * between them (spec §2).
+ * between them.
  */
 export type SliderVariant = 'standard' | 'centered' | 'range';
-/** Spec sizes XS–XL; XL is for hero moments only (spec §2). */
+/** Sizes XS–XL; XL is for hero moments only (M3 Guidelines). */
 export type SliderSize = 'xsmall' | 'small' | 'medium' | 'large' | 'xlarge';
 export type SliderOrientation = 'horizontal' | 'vertical';
+export type SliderDir = 'ltr' | 'rtl';
 
 export type SliderProps = Omit<
   JSX.HTMLAttributes<HTMLDivElement>,
@@ -34,6 +35,8 @@ export type SliderProps = Omit<
   size?: SliderSize;
   /** Default `horizontal`. Vertical puts the minimum at the bottom; avoid it for range. */
   orientation?: SliderOrientation;
+  /** Text direction; RTL puts the minimum on the right. Default: inherited from the parent element. */
+  dir?: SliderDir;
   /** Default 0. */
   min?: number;
   /** Default 100. */
@@ -42,7 +45,7 @@ export type SliderProps = Omit<
   step?: number;
   /**
    * Page Up/Down, Shift + Arrows and Space + Arrows step. Default: one step
-   * with `stops`, otherwise 10% of the range (derived, spec §8).
+   * with `stops`, otherwise 10% of the range (derived).
    */
   largeStep?: number;
   /** Controlled value: one number, two for `range`. */
@@ -57,9 +60,9 @@ export type SliderProps = Omit<
   label: string;
   /** Range only: names for the two handles, replacing the ones derived from `label`. */
   thumbLabels?: [string, string];
-  /** Stop indicators at every step (spec §2 "Stops"). Avoid too many. */
+  /** Stop indicators at every step. Avoid too many. */
   stops?: boolean;
-  /** Stop at the end of the inactive track for 3:1 contrast (spec §3). Default true. */
+  /** Stop at the end of the inactive track for 3:1 contrast (M3 Accessibility). Default true. */
   endStop?: boolean;
   /** Value indicator above the handle while pressed or keyboard focused. */
   labeled?: boolean;
@@ -78,11 +81,11 @@ export type SliderProps = Omit<
   minStepsBetweenThumbs?: number;
 };
 
-/** Spec §4.2: handle width enabled / focused or pressed, and handle-track gap. */
+/** M3 Specs: handle width enabled / focused or pressed, and handle-track gap. */
 const HANDLE_WIDTH = 4;
 const HANDLE_WIDTH_NARROW = 2;
 const GAP = 6;
-/** Spec §4.2: inset icon size and padding (mirrors the CSS size sets). */
+/** M3 Specs: inset icon size and padding (mirrors the CSS size sets). */
 const ICON_METRICS: Partial<Record<SliderSize, { size: number; padding: number }>> = {
   medium: { size: 24, padding: 6 },
   large: { size: 24, padding: 6 },
@@ -114,8 +117,7 @@ type Stop = { fraction: number; end?: 'start' | 'end'; state: 'active' | 'inacti
  * owns the behavior: pointer drag and select-jump (nearest handle for
  * range), keyboard, the focusable `role="slider"` handles, aria values and
  * hidden inputs for forms. Ark positions the handles; `thumbSize` is the
- * 4px handle width so handle centers travel from 2px to length − 2px
- * (spec §4.2). The tracks, stops and inset icon are drawn here from Ark's
+ * 4px handle width so handle centers travel from 2px to length − 2px. The tracks, stops and inset icon are drawn here from Ark's
  * `--slider-thumb-offset-*` variables, leaving the 6px gap around each
  * handle.
  */
@@ -136,6 +138,7 @@ export const Slider: Component<SliderProps> = (props) => {
       'class',
       'onValueChange',
       'onValueChangeEnd',
+      'dir',
     ],
     [
       'orientation',
@@ -171,11 +174,15 @@ export const Slider: Component<SliderProps> = (props) => {
   const [focusedIndex, setFocusedIndex] = createSignal(-1);
   const [focusVisible, setFocusVisible] = createSignal(false);
   // Set after the first pointer move of a press: positions follow the
-  // pointer 1:1 instead of animating (spec §6).
+  // pointer 1:1 instead of animating.
   const [moving, setMoving] = createSignal(false);
   // Track length along the slider axis, for stop and icon placement.
   const [length, setLength] = createSignal(0);
   const [control, setControl] = createSignal<HTMLElement>();
+  const [inheritedDir, setInheritedDir] = createSignal<SliderDir>();
+  // Ark writes dir="ltr" on the root unless a LocaleProvider says otherwise,
+  // so the direction is read from the root's parent.
+  const dir = () => local.dir ?? inheritedDir() ?? 'ltr';
 
   const api = useSlider(() => ({
     min: min(),
@@ -183,6 +190,7 @@ export const Slider: Component<SliderProps> = (props) => {
     step: step(),
     largeStep: largeStep(),
     orientation: orientation(),
+    dir: dir(),
     origin: variant() === 'centered' ? 'center' : 'start',
     value: machine.value,
     defaultValue:
@@ -192,7 +200,7 @@ export const Slider: Component<SliderProps> = (props) => {
     name: machine.name,
     form: machine.form,
     minStepsBetweenThumbs: machine.minStepsBetweenThumbs,
-    // Only the size along the axis is used: the 4px handle (spec §4.2).
+    // Only the size along the axis is used: the 4px handle.
     thumbSize: { width: HANDLE_WIDTH, height: HANDLE_WIDTH },
     thumbAlignment: 'contain',
     'aria-label': isRange()
@@ -205,6 +213,11 @@ export const Slider: Component<SliderProps> = (props) => {
   }));
 
   createEffect(() => {
+    const parent = control()?.parentElement?.parentElement;
+    if (parent) setInheritedDir(getComputedStyle(parent).direction === 'rtl' ? 'rtl' : 'ltr');
+  });
+
+  createEffect(() => {
     const el = control();
     if (!el) return;
     const vertical = orientation() === 'vertical';
@@ -215,17 +228,17 @@ export const Slider: Component<SliderProps> = (props) => {
     onCleanup(() => observer.disconnect());
   });
 
-  /** The handle drawn 2px wide (focused or pressed, spec §5), or -1. */
+  /** The handle drawn 2px wide (focused or pressed), or -1. */
   const narrowIndex = () => (api().dragging || focusVisible() ? focusedIndex() : -1);
   const handleWidth = (i: number) => (narrowIndex() === i ? HANDLE_WIDTH_NARROW : HANDLE_WIDTH);
   const fraction = (v: number) => (max() > min() ? (v - min()) / (max() - min()) : 0);
-  /** Handle center in px from the axis start (spec §4.2 "Handle travel"). */
+  /** Handle center in px from the axis start. */
   const center = (i: number) => 2 + fraction(api().value[i] ?? min()) * (length() - 4);
   const handleStart = (i: number) => center(i) - handleWidth(i) / 2 - GAP;
   const handleEnd = (i: number) => center(i) + handleWidth(i) / 2 + GAP;
 
   const hasIcon = () => variant() === 'standard' && !!local.icon && !!ICON_METRICS[size()];
-  /** Spec §4.2: on the active track if it fits, else after the handle, else hidden. */
+  /** Inset icon: on the active track if it fits, else after the handle, else hidden. */
   const iconPlace = createMemo(() => {
     const metrics = ICON_METRICS[size()];
     if (!hasIcon() || !metrics) return undefined;
@@ -257,7 +270,7 @@ export const Slider: Component<SliderProps> = (props) => {
     const value = api().value;
     return withEnds.map((v): Stop => {
       const end = v === lo ? 'start' : v === hi ? 'end' : undefined;
-      // Extreme stops: 4px inset + 2px radius from the track end (spec §4.2).
+      // Extreme stops: 4px inset + 2px radius from the track end.
       const pos = end === 'start' ? 6 : end === 'end' ? len - 6 : 2 + fraction(v) * (len - 4);
       const inZone = value.some((_, i) => pos >= handleStart(i) && pos <= handleEnd(i));
       let active: boolean;
@@ -287,7 +300,7 @@ export const Slider: Component<SliderProps> = (props) => {
   onCleanup(() => setMoving(false));
 
   /**
-   * Space + Arrow steps by `largeStep` (spec §8). A native listener on the
+   * Space + Arrow steps by `largeStep`. A native listener on the
    * handle runs before Ark's delegated handler, which skips prevented events.
    */
   const bindKeys = (el: HTMLElement, index: number) => {
@@ -300,11 +313,11 @@ export const Slider: Component<SliderProps> = (props) => {
         return;
       }
       if (!spaceHeld) return;
-      const rtl = getComputedStyle(el).direction === 'rtl';
+      // Same signs as Ark's plain arrows, which don't flip in RTL.
       const vertical = orientation() === 'vertical';
       const sign: Record<string, number> = vertical
         ? { ArrowUp: 1, ArrowDown: -1 }
-        : { ArrowRight: rtl ? -1 : 1, ArrowLeft: rtl ? 1 : -1 };
+        : { ArrowRight: 1, ArrowLeft: -1 };
       const s = sign[e.key];
       if (!s) return;
       e.preventDefault();

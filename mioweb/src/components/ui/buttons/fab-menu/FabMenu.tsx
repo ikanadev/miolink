@@ -30,7 +30,7 @@ export type FabMenuProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'children' |
   size?: FabSize;
   /**
    * The FAB's color style, default `primary-container`. The close button and
-   * items use the matching set: primary, secondary or tertiary (spec §7).
+   * items use the matching set: primary, secondary or tertiary.
    */
   color?: FabColor;
   /** Controlled open state. */
@@ -52,12 +52,16 @@ const FabMenuContext = createContext<FabMenuState>();
  * button (primary, secondary or tertiary set, following the FAB's color)
  * and the items rise above it, trailing-aligned.
  *
- * Disclosure pattern (spec §8): the toggle has aria-expanded and
- * aria-controls, focus stays on it when it opens and Tab moves to the top
- * item. Escape, a pointer down outside, focus leaving the menu or choosing an
- * item closes it. The caller positions the root (the FAB's box), usually
- * fixed at the bottom-end; the items scroll behind the close button when
- * they don't fit.
+ * Disclosure pattern (M3 Accessibility: FAB menu): the toggle has
+ * aria-expanded and aria-controls, focus stays on it when it opens and Tab
+ * moves to the top item. Escape, a pointer down outside, focus leaving the
+ * menu or choosing an item closes it. The caller positions the root (the
+ * FAB's box), usually fixed at the bottom-end; the items scroll behind the
+ * close button when they don't fit.
+ *
+ * Always the expressive pill stack. M3's specs also describe a web
+ * presentation built on the baseline menu (4dp gap) without saying when to
+ * switch; for that, anchor a `Menu` to a `Fab` instead.
  */
 export const FabMenu: Component<FabMenuProps> = (props) => {
   const [local, rest] = splitProps(props, [
@@ -116,14 +120,36 @@ export const FabMenu: Component<FabMenuProps> = (props) => {
     }),
   );
 
-  // Outside pointer down closes without moving focus.
+  // Hiding the FAB closes the menu for good, so a controlled parent hears it.
+  createEffect(
+    on(
+      () => local.visible ?? true,
+      (isVisible) => {
+        if (isVisible || !(local.open ?? inner())) return;
+        setInner(false);
+        local.onOpenChange?.(false);
+      },
+      { defer: true },
+    ),
+  );
+
+  // Outside pointer down closes without moving focus. Escape is also caught
+  // on the document: Safari doesn't focus buttons on click, so after a mouse
+  // open focus can stay on <body>.
   createEffect(() => {
     if (!open()) return;
     const onPointerDown = (e: PointerEvent) => {
       if (!root.contains(e.target as Node)) close(false);
     };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !e.defaultPrevented) close(true);
+    };
     document.addEventListener('pointerdown', onPointerDown, true);
-    onCleanup(() => document.removeEventListener('pointerdown', onPointerDown, true));
+    document.addEventListener('keydown', onKeyDown);
+    onCleanup(() => {
+      document.removeEventListener('pointerdown', onPointerDown, true);
+      document.removeEventListener('keydown', onKeyDown);
+    });
   });
 
   const set = () => (local.color ?? 'primary-container').replace('-container', '');
@@ -166,7 +192,7 @@ export const FabMenu: Component<FabMenuProps> = (props) => {
             <Icon class={styles.closeIcon} name="close" filled />
           </span>
         </Fab>
-        <ul ref={list} id={listId} class={styles.list} hidden={!rendered()}>
+        <ul ref={list} id={listId} class={styles.list} hidden={!rendered()} inert={closing()}>
           {local.children}
         </ul>
       </div>

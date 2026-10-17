@@ -334,13 +334,18 @@ export const ListDivider: Component<ListDividerProps> = (props) => {
   const ctx = useListContext();
   const attrs = () => ({
     class: local.class ? `${styles.divider} ${local.class}` : styles.divider,
+    'data-variant': ctx.variant(),
     'data-inset': local.inset ? 'middle' : 'none',
     'data-orientation': 'horizontal',
   });
-  // A listbox may only own options, so its divider is presentational.
+  // A listbox may only own options, so its divider is presentational. A
+  // `<ul>` may only own list items: the separator sits in a `role="none"` item
+  // so it isn't counted as one.
   return (
     <Show when={!ctx.selectable() && !ctx.option} fallback={<div {...rest} {...attrs()} aria-hidden="true" />}>
-      <li {...rest} {...attrs()} role="separator" />
+      <li role="none" class={styles.dividerItem}>
+        <hr {...rest} {...attrs()} />
+      </li>
     </Show>
   );
 };

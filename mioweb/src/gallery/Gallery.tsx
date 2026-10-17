@@ -1,4 +1,4 @@
-import { createSignal, For, type Component } from 'solid-js';
+import { createEffect, createSignal, For, onCleanup, type Component } from 'solid-js';
 import { AppBar } from '../components/ui/app-bar';
 import { IconButton } from '../components/ui/buttons/icon-button';
 import { demos } from './demos';
@@ -8,22 +8,50 @@ type Theme = 'system' | 'light' | 'dark';
 const NEXT: Record<Theme, Theme> = { system: 'light', light: 'dark', dark: 'system' };
 const ICON: Record<Theme, string> = { system: 'brightness_auto', light: 'light_mode', dark: 'dark_mode' };
 
+type Contrast = 'system' | 'standard' | 'medium' | 'high';
+const NEXT_CONTRAST: Record<Contrast, Contrast> = {
+  system: 'standard',
+  standard: 'medium',
+  medium: 'high',
+  high: 'system',
+};
+
+/** Keeps the browser UI color (theme-color meta) on the current surface color. */
+const syncThemeColor = () => {
+  const surface = getComputedStyle(document.body).backgroundColor;
+  for (const meta of document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')) {
+    meta.content = surface;
+  }
+};
+
 /** Component gallery: one section per component in src/components/ui. */
 export const Gallery: Component = () => {
   const [theme, setTheme] = createSignal<Theme>('system');
-  const [contrast, setContrast] = createSignal(false);
+  const [contrast, setContrast] = createSignal<Contrast>('system');
+
+  createEffect(() => {
+    theme();
+    contrast();
+    syncThemeColor();
+  });
+  for (const query of ['(prefers-color-scheme: dark)', '(prefers-contrast: more)']) {
+    const mql = matchMedia(query);
+    mql.addEventListener('change', syncThemeColor);
+    onCleanup(() => mql.removeEventListener('change', syncThemeColor));
+  }
 
   const cycleTheme = () => {
     const next = NEXT[theme()];
-    setTheme(next);
     if (next === 'system') delete document.documentElement.dataset.theme;
     else document.documentElement.dataset.theme = next;
+    setTheme(next);
   };
 
-  const toggleContrast = (on: boolean) => {
-    setContrast(on);
-    if (on) document.documentElement.dataset.contrast = 'high';
-    else delete document.documentElement.dataset.contrast;
+  const cycleContrast = () => {
+    const next = NEXT_CONTRAST[contrast()];
+    if (next === 'system') delete document.documentElement.dataset.contrast;
+    else document.documentElement.dataset.contrast = next;
+    setContrast(next);
   };
 
   return (
@@ -35,10 +63,8 @@ export const Gallery: Component = () => {
             <IconButton
               color="standard"
               icon="contrast"
-              label="High contrast"
-              toggle
-              selected={contrast()}
-              onSelectedChange={toggleContrast}
+              label={`Contrast: ${contrast()}`}
+              onClick={cycleContrast}
             />
             <IconButton
               color="standard"

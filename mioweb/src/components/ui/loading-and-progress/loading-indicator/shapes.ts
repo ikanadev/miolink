@@ -1,10 +1,9 @@
 /*
- * The loading indicator's seven shapes (loading-indicator.md §6.2, from
- * Compose's MaterialShapes.kt) and their morph.
+ * The loading indicator's seven shapes (Compose LoadingIndicator.kt /
+ * MaterialShapes.kt) and their morph.
  *
- * There is no web shape-morph API, so this is the spec's fallback (§6.5,
- * step 4, derived): each shape is built as a rounded polygon in the unit
- * square, normalized, and resampled to SAMPLES radii at evenly spaced
+ * There is no web shape-morph API, so this is a fallback (derived): each
+ * shape is built as a rounded polygon in the unit square, normalized, and resampled to SAMPLES radii at evenly spaced
  * angles around its center (all seven are star-convex). A morph lerps the
  * radii; the outline is drawn as a closed Catmull-Rom curve. Visually close
  * to Compose's vertex-matched morph, not identical. Computed once, on first
@@ -167,7 +166,7 @@ export type LoadingShapes = {
   radii: Float64Array[];
   /**
    * Scale that fits every shape, under any rotation, in 38/48 of the box
-   * (§4.2): min over shapes of 1 / (2 × max radius), times 38/48.
+   * (container 48 / active indicator 38 tokens): min over shapes of 1 / (2 × max radius), times 38/48.
    */
   scale: number;
 };

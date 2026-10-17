@@ -12,7 +12,7 @@ const ButtonGroupDemo: Component = () => {
   const [filters, setFilters] = createSignal<string[]>(['links']);
   return (
     <div style={{ display: 'grid', gap: '16px' }}>
-      <p class={g.label}>Standard, actions (press one: it grows and its neighbours make room)</p>
+      <p class={g.label}>Standard, actions (press one: it grows and its neighbours give up padding, labels stay whole; arrow keys move focus)</p>
       <div class={g.row}>
         <ButtonGroup label="Playback">
           <IconButton color="tonal" icon="skip_previous" label="Previous" />
@@ -43,7 +43,7 @@ const ButtonGroupDemo: Component = () => {
           )}
         </For>
       </div>
-      <p class={g.label}>Standard, multi-select toggles, square</p>
+      <p class={g.label}>Standard, multi-select toggles, square (each a tab stop; arrow keys, Home, End move focus)</p>
       <div class={g.row}>
         <ButtonGroup selection="multi" shape="square" label="Text style">
           <IconButton color="tonal" value="bold" icon="format_bold" label="Bold" />

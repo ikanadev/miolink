@@ -47,7 +47,7 @@
 .docked {
   --_container-color: var(--md-sys-color-surface-container-high);
   --_shape: var(--md-sys-shape-corner-large);
-  /* Kept from the token (level3): the drop-down floats over page content (spec §11). */
+  /* Kept from the token (level3): the drop-down floats over page content. */
   --_elevation: var(--md-sys-elevation-level3);
 
   z-index: calc(1000 + var(--layer-index, 0));
@@ -108,6 +108,17 @@
   composes: container from '../dialog/dialog.module.css';
 }
 
+/*
+ * Derived: 16px window margin on compact widths (M3 compact margin) instead
+ * of the dialog's 24px, so the 360px calendar keeps its 7 columns on phones.
+ * [data-layout] raises this above the composed positioner rule.
+ */
+@media (max-width: 399.98px) {
+  .dialogPositioner[data-layout='basic'] {
+    padding: var(--md-sys-measurement-space200);
+  }
+}
+
 /* [data-view] raises these above the composed container rules. */
 .dialog[data-view] {
   --_container-color: var(--md-sys-color-surface-container-high);
@@ -125,6 +136,9 @@
 .dialog[data-view='range'] {
   block-size: 640px;
 }
+
+/* md.comp.date-input.modal.container.height (512dp) is deliberately ignored:
+   the dialog sizes to its fields, as in M3's modal date input images. */
 
 .dialog[data-view][data-layout='full-screen'] {
   --_container-color: var(--md-sys-color-surface-container-high);
@@ -262,6 +276,15 @@
   flex: 1 1 auto;
 }
 
+/*
+ * Modal rows are 40px (the token, so the container fits 524dp), less than the
+ * 48px target: keep the target 48px wide but clip it to the row so a click
+ * near a circle's edge doesn't land on the date below.
+ */
+.calendar[data-layout='modal'] .day::after {
+  height: var(--_row-height);
+}
+
 .view {
   display: flex;
   flex-direction: column;
@@ -311,7 +334,7 @@
   block-size: calc(var(--_weekday-height) + 6 * var(--_row-height) + var(--md-sys-measurement-space100));
 }
 
-/* ---- Month slide (spec §6: lateral transition on default spatial) ---- */
+/* ---- Month slide (lateral transition) ---- */
 
 .slide {
   --_dir: 1;
@@ -336,8 +359,9 @@
 .grid {
   table-layout: fixed;
   border-collapse: collapse;
-  /* 7 x 48px columns, centered: 12px each side in the 360px container. */
-  inline-size: 336px;
+  /* 7 x 48px columns, centered: 12px each side in the 360px container.
+     Shrinks with equal columns when the window is narrower. */
+  inline-size: min(336px, 100%);
   margin-inline: auto;
   font-family: var(--md-sys-typescale-body-large-font);
   font-weight: var(--md-sys-typescale-body-large-weight);
@@ -360,14 +384,13 @@
 
 .cell {
   position: relative;
-  inline-size: 48px;
   block-size: var(--_row-height);
   padding: 0;
   text-align: center;
 }
 
 /* Range band (active indicator): 40px, from the start circle's center to the
-   end circle's center; square cuts at the row edges (spec §11). */
+   end circle's center; square cuts at the row edges. */
 .cell[data-range]::before {
   content: '';
   position: absolute;
@@ -435,7 +458,7 @@
 
 :where(.cell[data-range='middle']) .day {
   --_label: var(--md-sys-color-on-secondary-container);
-  /* Tokenized pair, kept as is (spec §11). */
+  /* Tokenized pair (md.comp.date-picker.modal.range-selection.date.in-range.*), kept as is. */
   --_state-layer-color: var(--md-sys-color-on-primary-container);
 }
 
@@ -472,11 +495,10 @@
 .weekdays {
   display: grid;
   flex-shrink: 0;
-  grid-template-columns: repeat(7, 48px);
+  grid-template-columns: repeat(7, minmax(0, 48px));
   justify-content: center;
   align-items: center;
   block-size: 40px;
-  border-block-end: 1px solid var(--md-sys-color-outline-variant);
   font-family: var(--md-sys-typescale-body-large-font);
   font-weight: var(--md-sys-typescale-body-large-weight);
   font-size: var(--md-sys-typescale-body-large-size);
@@ -489,6 +511,7 @@
 }
 
 .months {
+  position: relative;
   flex: 1 1 auto;
   min-block-size: 0;
   overflow-y: auto;

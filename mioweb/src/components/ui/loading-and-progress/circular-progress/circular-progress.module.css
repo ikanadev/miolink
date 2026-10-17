@@ -7,6 +7,7 @@
 .root {
   composes: base from '../shared/progress-base.module.css';
 
+  --_size: 40px;
   --_active-thickness: 4px;
   --_track-thickness: 4px;
   --_gap: var(--md-sys-measurement-space50);
@@ -18,13 +19,12 @@
   flex: none;
   vertical-align: middle;
   box-sizing: border-box;
-  inline-size: var(--_size, 40px);
-  block-size: var(--_size, 40px);
+  inline-size: var(--_size);
+  block-size: var(--_size);
 }
 
 .root[data-shape='wavy'] {
-  inline-size: var(--_size, 48px);
-  block-size: var(--_size, 48px);
+  --_size: 48px;
 }
 
 .svg {

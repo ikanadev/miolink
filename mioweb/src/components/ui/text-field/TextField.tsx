@@ -34,6 +34,8 @@ type Common<T extends Control> = {
   invalid?: boolean;
   /** Show an error icon at the end while invalid when there's no `trailing`. Default true. */
   errorIcon?: boolean;
+  /** Accessible name of the error icon, announced only when there's no error text. Default "Error". */
+  errorIconLabel?: string;
   required?: boolean;
   disabled?: boolean;
   /** Focusable, not editable. Say so in the label or supporting text. */
@@ -115,6 +117,7 @@ const LOCAL = [
   'errorText',
   'invalid',
   'errorIcon',
+  'errorIconLabel',
   'required',
   'disabled',
   'readOnly',
@@ -375,7 +378,12 @@ export const TextField: Component<TextFieldProps | MultilineTextFieldProps> = (p
             <Switch>
               <Match when={has(trailing)}>{trailing()}</Match>
               <Match when={showErrorIcon()}>
-                <Icon name="error" filled />
+                <Show
+                  when={!present(errorMessage())}
+                  fallback={<Icon name="error" filled />}
+                >
+                  <Icon name="error" filled role="img" aria-hidden={false} aria-label={local.errorIconLabel ?? 'Error'} />
+                </Show>
               </Match>
               <Match when={showClear()}>
                 <IconButton

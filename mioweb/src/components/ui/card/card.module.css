@@ -154,11 +154,11 @@
 }
 
 /* Pressed: the ripple is the state layer; elevation returns to its pressed level. */
-.root:not([data-disabled]):has(.action:active) {
+.root:not([data-disabled]):has(.action:is(:active, [data-key-pressed])) {
   box-shadow: var(--_pressed-elevation);
 }
 
-.root[data-variant='outlined']:not([data-disabled]):has(.action:active) {
+.root[data-variant='outlined']:not([data-disabled]):has(.action:is(:active, [data-key-pressed])) {
   --_outline-color: var(--md-sys-color-outline-variant);
 }
 
@@ -250,7 +250,10 @@
   cursor: default;
 }
 
-/* Secondary controls sit above the stretched action and keep their own states. */
+/*
+ * Controls inside an actionable card sit above the stretched action and keep
+ * their own states. M3 allows only a single overflow menu button there.
+ */
 .root:has(.action) :is(a[href], button, input, select, textarea, summary, [tabindex]):not(.action) {
   position: relative;
   z-index: 1;
@@ -351,6 +354,12 @@
 @media (forced-colors: active) {
   .root {
     border-color: CanvasText;
+  }
+
+  /* Shadows and fills are dropped in forced colors; outlined cards keep their border. */
+  .root:not([data-variant='outlined']):not(:has(.action:focus-visible)) {
+    outline: 1px solid CanvasText;
+    outline-offset: -1px;
   }
 
   .root:has(.action:focus-visible) {

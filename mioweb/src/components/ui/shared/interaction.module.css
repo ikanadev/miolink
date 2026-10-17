@@ -6,7 +6,7 @@
  *
  * - State layer: a ::before overlay between the container and the content,
  *   colored with --_state-layer-color (default: currentColor, the content
- *   color) at the hover/focus opacities. Pressed feedback is the <Ripple />.
+ *   color, declared on :root below) at the hover/focus opacities. Pressed feedback is the <Ripple />.
  * - Focus ring: 3px secondary outline at a 2px outer offset, on
  *   :focus-visible only. Set --_focus-ring-offset to the inner offset for
  *   full-bleed items.
@@ -16,6 +16,13 @@
  * The element must not use ::before itself and must keep its content in
  * normal flow (or above z-index -1).
  */
+/* Declared on the root so they always exist and still inherit: a component
+   sets them on itself or on an ancestor of its interactive parts. */
+:global(:root) {
+  --_state-layer-color: currentColor;
+  --_focus-ring-offset: var(--md-sys-state-focus-indicator-outer-offset);
+}
+
 .interactive {
   position: relative;
   isolation: isolate;
@@ -30,7 +37,7 @@
   inset: 0;
   z-index: -1;
   border-radius: inherit;
-  background: var(--_state-layer-color, currentColor);
+  background: var(--_state-layer-color);
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--md-sys-motion-spring-fast-effects-duration)
@@ -49,7 +56,7 @@
 
 .interactive:focus-visible {
   outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
-  outline-offset: var(--_focus-ring-offset, var(--md-sys-state-focus-indicator-outer-offset));
+  outline-offset: var(--_focus-ring-offset);
 }
 
 .interactive:is(:disabled, [data-disabled], [aria-disabled='true']) {

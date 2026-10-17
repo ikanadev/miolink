@@ -24,7 +24,7 @@ export type BadgeProps = Omit<JSX.HTMLAttributes<HTMLSpanElement>, 'children'> &
   children?: JSX.Element;
 };
 
-/** Badge text (§6): counts above `max` become "999+"; labels keep 4 characters. */
+/** Badge text: counts above `max` become "999+"; labels keep 4 characters. */
 export const formatBadge = (value: BadgeValue, max = 999) =>
   typeof value === 'number' ? (value > max ? `${max}+` : String(value)) : value.slice(0, 4);
 

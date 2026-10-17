@@ -28,14 +28,11 @@ const LoadingIndicatorDemo: Component = () => {
       <div class={g.row}>
         <For each={SIZES}>{(size) => <LoadingIndicator label={`Loading (${size}px, contained)`} size={size} contained />}</For>
       </div>
-      <p class={g.label}>Inside a button: the label color, 24px</p>
+      <p class={g.label}>Inside a button: the label color, 24px, decorative (the button says it's busy)</p>
       <div class={g.row}>
         <Button aria-busy="true">
           <span style={{ display: 'inline-flex', 'align-items': 'center', gap: '8px' }}>
-            <LoadingIndicator
-              size={24}
-              style={{ '--_color': 'currentColor' }}
-            />
+            <LoadingIndicator size={24} color="current" paused={paused()} />
             Saving
           </span>
         </Button>

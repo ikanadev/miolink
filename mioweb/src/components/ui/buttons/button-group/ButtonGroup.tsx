@@ -1,5 +1,5 @@
 import { ToggleGroup } from '@ark-ui/solid/toggle-group';
-import { createSignal, onCleanup, Show, splitProps, type Component, type JSX } from 'solid-js';
+import { createEffect, createSignal, onCleanup, Show, splitProps, type Component, type JSX } from 'solid-js';
 import {
   ButtonGroupContext,
   type ButtonGroupSelection,
@@ -35,21 +35,46 @@ export type ButtonGroupProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'childre
 
 /** Pressed item width multiplier (`pressed.item.width.multiplier`, 15%). */
 const PRESSED_GROWTH = 0.15;
-/** Neighbours never shrink below a 48px target (derived, spec §5). */
+/** Neighbours never shrink below a 48px target (derived). */
 const MIN_ITEM_WIDTH = 48;
 
 const isDisabled = (el: Element) => el.matches(':disabled, [data-disabled], [aria-disabled="true"]');
 
+type Rest = { width: number; padStart: number; padEnd: number; minWidth: number };
+
+type Target = { width: number; padStart: number; padEnd: number };
+
+const px = (value: string) => parseFloat(value) || 0;
+
+/** Rest geometry of an item; `minWidth` keeps its content (label, icon) whole. */
+const measure = (el: HTMLElement): Rest => {
+  const cs = getComputedStyle(el);
+  const padStart = px(cs.paddingInlineStart);
+  const padEnd = px(cs.paddingInlineEnd);
+  const inFlow = [...el.children].filter((child) => getComputedStyle(child).position !== 'absolute');
+  const content =
+    inFlow.reduce((sum, child) => sum + child.getBoundingClientRect().width, 0) +
+    px(cs.columnGap) * Math.max(0, inFlow.length - 1);
+  return {
+    width: el.getBoundingClientRect().width,
+    padStart,
+    padEnd,
+    minWidth: content + px(cs.borderInlineStartWidth) + px(cs.borderInlineEndWidth),
+  };
+};
+
 /**
- * Standard group press "bounce" (spec §5): the pressed item grows 15% and
- * its neighbours shrink by the same amount, so the group keeps its width.
- * Animated with the Web Animations API on inline-size with the fast spatial
- * spring curve; releasing animates back and then hands the width back to
- * CSS. Skipped with reduced motion.
+ * Standard group press "bounce": the pressed item grows 15% and its
+ * neighbours shrink by the same amount, so the group keeps its width.
+ * Neighbours give the width up from their padding first, so labels are never
+ * truncated (M3: don't truncate label text). Animated with the Web
+ * Animations API on inline-size and padding with the fast spatial spring
+ * curve; releasing animates back and then hands the values back to CSS.
+ * Skipped with reduced motion and outside the standard variant.
  */
-const attachPressBounce = (root: HTMLElement) => {
+const attachPressBounce = (root: HTMLElement, enabled: () => boolean) => {
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
-  let rest: Map<HTMLElement, number> | undefined;
+  let rest: Map<HTMLElement, Rest> | undefined;
   const running = new Map<HTMLElement, Animation>();
 
   const timing = (): KeyframeAnimationOptions => {
@@ -61,55 +86,75 @@ const attachPressBounce = (root: HTMLElement) => {
     };
   };
 
-  const animateTo = (targets: Map<HTMLElement, number>, onDone?: () => void) => {
+  const animateTo = (targets: Map<HTMLElement, Target>, onDone?: () => void) => {
     const options = timing();
     let last: Animation | undefined;
-    for (const [el, width] of targets) {
-      const from = el.getBoundingClientRect().width;
+    for (const [el, target] of targets) {
+      const cs = getComputedStyle(el);
+      const keyframes = [
+        {
+          inlineSize: `${el.getBoundingClientRect().width}px`,
+          paddingInlineStart: cs.paddingInlineStart,
+          paddingInlineEnd: cs.paddingInlineEnd,
+        },
+        {
+          inlineSize: `${target.width}px`,
+          paddingInlineStart: `${target.padStart}px`,
+          paddingInlineEnd: `${target.padEnd}px`,
+        },
+      ];
       running.get(el)?.cancel();
       try {
-        last = el.animate([{ inlineSize: `${from}px` }, { inlineSize: `${width}px` }], options);
+        last = el.animate(keyframes, options);
       } catch {
         // An easing the browser doesn't accept: fall back to a plain curve.
-        last = el.animate([{ inlineSize: `${from}px` }, { inlineSize: `${width}px` }], {
-          ...options,
-          easing: 'ease-out',
-        });
+        last = el.animate(keyframes, { ...options, easing: 'ease-out' });
       }
       running.set(el, last);
     }
     if (last && onDone) last.onfinish = onDone;
   };
 
+  const atRest = (r: Rest): Target => ({ width: r.width, padStart: r.padStart, padEnd: r.padEnd });
+
   const press = (item: HTMLElement) => {
-    if (motion.matches || isDisabled(item)) return;
+    if (!enabled() || motion.matches || isDisabled(item)) return;
     const items = [...root.children].filter(
       (el): el is HTMLElement => el instanceof HTMLElement && el.getClientRects().length > 0,
     );
     const index = items.indexOf(item);
     if (index < 0) return;
-    // Rest widths are measured once per press-release cycle, before any
-    // animation changes them.
-    rest ??= new Map(items.map((el) => [el, el.getBoundingClientRect().width]));
-    const restOf = (el: HTMLElement) => rest?.get(el) ?? el.getBoundingClientRect().width;
+    // Measured once per press-release cycle, before any animation changes them.
+    rest ??= new Map(items.map((el) => [el, measure(el)]));
+    const restOf = (el: HTMLElement) => rest?.get(el) ?? measure(el);
 
     const neighbours = [items[index - 1], items[index + 1]].filter((el): el is HTMLElement => !!el);
-    const delta = restOf(item) * PRESSED_GROWTH;
-    const targets = new Map<HTMLElement, number>([[item, restOf(item) + delta]]);
-    // Neighbours give up their share down to 48px (never growing, so items
-    // already narrower stay put); what they can't give, the group absorbs.
+    const pressed = restOf(item);
+    const delta = pressed.width * PRESSED_GROWTH;
+    const targets = new Map<HTMLElement, Target>([[item, { ...atRest(pressed), width: pressed.width + delta }]]);
+    // Neighbours give up their share down to 48px and to their content width
+    // (never growing, so items already narrower stay put); what they can't
+    // give, the group absorbs. Padding shrinks by what the content box can't
+    // spare, so the label keeps its max-content width.
     for (const el of neighbours) {
-      const width = restOf(el);
-      targets.set(el, Math.max(Math.min(width, MIN_ITEM_WIDTH), width - delta / neighbours.length));
+      const r = restOf(el);
+      const width = Math.max(Math.min(r.width, MIN_ITEM_WIDTH), r.minWidth, r.width - delta / neighbours.length);
+      const spare = width - r.minWidth;
+      const cut = Math.max(0, r.padStart + r.padEnd - spare) / 2;
+      targets.set(el, { width, padStart: Math.max(0, r.padStart - cut), padEnd: Math.max(0, r.padEnd - cut) });
     }
     // Items that were part of a previous press go back to rest.
-    for (const el of running.keys()) if (!targets.has(el)) targets.set(el, restOf(el));
+    for (const el of running.keys()) if (!targets.has(el)) targets.set(el, atRest(restOf(el)));
     animateTo(targets);
   };
 
   const release = () => {
     if (!rest || running.size === 0) return;
-    const targets = new Map([...running.keys()].map((el) => [el, rest?.get(el) ?? 0]));
+    const targets = new Map<HTMLElement, Target>();
+    for (const el of running.keys()) {
+      const r = rest.get(el);
+      if (r) targets.set(el, atRest(r));
+    }
     animateTo(targets, () => {
       for (const animation of running.values()) animation.cancel();
       running.clear();
@@ -156,6 +201,35 @@ const attachPressBounce = (root: HTMLElement) => {
 };
 
 /**
+ * ArrowLeft/Right (mirrored in RTL), Home and End between the enabled items
+ * of action and multi-select groups; Ark's roving focus covers single-select.
+ * Each item stays a tab stop. Arrows wrap at the ends (derived, like Ark's
+ * toggle group).
+ */
+const onArrowKeys = (e: KeyboardEvent & { currentTarget: HTMLElement }) => {
+  if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+  const root = e.currentTarget;
+  const items = [...root.children].filter(
+    (el): el is HTMLElement => el instanceof HTMLElement && el.getClientRects().length > 0 && !isDisabled(el),
+  );
+  const index = items.indexOf(e.target as HTMLElement);
+  if (index < 0) return;
+  e.preventDefault();
+  const rtl = getComputedStyle(root).direction === 'rtl';
+  const forward = (e.key === 'ArrowRight') !== rtl;
+  const last = items.length - 1;
+  const next =
+    e.key === 'Home'
+      ? 0
+      : e.key === 'End'
+        ? last
+        : forward
+          ? (index + 1) % items.length
+          : (index - 1 + items.length) % items.length;
+  items[next]?.focus();
+};
+
+/**
  * M3 button group: an
  * invisible container for `Button` and `IconButton` items that sets their
  * size and shape, adds the gap and morphs them on press and selection.
@@ -168,7 +242,8 @@ const attachPressBounce = (root: HTMLElement) => {
  * With `selection="single" | "multi"` the group is an Ark UI `ToggleGroup`
  * (radiogroup with aria-checked and roving focus, or a group of
  * aria-pressed toggles, each a tab stop), and items with a `value` are its
- * items. Without one it's a plain `role="group"` of actions.
+ * items. Without one it's a plain `role="group"` of actions. Arrow keys,
+ * Home and End move focus between items in every mode.
  */
 export const ButtonGroup: Component<ButtonGroupProps> = (props) => {
   const [local, rest] = splitProps(props, [
@@ -184,6 +259,7 @@ export const ButtonGroup: Component<ButtonGroupProps> = (props) => {
     'children',
     'class',
     'ref',
+    'onKeyDown',
   ]);
 
   const state = (): ButtonGroupState => ({
@@ -203,9 +279,23 @@ export const ButtonGroup: Component<ButtonGroupProps> = (props) => {
     local.onValueChange?.(next);
   };
 
+  if (import.meta.env.DEV) {
+    createEffect(() => {
+      if (state().variant === 'connected' && state().selection === 'none') {
+        console.warn('ButtonGroup: avoid a connected group when none of the buttons can be toggled.');
+      }
+    });
+  }
+
   const ref = (el: HTMLElement) => {
-    if (state().variant === 'standard') attachPressBounce(el);
+    attachPressBounce(el, () => state().variant === 'standard');
     (local.ref as ((el: HTMLElement) => void) | undefined)?.(el);
+  };
+
+  const onKeyDown = (e: KeyboardEvent & { currentTarget: HTMLElement; target: Element }) => {
+    if (state().selection !== 'single') onArrowKeys(e);
+    const own = local.onKeyDown;
+    if (typeof own === 'function') own(e as KeyboardEvent & { currentTarget: HTMLDivElement; target: Element });
   };
 
   const rootProps = () => ({
@@ -222,7 +312,7 @@ export const ButtonGroup: Component<ButtonGroupProps> = (props) => {
       <Show
         when={state().selection !== 'none'}
         fallback={
-          <div role="group" {...rootProps()} ref={ref}>
+          <div role="group" {...rootProps()} ref={ref} onKeyDown={onKeyDown}>
             {local.children}
           </div>
         }
@@ -230,9 +320,10 @@ export const ButtonGroup: Component<ButtonGroupProps> = (props) => {
         <ToggleGroup.Root
           {...rootProps()}
           ref={ref}
+          onKeyDown={onKeyDown}
           multiple={state().selection === 'multi'}
           deselectable={!local.required}
-          // Spec §8: a radiogroup is one tab stop; toggles are each a tab stop.
+          // A radiogroup is one tab stop; toggles are each a tab stop (arrow keys from onKeyDown).
           rovingFocus={state().selection === 'single'}
           value={value()}
           onValueChange={(details) => change(details.value)}

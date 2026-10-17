@@ -13,7 +13,7 @@
  * shape through --_radius (Button) or the border-*-radius longhands
  * (SplitButton, ButtonGroup), and the padding through --_leading and
  * --_trailing. Values are numeric so radius changes animate: full is
- * --_full (height / 2), never 9999px (spec §6).
+ * --_full (height / 2), never 9999px.
  */
 .base {
   composes: interactive target from '../../shared/interaction.module.css';
@@ -44,7 +44,7 @@
   --_outline-color: transparent;
   --_border-width: 0px;
   --_elevation: var(--md-sys-elevation-level0);
-  /* Derived (spec §4.4, §11): no hovered elevation tokens; +1 level on hover. */
+  /* Derived: M3 has no hovered elevation tokens; +1 level on hover. */
   --_elevation-hover: var(--md-sys-elevation-level1);
   --_state-layer-color: var(--_label-color);
   --md-icon-size: var(--_icon-size);
@@ -59,8 +59,8 @@
   block-size: var(--_height);
   margin: 0;
   padding-block: 0;
-  /* The outline is drawn inside the container (spec §4.2, derived), so the
-     padding is measured from the outer edge in every style. */
+  /* The outline is drawn inside the container (derived), so the padding is
+     measured from the outer edge in every style. */
   padding-inline: calc(var(--_leading) - var(--_border-width))
     calc(var(--_trailing) - var(--_border-width));
   border: var(--_border-width) solid var(--_outline-color);
@@ -79,7 +79,7 @@
   vertical-align: middle;
   user-select: none;
   /* Corners: fast spatial spring (the pressed corner-size spring token).
-     Color and shadow: fast effects spring (derived, spec §6). Transitions
+     Color and shadow: fast effects spring (derived). Transitions
      retarget from the current value, so rapid clicks don't restart the
      morph. */
   transition:
@@ -109,8 +109,9 @@
   text-overflow: ellipsis;
 }
 
+/* Pressed elevation is the rest level (md.comp.button.*.pressed.container.elevation). */
 @media (hover: hover) {
-  .base:hover {
+  .base:hover:not(:active, [data-key-pressed]) {
     box-shadow: var(--_elevation-hover);
   }
 }
@@ -259,7 +260,7 @@
   --_icon-color: var(--md-sys-color-on-surface-variant);
 }
 
-/* No selected outline token: the inverse-surface fill replaces it (spec §11). */
+/* No selected outline token: the inverse-surface fill replaces it. */
 .base[data-color='outlined'][data-state='on'] {
   --_outline-color: transparent;
   --_container: var(--md-sys-color-inverse-surface);
@@ -288,8 +289,10 @@
   --_elevation-hover: var(--md-sys-elevation-level0);
 }
 
-/* Text and default/unselected outlined buttons keep no fill (spec §11); the
-   outline stays outline-variant at full opacity. */
+/* Text and default/unselected outlined buttons keep no fill; the outline
+   stays outline-variant at full opacity. This departs on purpose from
+   md.comp.button.text.disabled.container.color/opacity (on-surface 10%),
+   which Compose and the M3 baseline images don't apply. */
 .base:is([data-color='text'], [data-color='outlined']:not([data-state='on'])):is(
     :disabled,
     [data-disabled],

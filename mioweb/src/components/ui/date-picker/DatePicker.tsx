@@ -30,6 +30,8 @@ import { IconButton } from '../buttons/icon-button';
 import { DialogRoot } from '../dialog';
 import { Icon } from '../icon/Icon';
 import { Ripple } from '../shared/Ripple';
+import { Tooltip } from '../tooltip';
+import type { TooltipTriggerAttrs } from '../tooltip/trigger';
 import { TextField, type TextFieldVariant } from '../text-field';
 import {
   clampIso,
@@ -78,6 +80,17 @@ export type DatePickerLabels = {
   outOfRange: string;
   unavailable: string;
   endBeforeStart: string;
+  /**
+   * Tooltip text for a navigation button with a keyboard shortcut. `keys` is
+   * its `aria-keyshortcuts` value, e.g. `Shift+PageUp`. Default
+   * "Previous year (Shift + Page Up)".
+   */
+  withShortcut: (label: string, keys: string) => string;
+};
+
+const KEY_NAMES: Record<string, string> = {
+  PageUp: 'Page Up',
+  PageDown: 'Page Down',
 };
 
 const DEFAULT_LABELS: DatePickerLabels = {
@@ -103,6 +116,11 @@ const DEFAULT_LABELS: DatePickerLabels = {
   outOfRange: 'Date out of range',
   unavailable: 'Date not available',
   endBeforeStart: 'End date is before start date',
+  withShortcut: (label, keys) =>
+    `${label} (${keys
+      .split('+')
+      .map((k) => KEY_NAMES[k] ?? k)
+      .join(' + ')})`,
 };
 
 export type DatePickerProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'children' | 'onChange'> & {
@@ -187,8 +205,8 @@ type CalendarLayout = 'docked' | 'modal' | 'range';
 type Api = UseDatePickerContext;
 type VisibleRange = { start: DateValue; end: DateValue };
 
-/** Months rendered by the scrolling range picker (derived: one year from the focused month). */
-const RANGE_MONTHS = 12;
+/** Scrolling range picker (derived): months rendered before the focused month on open, and added per step. */
+const RANGE_MONTHS_STEP = 12;
 /** Year span when there's no min/max (derived, as Compose: 1900-2100). */
 const MIN_YEAR = 1900;
 const MAX_YEAR = 2100;
@@ -213,7 +231,7 @@ type Ctx = {
   menu: Accessor<Menu>;
   setMenu: (menu: Menu) => void;
   showOutsideDays: Accessor<boolean>;
-  /** Docked: Enter on a date commits and closes (spec §8 keyboard). */
+  /** Docked: Enter on a date commits and closes (M3 Accessibility, keyboard). */
   onDayEnter: () => void;
 };
 
@@ -291,9 +309,12 @@ export const DatePicker = (props: DatePickerProps) => {
   };
 
   // ---- Committed value ----
-  const [ownValue, setOwnValue] = createSignal(untrack(() => normalize(local.defaultValue)), {
-    equals: sameList,
-  });
+  const [ownValue, setOwnValue] = createSignal(
+    untrack(() => normalize(local.defaultValue)),
+    {
+      equals: sameList,
+    },
+  );
   const value = createMemo(() => (local.value !== undefined ? normalize(local.value) : ownValue()), [], {
     equals: sameList,
   });
@@ -321,12 +342,15 @@ export const DatePicker = (props: DatePickerProps) => {
   };
 
   // ---- Pending selection (the calendar and the dialog's text fields) ----
-  const [pending, setPending] = createSignal<string[]>([], { equals: sameList });
+  const [pending, setPending] = createSignal<string[]>([], {
+    equals: sameList,
+  });
   const [menu, setMenu] = createSignal<Menu>(null);
   const [inputText, setInputText] = createSignal<string[]>([]);
   const [inputErrors, setInputErrors] = createSignal<(string | undefined)[]>([]);
 
-  const syncInputText = () => setInputText(indices().map((i) => (pending()[i] ? fmt().format(pending()[i]) : '')));
+  const syncInputText = () =>
+    setInputText(indices().map((i) => (pending()[i] ? fmt().format(pending()[i]) : '')));
 
   // Before the surface renders, so the calendar mounts focused on the value.
   createComputed(
@@ -460,7 +484,7 @@ export const DatePicker = (props: DatePickerProps) => {
       setInputErrors([]);
       setMode('input');
     } else {
-      // Invalid typed input blocks switching back until fixed (spec §6).
+      // Invalid typed input blocks switching back until fixed.
       const parsed = readInputs();
       if (!parsed) return;
       setPending(parsed);
@@ -495,7 +519,11 @@ export const DatePicker = (props: DatePickerProps) => {
     const v = pending();
     if (!range()) {
       return v[0]
-        ? formatIso(v[0], locale(), { weekday: 'short', month: 'short', day: 'numeric' })
+        ? formatIso(v[0], locale(), {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+          })
         : labels().selectedDate;
     }
     const part = (date: string | undefined, fallback: string) =>
@@ -512,6 +540,11 @@ export const DatePicker = (props: DatePickerProps) => {
       : range()
         ? labels().selectDates
         : labels().selectDate);
+
+  // Escape with a month/year menu open closes only the menu (the views handle it).
+  const keepOpenForMenu = (e: KeyboardEvent) => {
+    if (menu()) e.preventDefault();
+  };
 
   const triggerDisabled = () => !!(local.disabled || local.readOnly);
 
@@ -655,6 +688,7 @@ export const DatePicker = (props: DatePickerProps) => {
             role="dialog"
             open={open()}
             onOpenChange={(isOpen) => (isOpen ? setOpen(true) : cancel())}
+            onEscapeKeyDown={keepOpenForMenu}
             initialFocusEl={initialFocus}
           >
             <Show when={local.field !== false}>{fields()}</Show>
@@ -702,6 +736,7 @@ export const DatePicker = (props: DatePickerProps) => {
         <Popover.Root
           open={open()}
           onOpenChange={(d) => (d.open ? setOpen(true) : cancel())}
+          onEscapeKeyDown={keepOpenForMenu}
           positioning={{ placement: 'bottom-start', gutter: 4, flip: true }}
           initialFocusEl={initialFocus}
           lazyMount
@@ -709,7 +744,7 @@ export const DatePicker = (props: DatePickerProps) => {
         >
           <Popover.Anchor class={styles.anchor}>{fields()}</Popover.Anchor>
           <Portal>
-            <Popover.Positioner class={styles.positioner}>
+            <Popover.Positioner>
               <Popover.Content
                 ref={(el: HTMLDivElement) => (surface = el)}
                 class={styles.docked}
@@ -736,17 +771,12 @@ const Calendar = (props: { ctx: Ctx; layout: CalendarLayout }) => {
     const v = ctx.pending();
     return (v[0] ? v.filter(Boolean) : []).map((d) => parseDate(d));
   });
-  const focusStart = untrack(() =>
-    clampIso(ctx.pending().find(Boolean) ?? todayIso(), ctx.min(), ctx.max()),
-  );
+  const focusStart = untrack(() => clampIso(ctx.pending().find(Boolean) ?? todayIso(), ctx.min(), ctx.max()));
   const outside = () => (props.layout === 'docked' && ctx.showOutsideDays() ? 'show' : 'hide');
 
   const onKeyDown = (e: KeyboardEvent) => {
     const target = e.target as HTMLElement;
-    if (
-      e.key === 'Enter' &&
-      target.matches('[data-part="table-cell-trigger"]:not([data-disabled])')
-    ) {
+    if (e.key === 'Enter' && target.matches('[data-part="table-cell-trigger"]:not([data-disabled])')) {
       // Runs after Ark's own Enter handler (on the table) has selected the date.
       setTimeout(ctx.onDayEnter);
     }
@@ -757,7 +787,7 @@ const Calendar = (props: { ctx: Ctx; layout: CalendarLayout }) => {
       inline
       class={styles.calendar}
       data-layout={props.layout}
-      // Spec §6: month slides on the standard scheme (no overshoot).
+      // Month slides on the standard scheme (no overshoot).
       data-motion-scheme="standard"
       data-outside={outside()}
       locale={ctx.locale()}
@@ -771,7 +801,6 @@ const Calendar = (props: { ctx: Ctx; layout: CalendarLayout }) => {
       isDateUnavailable={(d) => ctx.isUnavailable(iso(d))}
       startOfWeek={ctx.startOfWeek()}
       fixedWeeks={props.layout === 'modal'}
-      numOfMonths={props.layout === 'range' ? RANGE_MONTHS : undefined}
       outsideDaySelectable={outside() === 'show'}
       minView="day"
       maxView="day"
@@ -852,6 +881,50 @@ const MenuButton = (props: {
   </button>
 );
 
+/** Ark's `asChild` props function for a trigger part. */
+type ArkTriggerProps = (userProps?: TooltipTriggerAttrs) => JSX.HTMLAttributes<HTMLButtonElement>;
+
+/**
+ * Month/year arrow. Its tooltip names the keyboard shortcut (M3 Accessibility,
+ * "Affordance for keyboard shortcuts"). `trigger` is the Ark Prev/NextTrigger
+ * props, which also own `disabled` at the min/max month.
+ */
+const NavButton = (props: {
+  ctx: Ctx;
+  trigger?: ArkTriggerProps;
+  icon: string;
+  label: string;
+  /** `aria-keyshortcuts` value. */
+  keys: string;
+  disabled?: boolean;
+  /** Hidden (kept in layout) while a month or year menu is open. */
+  hidden?: boolean;
+  onClick?: () => void;
+}) => (
+  <Tooltip
+    label={props.ctx.labels().withShortcut(props.label, props.keys)}
+    disabled={props.hidden}
+    asChild={(tooltip) => {
+      const own = tooltip(props.onClick ? { onClick: props.onClick } : undefined);
+      const attrs = (props.trigger ? props.trigger(own) : own) as JSX.HTMLAttributes<HTMLButtonElement> & {
+        disabled?: boolean;
+      };
+      return (
+        <IconButton
+          {...(attrs as object)}
+          color="standard"
+          icon={props.icon}
+          mirror
+          label={props.label}
+          aria-keyshortcuts={props.keys}
+          disabled={props.trigger ? attrs.disabled : props.disabled}
+          data-hidden={props.hidden ? '' : undefined}
+        />
+      );
+    }}
+  />
+);
+
 const DockedView = (props: { ctx: Ctx; api: Api }) => {
   const ctx = props.ctx;
   const api = props.api;
@@ -885,6 +958,12 @@ const DockedView = (props: { ctx: Ctx; api: Api }) => {
   };
 
   const onKeyDown = (e: KeyboardEvent) => {
+    const open = ctx.menu();
+    if (e.key === 'Escape' && open) {
+      ctx.setMenu(null);
+      (open === 'month' ? monthButton : yearButton).focus();
+      return;
+    }
     if (!e.shiftKey || e.ctrlKey || e.metaKey || e.altKey) return;
     if ((e.target as HTMLElement).matches('input')) return;
     if (e.key === 'M') monthButton.focus();
@@ -893,22 +972,19 @@ const DockedView = (props: { ctx: Ctx; api: Api }) => {
     e.preventDefault();
   };
 
-  const arrowHidden = () => (ctx.menu() ? '' : undefined);
-
   return (
     <div class={styles.view} onKeyDown={onKeyDown}>
       <div class={styles.dockedHeader}>
         <div class={styles.group}>
           <ArkDatePicker.PrevTrigger
             asChild={(tp) => (
-              <IconButton
-                {...tp()}
-                color="standard"
+              <NavButton
+                ctx={ctx}
+                trigger={tp}
                 icon="chevron_left"
-                mirror
                 label={ctx.labels().previousMonth}
-                aria-keyshortcuts="PageUp"
-                data-hidden={arrowHidden()}
+                keys="PageUp"
+                hidden={!!ctx.menu()}
               />
             )}
           />
@@ -922,27 +998,25 @@ const DockedView = (props: { ctx: Ctx; api: Api }) => {
           />
           <ArkDatePicker.NextTrigger
             asChild={(tp) => (
-              <IconButton
-                {...tp()}
-                color="standard"
+              <NavButton
+                ctx={ctx}
+                trigger={tp}
                 icon="chevron_right"
-                mirror
                 label={ctx.labels().nextMonth}
-                aria-keyshortcuts="PageDown"
-                data-hidden={arrowHidden()}
+                keys="PageDown"
+                hidden={!!ctx.menu()}
               />
             )}
           />
         </div>
         <div class={styles.group}>
-          <IconButton
-            color="standard"
+          <NavButton
+            ctx={ctx}
             icon="chevron_left"
-            mirror
             label={ctx.labels().previousYear}
-            aria-keyshortcuts="Shift+PageUp"
+            keys="Shift+PageUp"
             disabled={year() <= bounds().min}
-            data-hidden={arrowHidden()}
+            hidden={!!ctx.menu()}
             onClick={() => shiftYear(-1)}
           />
           <MenuButton
@@ -953,14 +1027,13 @@ const DockedView = (props: { ctx: Ctx; api: Api }) => {
             disabled={ctx.menu() === 'month'}
             onClick={() => toggle('year')}
           />
-          <IconButton
-            color="standard"
+          <NavButton
+            ctx={ctx}
             icon="chevron_right"
-            mirror
             label={ctx.labels().nextYear}
-            aria-keyshortcuts="Shift+PageDown"
+            keys="Shift+PageDown"
             disabled={year() >= bounds().max}
-            data-hidden={arrowHidden()}
+            hidden={!!ctx.menu()}
             onClick={() => shiftYear(1)}
           />
         </div>
@@ -1014,6 +1087,11 @@ const ModalView = (props: { ctx: Ctx; api: Api }) => {
   };
 
   const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && yearOpen()) {
+      ctx.setMenu(null);
+      menuButton.focus();
+      return;
+    }
     if (!e.shiftKey || e.ctrlKey || e.metaKey || e.altKey || e.key !== 'Y') return;
     e.preventDefault();
     ctx.setMenu('year');
@@ -1033,25 +1111,23 @@ const ModalView = (props: { ctx: Ctx; api: Api }) => {
           <div class={styles.navArrows}>
             <ArkDatePicker.PrevTrigger
               asChild={(tp) => (
-                <IconButton
-                  {...tp()}
-                  color="standard"
+                <NavButton
+                  ctx={ctx}
+                  trigger={tp}
                   icon="chevron_left"
-                  mirror
                   label={ctx.labels().previousMonth}
-                  aria-keyshortcuts="PageUp"
+                  keys="PageUp"
                 />
               )}
             />
             <ArkDatePicker.NextTrigger
               asChild={(tp) => (
-                <IconButton
-                  {...tp()}
-                  color="standard"
+                <NavButton
+                  ctx={ctx}
+                  trigger={tp}
                   icon="chevron_right"
-                  mirror
                   label={ctx.labels().nextMonth}
-                  aria-keyshortcuts="PageDown"
+                  keys="PageDown"
                 />
               )}
             />
@@ -1082,10 +1158,87 @@ const ModalView = (props: { ctx: Ctx; api: Api }) => {
   );
 };
 
+const monthIndex = (year: number, month: number) => year * 12 + month - 1;
+const monthOf = (index: number) => ({
+  year: Math.floor(index / 12),
+  month: (index % 12) + 1,
+});
+
+/**
+ * Full-screen range picker: months scroll vertically. The list covers the
+ * months between min and max, rendered as a window around the focused month
+ * that grows by a year when scrolling near either end or when the keyboard
+ * moves focus past it.
+ */
 const RangeView = (props: { ctx: Ctx; api: Api }) => {
   const ctx = props.ctx;
   const api = props.api;
-  const months = Array.from({ length: RANGE_MONTHS }, (_, i) => i);
+  let list!: HTMLDivElement;
+
+  const lowest = () =>
+    ctx.min()
+      ? monthIndex(Number(ctx.min()!.slice(0, 4)), Number(ctx.min()!.slice(5, 7)))
+      : monthIndex(MIN_YEAR, 1);
+  const highest = () =>
+    ctx.max()
+      ? monthIndex(Number(ctx.max()!.slice(0, 4)), Number(ctx.max()!.slice(5, 7)))
+      : monthIndex(MAX_YEAR, 12);
+  const focusedIndex = () => monthIndex(api().focusedValue.year, api().focusedValue.month);
+  const anchor = untrack(focusedIndex);
+
+  const [first, setFirst] = createSignal(untrack(() => Math.max(lowest(), anchor - RANGE_MONTHS_STEP)));
+  const [last, setLast] = createSignal(untrack(() => Math.min(highest(), anchor + 2 * RANGE_MONTHS_STEP)));
+  const months = createMemo(() => Array.from({ length: last() - first() + 1 }, (_, i) => first() + i));
+
+  /** Adds months above without moving what's on screen. */
+  const growUp = (to: number) => {
+    const next = Math.max(lowest(), to);
+    if (next >= first()) return;
+    const before = list.scrollHeight;
+    setFirst(next);
+    list.scrollTop += list.scrollHeight - before;
+  };
+  const growDown = (to: number) => {
+    const next = Math.min(highest(), to);
+    if (next > last()) setLast(next);
+  };
+
+  const onScroll = () => {
+    const margin = list.clientHeight;
+    if (list.scrollTop < margin) growUp(first() - RANGE_MONTHS_STEP);
+    if (list.scrollTop + list.clientHeight > list.scrollHeight - margin) growDown(last() + RANGE_MONTHS_STEP);
+  };
+
+  /** Scrolls inside the list only (Ark focuses cells with preventScroll). */
+  const reveal = (el: HTMLElement, alignTop: boolean) => {
+    const top = el.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop;
+    const bottom = top + el.offsetHeight;
+    if (alignTop) list.scrollTop = top;
+    else if (top < list.scrollTop) list.scrollTop = top;
+    else if (bottom > list.scrollTop + list.clientHeight) list.scrollTop = bottom - list.clientHeight;
+  };
+
+  createEffect(
+    on(focusedIndex, (index, prev) => {
+      if (index < first()) growUp(index - 1);
+      if (index > last()) growDown(index + 1);
+      if (prev === undefined) return;
+      requestAnimationFrame(() => {
+        const cell = list.querySelector<HTMLElement>(
+          '[data-part="table-cell-trigger"][data-focus]:not([data-outside-range])',
+        );
+        if (cell) reveal(cell, false);
+      });
+    }),
+  );
+
+  onMount(() =>
+    requestAnimationFrame(() => {
+      const section = list.querySelector<HTMLElement>(`[data-month="${anchor}"]`);
+      if (section) reveal(section, true);
+    }),
+  );
+
   return (
     <div class={styles.view}>
       <div class={styles.weekdays} aria-hidden="true">
@@ -1097,21 +1250,30 @@ const RangeView = (props: { ctx: Ctx; api: Api }) => {
           )}
         </Index>
       </div>
-      <div class={styles.months}>
-        <For each={months}>
-          {(i) => {
-            const offset = createMemo(() => api().getOffset({ months: i }));
+      <div ref={list} class={styles.months} onScroll={onScroll}>
+        <For each={months()}>
+          {(index) => {
+            const { year, month } = monthOf(index);
+            const start = parseDate(toIso(year, month, 1));
+            const visibleRange = {
+              start,
+              end: parseDate(toIso(year, month, daysInMonth(year, month))),
+            };
+            const weeks = createMemo(() => api().getMonthWeeks(start));
             const title = () =>
-              formatIso(iso(offset().visibleRange.start), ctx.locale(), { month: 'long', year: 'numeric' });
+              formatIso(toIso(year, month, 1), ctx.locale(), {
+                month: 'long',
+                year: 'numeric',
+              });
             return (
-              <section class={styles.month}>
+              <section class={styles.month} data-month={index}>
                 <h3 class={styles.subhead}>{title()}</h3>
                 <DayTable
                   ctx={ctx}
                   api={api}
-                  weeks={offset().weeks}
-                  visibleRange={offset().visibleRange}
-                  id={`month-${i}`}
+                  weeks={weeks()}
+                  visibleRange={visibleRange}
+                  id={`month-${index}`}
                   label={title()}
                   hideHead
                 />
@@ -1188,7 +1350,10 @@ const DayTable = (props: {
 
 const DayCell = (props: { ctx: Ctx; api: Api; day: DateValue; visibleRange?: VisibleRange }) => {
   const state = createMemo(() =>
-    props.api().getDayTableCellState({ value: props.day, visibleRange: props.visibleRange }),
+    props.api().getDayTableCellState({
+      value: props.day,
+      visibleRange: props.visibleRange,
+    }),
   );
 
   /** Range band piece: from the start circle's center to the end circle's center. */
@@ -1201,7 +1366,10 @@ const DayCell = (props: { ctx: Ctx; api: Api; day: DateValue; visibleRange?: Vis
       : [s.firstInHoveredRange, s.lastInHoveredRange, s.inHoveredRange];
     if (!within && !first && !last) return {};
     if (first && last) return {};
-    return { kind: first ? 'start' : last ? 'end' : 'middle', preview: !complete };
+    return {
+      kind: first ? 'start' : last ? 'end' : 'middle',
+      preview: !complete,
+    };
   });
 
   return (

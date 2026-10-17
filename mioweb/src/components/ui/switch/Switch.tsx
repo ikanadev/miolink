@@ -5,12 +5,12 @@ import { Ripple } from '../shared/Ripple';
 import styles from './switch.module.css';
 
 /**
- * Icons in the handle (spec §2): `none` (default), `selected` (check when
+ * Icons in the handle: `none` (default), `selected` (check when
  * on) or `both` (check when on, close when off; the off handle is 24px).
  */
 export type SwitchIcons = 'none' | 'selected' | 'both';
 
-/** Check and close glyphs, both rendered so they can cross-fade (spec §6). */
+/** Check and close glyphs, both rendered so they can cross-fade. */
 const HandleIcons: Component = () => (
   <>
     <Icon class={`${styles.handleIcon} ${styles.onIcon}`} name="check" size={16} />
@@ -22,7 +22,7 @@ export type SwitchProps = Omit<
   ArkSwitch.RootProps,
   'children' | 'asChild' | 'onCheckedChange' | 'aria-label' | 'invalid'
 > & {
-  /** Visible label before the switch (spec §7: label leading); clicking it toggles. */
+  /** Visible label before the switch; clicking it toggles. */
   children?: JSX.Element;
   /**
    * Accessible name when there's no visible label (rendered visually
@@ -55,7 +55,7 @@ export const Switch: Component<SwitchProps> = (props) => {
     'class',
   ]);
   // Ark's press tracking is pointer-only; Space/Enter on the focused input
-  // mark the control as pressed so the handle grows to 28px (spec §5).
+  // mark the control as pressed so the handle grows to 28px.
   const [keyPressed, setKeyPressed] = createSignal(false);
   const supportingId = createUniqueId();
 
@@ -105,7 +105,7 @@ export const Switch: Component<SwitchProps> = (props) => {
         aria-describedby={local.supportingText != null ? supportingId : undefined}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
-            // Spec §8: Enter toggles too, instead of submitting the form.
+            // M3 Accessibility: Enter toggles too, instead of submitting the form.
             e.preventDefault();
             if (!e.repeat) e.currentTarget.click();
           }

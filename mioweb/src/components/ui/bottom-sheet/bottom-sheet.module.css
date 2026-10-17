@@ -21,7 +21,9 @@
 .scrim {
   position: fixed;
   inset: 0;
-  z-index: calc(var(--z-index, 1000) - 1);
+  /* Zag sets --layer-index (and --z-index) on the backdrop and positioner too;
+     the scrim sits one step below its own layer's content. */
+  z-index: calc(999 + var(--layer-index, 0));
   /* Scrim role at 32% (guidelines, Scrim / modal layer recipe). */
   background: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
   transition: opacity var(--md-sys-motion-spring-default-effects-duration)
@@ -48,7 +50,7 @@
 .positioner {
   position: fixed;
   inset: 0;
-  z-index: var(--z-index, 1000);
+  z-index: calc(1000 + var(--layer-index, 0));
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -193,7 +195,7 @@
   min-inline-size: 0;
   margin: 0;
   color: var(--_headline-color);
-  /* Derived: the spec has no typography; title-large like a small app bar title. */
+  /* Derived: M3 gives no headline typography; title-large like a small app bar title. */
   font-family: var(--md-sys-typescale-title-large-font);
   font-weight: var(--md-sys-typescale-title-large-weight);
   font-size: var(--md-sys-typescale-title-large-size);
@@ -238,9 +240,9 @@
 
 /*
  * Enter/exit beyond bounds: slides up from the bottom edge and back down,
- * without overshoot (spec: common transitions don't bounce), on the legacy
+ * without overshoot (M3 Motion: common transitions don't bounce), on the legacy
  * emphasized curves: decelerate 400ms in, accelerate 200ms out (derived
- * from the legacy table, as the spec suggests). Ark unmounts on the exit
+ * from the legacy table, as M3 suggests). Ark unmounts on the exit
  * animation's end. The keyframes start/end at the current detent offset.
  */
 .container[data-state='open'] {

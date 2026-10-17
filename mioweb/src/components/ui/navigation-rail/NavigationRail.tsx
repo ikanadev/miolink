@@ -274,7 +274,7 @@ export const NavigationRail: Component<NavigationRailProps> = (props) => {
       layout,
       select: (next) => {
         selectValue(next);
-        // Navigation completes the modal's task (derived, spec §5).
+        // Navigation completes the modal's task (derived).
         if (where === 'modal') setExpanded(false);
       },
     };

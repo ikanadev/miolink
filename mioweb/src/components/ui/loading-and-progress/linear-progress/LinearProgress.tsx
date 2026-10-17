@@ -5,24 +5,32 @@ import {
   progressAria,
   progressFraction,
   windowed,
+  withVars,
+  type IndicatorColor,
   type ProgressFrame,
   type ProgressShape,
 } from '../shared/progress';
 import styles from './linear-progress.module.css';
 
-export type LinearProgressProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'children' | 'role'> & {
+export type LinearProgressProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'children' | 'role' | 'color'> & {
   /** Progress between 0 and `max`. Omit for an indeterminate indicator. */
   value?: number;
   /** Default 1. */
   max?: number;
-  /** Accessible name: the process and what it affects ("Loading news article"). */
+  /**
+   * Accessible name: the process and what it affects ("Loading news
+   * article"). Without it (or `aria-label` / `aria-labelledby`) the
+   * indicator is decorative: `aria-hidden`, no progressbar role.
+   */
   label?: string;
   /** Default `flat`. `wavy` raises the height to thickness + 2 × amplitude (10px). */
   shape?: ProgressShape;
   /** Active indicator and track thickness in px. Default 4. */
   thickness?: number;
-  /** Show the track. Default true; remove it inside buttons. */
+  /** Show the track (and the stop indicator). Default true; remove it inside buttons. */
   track?: boolean;
+  /** `current` draws the active indicator and stop in `currentColor`. Default `default`. */
+  color?: IndicatorColor;
   /**
    * Dot at the trailing end (determinate only). Default true; remove it
    * only when the track has 3:1 contrast with everything around it.
@@ -43,7 +51,7 @@ type Geometry = {
   stopSpace: number;
 };
 
-/* [Compose] linear indeterminate cycle (progress-indicators.md §6.3). */
+/* Compose ProgressIndicator.kt linear indeterminate cycle. */
 const CYCLE = 1750;
 
 type Span = [number, number];
@@ -73,6 +81,7 @@ export const LinearProgress: Component<LinearProgressProps> = (props) => {
     'thickness',
     'track',
     'stopIndicator',
+    'color',
     'class',
     'style',
   ]);
@@ -119,7 +128,7 @@ export const LinearProgress: Component<LinearProgressProps> = (props) => {
     const x = (fr: number) => caps + fr * length;
     const cy = g.height / 2;
     // Centerline distance between an active end and a track end: the gap
-    // plus both round caps (§4.2).
+    // plus both round caps.
     const gap = length > 0 ? (g.gap + (g.active + g.track) / 2) / length : 0;
 
     let active: Span[] = [];
@@ -173,7 +182,7 @@ export const LinearProgress: Component<LinearProgressProps> = (props) => {
     );
 
     // Stop indicator: centered in the track's end cap, shrinking as the
-    // active indicator reaches it (§4.2).
+    // active indicator reaches it.
     let r = 0;
     let cx = 0;
     if (!f.indeterminate && local.stopIndicator !== false) {
@@ -199,18 +208,19 @@ export const LinearProgress: Component<LinearProgressProps> = (props) => {
   return (
     <div
       {...rest}
-      {...progressAria(fraction(), local.label)}
+      {...progressAria(fraction(), props)}
       ref={root}
       class={local.class ? `${styles.root} ${local.class}` : styles.root}
       data-shape={local.shape ?? 'flat'}
       data-indeterminate={fraction() === undefined ? '' : undefined}
       data-no-track={local.track === false ? '' : undefined}
-      style={{
-        ...(local.thickness
+      data-color={local.color === 'current' ? 'current' : undefined}
+      style={withVars(
+        local.thickness
           ? { '--_active-thickness': `${local.thickness}px`, '--_track-thickness': `${local.thickness}px` }
-          : {}),
-        ...(typeof local.style === 'object' ? local.style : {}),
-      }}
+          : {},
+        local.style,
+      )}
     >
       <svg ref={svg} class={styles.svg} aria-hidden="true">
         <path ref={trackPath} data-part="track" />

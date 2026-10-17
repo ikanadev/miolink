@@ -1,6 +1,6 @@
 /**
  * Arrow Up/Down and Home/End between navigation destinations (rail and
- * drawer, spec §8): attach the returned handler to a container's
+ * drawer, M3 Accessibility keyboard tables): attach the returned handler to a container's
  * `onKeyDown`. Only keys pressed on an element matching `selector` are
  * handled; Tab keeps working. Arrows wrap at the ends (derived).
  */

@@ -62,7 +62,7 @@ export type NavigationItemProps = Omit<JSX.HTMLAttributes<HTMLElement>, 'childre
  * visible label as the accessible name (e.g. "Music library" for
  * "Library"); badge text is appended either way.
  *
- * Space activates links too (spec §8; links only react to Enter natively).
+ * Space activates links too (M3 Accessibility keyboard tables; links only react to Enter natively).
  */
 export const NavigationItem: Component<NavigationItemProps> = (props) => {
   const [local, rest] = splitProps(props, [

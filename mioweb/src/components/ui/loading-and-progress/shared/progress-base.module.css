@@ -38,7 +38,13 @@
   stroke: none;
 }
 
-.base[data-no-track] [data-part='track'] {
+.base[data-color='current'] {
+  --_active-color: currentColor;
+  --_stop-color: currentColor;
+}
+
+/* The stop indicator marks the end of the track, so it goes with it. */
+.base[data-no-track] :is([data-part='track'], [data-part='stop']) {
   display: none;
 }
 

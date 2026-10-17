@@ -46,7 +46,7 @@ export type RichTooltipProps = {
   children?: JSX.Element;
   /** Render-prop alternative to `children`: `{(t) => <button {...t()} />}`. */
   asChild?: (props: TooltipTriggerProps) => JSX.Element;
-  /** Default `bottom-end`; `bottom` centers it under the trigger. */
+  /** Default `bottom-start` (below, extending toward the end side); `bottom` centers it under the trigger. */
   placement?: TooltipPlacement;
   /** Gap to the trigger: 4px with a visual boundary (default), 8px without. */
   offset?: number;
@@ -69,11 +69,12 @@ const RichTooltipContext = createContext<{ close: (reason: TooltipCloseReason) =
  * M3 rich tooltip: optional subhead,
  * supporting text and up to two text actions on a surface-container card.
  *
- * Built on Ark UI `Popover` (non-modal), not `Tooltip`: its content is
- * interactive, so it is a `role="dialog"` with `aria-expanded`/`aria-controls`
- * on the trigger, Tab moves from the trigger into it and out to the next
- * element without a focus trap, and Escape or an outside interaction closes
- * it. Transient tooltips drive the popover's `open` from hover, keyboard
+ * Built on Ark UI `Popover` (non-modal), not `Tooltip`: its content can be
+ * interactive, so with `actions` or `persistent` it is a `role="dialog"` with
+ * `aria-expanded`/`aria-haspopup` on the trigger; a transient tooltip without
+ * actions is a `role="tooltip"` that only describes the trigger. Tab moves
+ * from the trigger into it and out to the next element without a focus trap,
+ * and Escape or an outside interaction closes it. Transient tooltips drive the popover's `open` from hover, keyboard
  * focus and long-press, with the hover region covering the tooltip itself.
  */
 export const RichTooltip: Component<RichTooltipProps> = (props) => {
@@ -105,6 +106,7 @@ export const RichTooltip: Component<RichTooltipProps> = (props) => {
   const [openState, setOpenState] = createSignal(!!local.defaultOpen);
   const isOpen = () => local.open ?? openState();
   const transient = () => !local.persistent;
+  const isTooltipRole = () => transient() && !local.actions;
   let trigger: HTMLElement | undefined;
   let content: HTMLElement | undefined;
   let showTimer: number | undefined;
@@ -173,7 +175,7 @@ export const RichTooltip: Component<RichTooltipProps> = (props) => {
     autoFocus: false,
     restoreFocus: false,
     positioning: {
-      placement: local.placement ?? 'bottom-end',
+      placement: local.placement ?? 'bottom-start',
       gutter: local.offset ?? 4,
       overflowPadding: OVERFLOW_PADDING,
       flip: true,
@@ -195,7 +197,7 @@ export const RichTooltip: Component<RichTooltipProps> = (props) => {
     onPointerDownOutside: () => (pending = 'outside-interaction'),
     onFocusOutside: (e) => {
       if (transient()) {
-        // Focus left the trigger and the tooltip: hide after the delay (spec §5).
+        // Focus left the trigger and the tooltip: hide after the 1.5s delay.
         e.preventDefault();
         hide('blur');
       } else {
@@ -211,6 +213,9 @@ export const RichTooltip: Component<RichTooltipProps> = (props) => {
     ({
       ref: (el: HTMLElement) => (trigger = el),
       'aria-describedby': isOpen() ? ids.description : undefined,
+      // null removes Ark's popover attributes (undefined would fall back to them).
+      'aria-haspopup': isTooltipRole() ? null : undefined,
+      'aria-expanded': isTooltipRole() ? null : undefined,
       'oncapture:pointerenter': (e: PointerEvent) => {
         if (hovering(e)) show(local.showDelay ?? SHOW_DELAY);
       },
@@ -247,6 +252,7 @@ export const RichTooltip: Component<RichTooltipProps> = (props) => {
               ref={(el: HTMLElement) => (content = el)}
               class={local.class ? `${styles.content} ${local.class}` : styles.content}
               data-variant="rich"
+              role={isTooltipRole() ? 'tooltip' : 'dialog'}
               data-persistent={local.persistent ? '' : undefined}
               onPointerEnter={(e) => hovering(e) && keep()}
               onPointerLeave={(e) => hovering(e) && hide('pointerleave')}
@@ -275,7 +281,7 @@ export type RichTooltipActionProps = JSX.ButtonHTMLAttributes<HTMLButtonElement>
 
 /**
  * Text button for a rich tooltip's actions: primary label-large text with a
- * primary state layer (spec §4.1). Closes the tooltip unless `keepOpen` is
+ * primary state layer. Closes the tooltip unless `keepOpen` is
  * set or the click handler calls `preventDefault()`.
  */
 export const RichTooltipAction: Component<RichTooltipActionProps> = (props) => {

@@ -79,6 +79,9 @@ const TooltipDemo: Component = () => {
             <Icon name="warning" />
           </span>
         </Tooltip>
+        <Tooltip label="A label too long for a narrow screen wraps instead of being cut off with an ellipsis">
+          <IconButton color="standard" icon="notes" label="Long label" />
+        </Tooltip>
       </div>
 
       <p class={g.label}>Placement, flipping to stay on screen</p>
@@ -153,7 +156,7 @@ const TooltipDemo: Component = () => {
           }
           onOpenChange={(d) => setLog(describe(d))}
         >
-          <IconButton color="standard" icon="info" label="About saved links" />
+          <IconButton tooltip={false} color="standard" icon="info" label="About saved links" />
         </RichTooltip>
         <RichTooltip
           subhead="Thumbnails"
@@ -161,14 +164,14 @@ const TooltipDemo: Component = () => {
           actions={<RichTooltipAction>Got it</RichTooltipAction>}
           onOpenChange={(d) => setLog(describe(d))}
         >
-          <IconButton color="standard" icon="image" label="About thumbnails" />
+          <IconButton tooltip={false} color="standard" icon="image" label="About thumbnails" />
         </RichTooltip>
         <RichTooltip
           subhead="Views"
           supportingText="Opening a link counts a view. Views don't trigger a sync."
           onOpenChange={(d) => setLog(describe(d))}
         >
-          <IconButton color="standard" icon="visibility" label="About views" />
+          <IconButton tooltip={false} color="standard" icon="visibility" label="About views" />
         </RichTooltip>
         <RichTooltip
           supportingText="Deleting a directory also deletes everything inside it."
@@ -176,7 +179,7 @@ const TooltipDemo: Component = () => {
           placement="bottom"
           onOpenChange={(d) => setLog(describe(d))}
         >
-          <IconButton color="standard" icon="folder_delete" label="About deleting" />
+          <IconButton tooltip={false} color="standard" icon="folder_delete" label="About deleting" />
         </RichTooltip>
         <RichTooltip
           supportingText={
@@ -196,7 +199,7 @@ const TooltipDemo: Component = () => {
           }
           onOpenChange={(d) => setLog(describe(d))}
         >
-          <IconButton color="standard" icon="help" label="About directory names" />
+          <IconButton tooltip={false} color="standard" icon="help" label="About directory names" />
         </RichTooltip>
       </div>
 

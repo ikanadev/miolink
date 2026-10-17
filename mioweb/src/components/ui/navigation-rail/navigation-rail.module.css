@@ -20,7 +20,8 @@
  * Expand/collapse: .inner switches to its target width at once and the
  * <nav> animates its inline size between the measured widths (the
  * component sets it inline) with overflow clipped, so icons keep their x
- * position while the content next to the rail reflows (spec §10d fallback:
+ * position while the content next to the rail reflows (M3 nav rail Motion,
+ * simplified:
  * instant item layout switch, width animates, labels fade).
  */
 
@@ -50,7 +51,7 @@
   --_container-color: transparent;
 }
 
-/* Optional divider on the edge facing the content (spec §2). */
+/* Optional divider on the edge facing the content (M3 nav rail Anatomy). */
 .root[data-divider] {
   border-inline-end: 1px solid var(--md-sys-color-outline-variant);
 }
@@ -71,7 +72,7 @@
 
 .inner {
   --_collapsed-width: 96px;
-  /* Hug mode start offset (derived, spec §11): (96 - 56) / 2 = 20px, so
+  /* Hug mode start offset (derived): (96 - 56) / 2 = 20px, so
      the icon x is the same collapsed and expanded. */
   --_hug-start: calc((var(--_collapsed-width) - 56px) / 2);
 
@@ -80,7 +81,7 @@
   box-sizing: border-box;
   inline-size: var(--_collapsed-width);
   block-size: 100%;
-  /* Top space 44px; bottom padding 16px (derived, spec §11). */
+  /* Top space 44px; bottom padding 16px (derived, M3 nav rail Specs). */
   padding-block: 44px var(--md-sys-measurement-space200);
 }
 
@@ -103,11 +104,11 @@
   flex: none;
   flex-direction: column;
   align-items: flex-start;
-  /* Menu-FAB gap: derived 4px (spec §11). */
+  /* Menu-FAB gap: derived 4px. */
   gap: var(--md-sys-measurement-space50);
   /* FAB (56px) starts at the hug offset in both layouts: it doesn't move. */
   padding-inline-start: var(--_hug-start);
-  /* item.header-space-minimum: header -> first item (spec §11). */
+  /* md.comp.nav-rail.item.header-space-minimum: header -> first item. */
   margin-block-end: var(--md-sys-measurement-space500);
 }
 
@@ -124,7 +125,7 @@
   margin-block-end: var(--md-sys-measurement-space100);
 }
 
-/* Nested FAB: level0 resting (spec §4.4); level1 on hover (derived). */
+/* Nested FAB: level0 resting (M3 nav rail Specs); level1 on hover (derived). */
 .header .fab[data-color] {
   --_elevation-rest: var(--md-sys-elevation-level0);
   --_elevation-hover: var(--md-sys-elevation-level1);
@@ -152,7 +153,7 @@
   list-style: none;
 }
 
-/* Expanded items touch (0px, derived, spec §11). */
+/* Expanded items touch (0px, derived). */
 .inner[data-layout='horizontal'] .list {
   gap: 0;
 }
@@ -167,11 +168,10 @@
 }
 
 /* Collapsed (vertical) item: the bar's sizes (64px, 56x32 pill, 4px gap,
-   label-medium), no reduced pill on hover (spec §5: state layer only) and
-   the same label weight when active (spec §4.3). */
+   label-medium, bold when active), no reduced pill on hover (M3 nav rail
+   States: state layer only). */
 .inner [data-rail-item] {
   --_hover-indicator-opacity: 0;
-  --_active-label-weight: var(--md-sys-typescale-label-medium-weight);
 }
 
 /* item.vertical.leading/trailing-space 16/16: max label width = rail - 32.
@@ -194,7 +194,9 @@
   --_label-line-height: var(--md-sys-typescale-label-large-line-height);
   --_label-tracking: var(--md-sys-typescale-label-large-tracking);
   --_label-weight: var(--md-sys-typescale-label-large-weight);
-  --_active-label-weight: var(--md-sys-typescale-label-large-weight);
+  /* Bold when active like the collapsed item and the drawer (derived; the
+     expressive nav-rail tokens have no weight). */
+  --_active-label-weight: var(--md-sys-typescale-label-large-weight-prominent);
   --_leading-track: var(--_hug-start);
   --_trailing-track: minmax(0, 1fr);
 }
@@ -219,7 +221,7 @@
   flex-direction: column;
 }
 
-/* Subhead: title-small, on-surface-variant (derived, spec §4.3), aligned
+/* Subhead: title-small, on-surface-variant (derived from the drawer), aligned
    with the item icons; 56px tall like an item (derived). */
 .subhead {
   display: flex;
@@ -237,7 +239,7 @@
 
 /* ---- Expand/collapse: labels fade in once the old ones are gone ---- */
 
-/* Clean fade (spec §6): the old labels are removed at once, the new ones
+/* Clean fade (M3 nav rail Motion): the old labels are removed at once, the new ones
    wait the fast effects duration (the would-be fade-out), then fade in on
    the default effects spring (derived timing). */
 .inner[data-animating] [data-part='label'],
@@ -258,7 +260,8 @@
 .scrim {
   position: fixed;
   inset: 0;
-  z-index: calc(var(--z-index, 1000) - 1);
+  /* Zag sets --layer-index on the backdrop too; one below the positioner. */
+  z-index: calc(999 + var(--layer-index, 0));
   /* Scrim at 32% beneath expanded navigation (guidelines). */
   background: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
 }
@@ -276,13 +279,13 @@
 .positioner {
   position: fixed;
   inset: 0;
-  z-index: var(--z-index, 1000);
+  z-index: calc(1000 + var(--layer-index, 0));
   display: flex;
   justify-content: flex-start;
 }
 
 .modal {
-  /* Collapsed width the modal grows from, or 0 when hidden (spec §6). */
+  /* Collapsed width the modal grows from, or 0 when hidden (M3 nav rail Motion). */
   --_from-width: 96px;
 
   position: relative;
@@ -291,7 +294,7 @@
   block-size: 100%;
   max-inline-size: 100vw;
   overflow: hidden;
-  /* corner.large on the end corners only; the start edge is flush with the window (derived, spec §11). */
+  /* corner.large on the end corners only; the start edge is flush with the window (derived). */
   border-start-end-radius: var(--md-sys-shape-corner-large);
   border-end-end-radius: var(--md-sys-shape-corner-large);
   background: var(--md-sys-color-surface-container);
@@ -317,7 +320,7 @@
 
 /* Grows from the collapsed rail's width (a clip, so the items don't
    move): default spatial in; exits on the default effects curve, shorter
-   (derived, spec §6). The end inset goes past the box so the shadow
+   (derived). The end inset goes past the box so the shadow
    shows. */
 .modal[data-state='open'] {
   animation: modal-in var(--md-sys-motion-spring-default-spatial-duration)

@@ -30,22 +30,52 @@ const IconButtonDemo: Component = () => (
         </div>
       )}
     </For>
-    <p class={g.label}>Sizes</p>
+    <p class={g.label}>Sizes: filled round, outlined, square toggle selected</p>
     <div class={g.row}>
       <For each={SIZES}>{(size) => <IconButton size={size} icon="edit" label={`Edit (${size})`} />}</For>
     </div>
-    <p class={g.label}>Widths</p>
     <div class={g.row}>
-      <For each={WIDTHS}>
-        {(width) => <IconButton color="tonal" width={width} icon="add" label={`Add (${width})`} />}
+      <For each={SIZES}>
+        {(size) => <IconButton size={size} color="outlined" icon="edit" label={`Edit outlined (${size})`} />}
       </For>
     </div>
-    <p class={g.label}>Built-in tooltip, link</p>
     <div class={g.row}>
-      <IconButton color="standard" icon="share" label="Share" tooltip />
-      <IconButton color="tonal" icon="bookmark" label="Bookmark" toggle tooltip />
-      <IconButton color="outlined" icon="open_in_new" label="Open the icon button spec" tooltip
-        href="https://m3.material.io/components/icon-buttons" target="_blank" rel="noopener" />
+      <For each={SIZES}>
+        {(size) => (
+          <IconButton size={size} shape="square" icon="bookmark" label={`Bookmark (${size})`} toggle />
+        )}
+      </For>
+    </div>
+    <p class={g.label}>Widths per size: narrow, default, wide</p>
+    <For each={SIZES}>
+      {(size) => (
+        <div class={g.row}>
+          <For each={WIDTHS}>
+            {(width) => (
+              <IconButton color="tonal" size={size} width={width} icon="add" label={`Add (${size}, ${width})`} />
+            )}
+          </For>
+        </div>
+      )}
+    </For>
+    <p class={g.label}>Selected weight for a glyph without a filled version (600)</p>
+    <div class={g.row}>
+      <IconButton color="standard" icon="check" label="Done" toggle selectedWeight={600} />
+      <IconButton color="tonal" icon="check" label="Done" toggle defaultSelected selectedWeight={600} />
+    </div>
+    <p class={g.label}>Tooltip (on by default, hover or focus), tooltip off, link</p>
+    <div class={g.row}>
+      <IconButton color="standard" icon="share" label="Share" />
+      <IconButton color="tonal" icon="bookmark" label="Bookmark" toggle />
+      <IconButton color="standard" icon="block" label="No tooltip" tooltip={false} />
+      <IconButton
+        color="outlined"
+        icon="open_in_new"
+        label="Open the icon button spec"
+        href="https://m3.material.io/components/icon-buttons"
+        target="_blank"
+        rel="noopener"
+      />
     </div>
   </div>
 );

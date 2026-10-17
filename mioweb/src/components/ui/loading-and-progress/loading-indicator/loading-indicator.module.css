@@ -4,8 +4,7 @@
  * shape, already scaled to 38/48 of the box by the morph code.
  */
 .root {
-  --_container-width: 48px;
-  --_container-height: 48px;
+  --_size: 48px;
   --_container-shape: var(--md-sys-shape-corner-full);
   --_color: var(--md-sys-color-primary);
   --_container-color: transparent;
@@ -14,8 +13,8 @@
   place-items: center;
   flex: none;
   box-sizing: border-box;
-  inline-size: var(--_size, var(--_container-width));
-  block-size: var(--_size, var(--_container-height));
+  inline-size: var(--_size);
+  block-size: var(--_size);
   border-radius: var(--_container-shape);
   background: var(--_container-color);
   contain: strict;
@@ -24,6 +23,10 @@
 .root[data-contained] {
   --_container-color: var(--md-sys-color-primary-container);
   --_color: var(--md-sys-color-on-primary-container);
+}
+
+.root[data-color='current'] {
+  --_color: currentColor;
 }
 
 .root[hidden] {
@@ -41,10 +44,14 @@
   fill: var(--_color);
 }
 
-/* Reduced motion (web mapping, §8): the first shape held still, spinning
-   at half speed so activity stays visible. */
+/* Reduced motion (web mapping, derived): the first shape held still,
+   spinning at half speed so activity stays visible. */
 .root[data-reduced] .indicator {
   animation: spin 9332ms linear infinite;
+}
+
+.root[data-reduced][data-paused] .indicator {
+  animation-play-state: paused;
 }
 
 @keyframes spin {

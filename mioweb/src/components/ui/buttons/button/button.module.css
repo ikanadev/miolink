@@ -15,7 +15,7 @@
 .root {
   composes: base from '../shared/button-base.module.css';
 
-  /* Never narrower than the label (spec §7). Groups lift this. */
+  /* Never narrower than the label (M3: don't truncate label text). Groups lift this. */
   min-inline-size: max-content;
 }
 
@@ -24,7 +24,7 @@
   inline-size: 100%;
 }
 
-/* Legacy 24dp small padding: opt-in only, not recommended (spec §4.2). */
+/* Legacy 24dp small padding: opt-in only, not recommended (M3 Specs). */
 .root[data-size='small'][data-padding='wide'] {
   --_leading: 24px;
   --_trailing: 24px;

@@ -19,9 +19,11 @@
 /* ---- Sheet (shared by both variants) ---- */
 
 .sheet {
-  /* 12px indicator inset + 16px inside the pill = 28px content padding (spec §4.2). */
+  /* 12px indicator inset + 16px inside the pill = 28px content padding (M3 nav drawer Specs). */
   --_inset: var(--md-sys-measurement-space150);
   --_pad: var(--md-sys-measurement-space200);
+  /* md.comp.navigation-drawer.standard.container.color; the modal sets its own. */
+  --_container-color: var(--md-sys-color-surface);
 
   display: flex;
   flex-direction: column;
@@ -29,16 +31,16 @@
   inline-size: 360px;
   max-inline-size: 100%;
   block-size: 100%;
-  /* Sheet block padding 12px (derived, spec §11). */
+  /* Sheet block padding 12px (derived). */
   padding: var(--md-sys-measurement-space150) var(--_inset);
   overflow-x: hidden;
   overflow-y: auto;
-  /* Scrolls on its own; never chains to the page (spec §6). */
+  /* Scrolls on its own; never chains to the page. */
   overscroll-behavior: contain;
   /* Start-anchored: rounded end corners only, mirrored in RTL (corner.large, 16px). */
   border-start-end-radius: var(--md-sys-shape-corner-large);
   border-end-end-radius: var(--md-sys-shape-corner-large);
-  background: var(--md-sys-color-surface-container-low);
+  background: var(--_container-color);
   color: var(--md-sys-color-on-surface-variant);
 }
 
@@ -49,7 +51,7 @@
 }
 
 /* Headline and subheads: 56px rows aligned with the labels, title-small,
-   on-surface-variant (derived heights, spec §4.2 / §4.3). */
+   on-surface-variant (derived heights, M3 nav drawer Specs). */
 .headline,
 .subhead {
   display: flex;
@@ -67,7 +69,7 @@
   letter-spacing: var(--md-sys-typescale-title-small-tracking);
 }
 
-/* Items touch: 0px between elements (spec §4.2). */
+/* Items touch: 0px between elements (M3 nav drawer Specs). */
 .list {
   display: flex;
   flex-direction: column;
@@ -87,6 +89,12 @@
   flex-direction: column;
 }
 
+/* <li role="none"> holding the separator, so the list only owns list items. */
+.dividerItem {
+  display: flex;
+  flex-direction: column;
+}
+
 /* Full width of the sheet (through the 12px inset), 8px block margin (derived). */
 .divider {
   flex: none;
@@ -99,10 +107,11 @@
 /* ---- Items ---- */
 
 /* 56px full-width pill (336px in the 360px sheet), 16px inside it, 24px
-   icon, 12px icon-label gap (spec §4.2), label-large (§4.3), badge text
-   at the end at least 12px after the label. The active label stays
-   label-large weight and on-secondary-container (it sits in the pill).
-   The pill fades in place (§6); no reduced pill on hover (§5). */
+   icon, 12px icon-label gap, label-large, badge text in the label-large
+   weight at the end at least 12px after the label. The active label is
+   bold (label-large prominent) and on-secondary-container (it sits in the
+   pill). The pill fades in place; no reduced pill on hover. Focus ring at
+   the inner offset (md.comp.navigation-drawer.focus.indicator.outline.offset). */
 .sheet [data-drawer-item] {
   --_min-height: 56px;
   --_indicator-height: 56px;
@@ -120,12 +129,14 @@
   --_label-line-height: var(--md-sys-typescale-label-large-line-height);
   --_label-tracking: var(--md-sys-typescale-label-large-tracking);
   --_label-weight: var(--md-sys-typescale-label-large-weight);
-  --_active-label-weight: var(--md-sys-typescale-label-large-weight);
+  --_active-label-weight: var(--md-sys-typescale-label-large-weight-prominent);
+  --_badge-text-weight: var(--md-sys-typescale-label-large-weight);
   --_hover-indicator-opacity: 0;
   --_indicator-grow: 0;
+  --_focus-ring-offset: var(--md-sys-state-focus-indicator-inner-offset);
 }
 
-/* Inactive hover/focus: content and state layer on-surface (spec §4.1 †). */
+/* Inactive hover/focus: content and state layer on-surface (M3 nav drawer color tokens). */
 @media (hover: hover) {
   .sheet [data-drawer-item]:not([aria-current='page']):hover {
     --_icon-color: var(--md-sys-color-on-surface);
@@ -155,7 +166,7 @@
  * dismissible drawer animates its inline size; the sheet inside keeps
  * 360px and stays pinned to the end of the box, so it reads as a slide
  * from the start edge while the content reflows (enter emphasized
- * decelerate 400ms, exit emphasized accelerate 200ms, spec §6).
+ * decelerate 400ms, exit emphasized accelerate 200ms; M3 nav drawer Motion).
  */
 .root {
   position: sticky;
@@ -191,8 +202,9 @@
 .scrim {
   position: fixed;
   inset: 0;
-  z-index: calc(var(--z-index, 1000) - 1);
-  /* Scrim at 32% (guidelines); fades linearly with the sheet's durations (spec §6). */
+  /* Zag sets --layer-index on the backdrop too; one below the positioner. */
+  z-index: calc(999 + var(--layer-index, 0));
+  /* Scrim at 32% (guidelines); fades linearly with the sheet's durations (derived). */
   background: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
 }
 
@@ -207,7 +219,7 @@
 .positioner {
   position: fixed;
   inset: 0;
-  z-index: var(--z-index, 1000);
+  z-index: calc(1000 + var(--layer-index, 0));
   display: flex;
   justify-content: flex-start;
 }
@@ -215,12 +227,14 @@
 .modal {
   /* -1: slides toward the left (LTR start edge); +1 in RTL. */
   --_slide: -1;
+  /* Swipe offset, set inline while dragging. */
+  --_drag: 0px;
 
   position: relative;
   z-index: calc(1000 + var(--layer-index, 0));
   display: flex;
   box-sizing: border-box;
-  /* Leaves a 56px strip of scrim to tap on narrow windows (derived, spec §4.2). */
+  /* Leaves a 56px strip of scrim to tap on narrow windows (derived). */
   max-inline-size: calc(100vw - 56px);
   block-size: 100%;
   border-start-end-radius: var(--md-sys-shape-corner-large);
@@ -230,7 +244,7 @@
   /* Horizontal swipes are ours; vertical ones scroll the list. */
   touch-action: pan-y;
   /* Swipe offset, eased back when the swipe doesn't close. */
-  transform: translateX(var(--_drag, 0px));
+  transform: translateX(var(--_drag));
   transition: transform var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-emphasized-decelerate);
 }
 
@@ -249,12 +263,13 @@
 }
 
 .modalNav > .sheet {
-  /* Safe areas on notched devices (spec §4.2). */
+  /* Safe areas on notched devices. */
   padding-block: calc(var(--md-sys-measurement-space150) + env(safe-area-inset-top, 0px))
     calc(var(--md-sys-measurement-space150) + env(safe-area-inset-bottom, 0px));
+  --_container-color: var(--md-sys-color-surface-container-low);
 }
 
-/* Enter/exit beyond bounds (spec §6): emphasized decelerate 400ms in,
+/* Enter/exit beyond bounds (M3 nav drawer Motion): emphasized decelerate 400ms in,
    emphasized accelerate 200ms out, from wherever a swipe left it. The
    extra 24px hides the shadow. */
 .modal[data-state='open'] {
@@ -274,7 +289,7 @@
 
 @keyframes drawer-out {
   from {
-    transform: translateX(var(--_drag, 0px));
+    transform: translateX(var(--_drag));
   }
   to {
     transform: translateX(calc((100% + 24px) * var(--_slide)));

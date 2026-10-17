@@ -35,7 +35,7 @@ export type NavigationBarProps = Omit<JSX.HTMLAttributes<HTMLElement>, 'children
   /**
    * Hide while scrolling down, show again when scrolling up, near the top,
    * or when focus moves into the bar. Leave off when assistive technology
-   * may be in use (spec §8).
+   * may be in use (M3 nav bar Accessibility).
    */
   hideOnScroll?: boolean;
   /** The scrolling element watched by `hideOnScroll`. Default: window. */

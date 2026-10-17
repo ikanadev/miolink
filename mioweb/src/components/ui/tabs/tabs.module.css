@@ -31,7 +31,7 @@
 }
 
 /* Fixed, 600px and up: equal columns as wide as the widest tab, at the start
-   or centered. The breakpoint is derived (spec §4.2); a container query, so
+   or centered. The breakpoint is derived; a container query, so
    tabs embedded in a narrow region keep the compact layout (web mapping). */
 @container (min-width: 600px) {
   .bar[data-layout='fixed'] .list {
@@ -59,7 +59,7 @@
 .bar[data-layout='scrollable'] .list {
   inline-size: max-content;
   grid-auto-columns: max-content;
-  /* First tab 52px from the leading edge (spec §2). */
+  /* First tab 52px from the leading edge (M3 tabs Specs). */
   padding-inline-start: 52px;
 }
 
@@ -78,7 +78,7 @@
   justify-content: center;
   box-sizing: border-box;
   min-block-size: var(--_height);
-  /* 48px minimum and 16px side padding are derived (Material web; spec §4.2). */
+  /* 48px minimum and 16px side padding are derived (Material web). */
   min-inline-size: 48px;
   margin: 0;
   padding-block: 0;
@@ -215,7 +215,7 @@
   --_state-layer-color: var(--md-sys-color-on-surface);
 }
 
-/* Disabled isn't in the spec (§11); on-surface at 0.38 from the shared
+/* M3 tabs have no disabled tokens; on-surface at 0.38 from the shared
    disabled recipe (derived). */
 .tab:is(:disabled, [data-disabled]) {
   --_color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);

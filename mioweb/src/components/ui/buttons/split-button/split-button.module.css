@@ -19,9 +19,12 @@
   --_lead-start: var(--md-sys-measurement-space200);
   --_lead-end: var(--md-sys-measurement-space150);
   --_trail-icon: 22px;
+  /* Derived: M3 gives no optical size; it follows the glyph size up to the
+     axis maximum (48), like the other buttons. */
+  --_trail-optical: 22;
   --_trail-pad: 13px;
-  /* Optical centering of the closed chevron toward the gap (source
-     measurement; direction derived, spec §4.2). */
+  /* Optical centering of the closed chevron toward the gap (M3 Specs
+     measurement; direction derived). */
   --_icon-offset: -1px;
 
   display: inline-flex;
@@ -38,6 +41,7 @@
   --_lead-start: var(--md-sys-measurement-space150);
   --_lead-end: var(--md-sys-measurement-space125);
   --_trail-icon: 22px;
+  --_trail-optical: 22;
   --_trail-pad: 13px;
   --_icon-offset: -1px;
 }
@@ -51,6 +55,7 @@
   --_lead-start: var(--md-sys-measurement-space300);
   --_lead-end: var(--md-sys-measurement-space300);
   --_trail-icon: 26px;
+  --_trail-optical: 26;
   --_trail-pad: 15px;
   --_icon-offset: -2px;
 }
@@ -64,6 +69,7 @@
   --_lead-start: var(--md-sys-measurement-space600);
   --_lead-end: var(--md-sys-measurement-space600);
   --_trail-icon: 38px;
+  --_trail-optical: 38;
   --_trail-pad: 29px;
   --_icon-offset: -3px;
 }
@@ -77,6 +83,7 @@
   --_lead-start: var(--md-sys-measurement-space800);
   --_lead-end: var(--md-sys-measurement-space800);
   --_trail-icon: 50px;
+  --_trail-optical: 48;
   --_trail-pad: 43px;
   --_icon-offset: -6px;
 }
@@ -113,9 +120,9 @@
   --_leading: var(--_trail-pad);
   --_trailing: var(--_trail-pad);
   --md-icon-size: var(--_trail-icon);
-  --md-icon-optical-size: 24;
+  --md-icon-optical-size: var(--_trail-optical);
 
-  /* Fixed width: leading + icon + trailing (derived, spec §4.2). */
+  /* Fixed width: leading + icon + trailing (derived). */
   inline-size: calc(var(--_trail-pad) * 2 + var(--_trail-icon));
   border-start-end-radius: var(--_full);
   border-end-end-radius: var(--_full);
@@ -131,7 +138,7 @@
   }
 }
 
-/* No focused token: focus uses the hovered value (spec §11). */
+/* No focused token: focus uses the hovered value (derived). */
 .root[data-size] > .half:focus-visible {
   --_r-inner: var(--_inner-hover);
 }
@@ -150,22 +157,23 @@
   --_r-inner: var(--_inner);
 }
 
-/* Open menu: a persistent 10% state layer (spec §4.1), colors unchanged. */
+/* Open menu: a persistent 10% state layer (M3 Specs: color), colors unchanged. */
 .root[data-size] > .trailing[aria-expanded='true']::before {
   opacity: var(--md-sys-state-pressed-state-layer-opacity);
 }
 
 /* ---- Menu icon ---- */
 
-/* Rotation: the standard motion scheme's fast spatial curve as a literal, so
-   it stays standard under the expressive scheme (spec §6). */
+/* The icon carries data-motion-scheme="standard", so these springs are the
+   standard scheme's even inside an expressive subtree. */
 .menuIcon {
   position: relative;
   inset-inline-start: var(--_icon-offset);
   rotate: 0deg;
   transition:
-    rotate 350ms cubic-bezier(0.27, 1.06, 0.18, 1),
-    inset-inline-start 350ms cubic-bezier(0.27, 1.06, 0.18, 1);
+    rotate var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing),
+    inset-inline-start var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial-easing);
 }
 
 /* Rotates inwards: clockwise in LTR, counter-clockwise in RTL (derived). */
@@ -176,12 +184,6 @@
 
 .trailing[aria-expanded='true']:dir(rtl) .menuIcon {
   rotate: -180deg;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .menuIcon {
-    transition: none;
-  }
 }
 
 @media (forced-colors: active) {

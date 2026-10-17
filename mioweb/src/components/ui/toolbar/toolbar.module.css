@@ -28,7 +28,7 @@
   box-shadow: var(--_elevation);
   /* Hide/show: default spatial spring (partial-screen movement); shadow:
      default effects spring; collapse: fast spatial spring for the size and
-     fast effects for opacity. The spec gives no motion values (derived, §6). */
+     fast effects for opacity. Derived: M3 gives no toolbar motion values. */
   transition:
     translate var(--md-sys-motion-spring-default-spatial-duration)
       var(--md-sys-motion-spring-default-spatial-easing),
@@ -56,7 +56,7 @@
 
 /* ---- Items: standard icon buttons and text buttons take the toolbar's
    colors (md.comp.toolbar.<color>.*). Filled, tonal and outlined items keep
-   their own colors for emphasis (spec §5). Disabled items keep their own
+   their own colors for emphasis (M3 Guidelines). Disabled items keep their own
    disabled colors (on-surface 38%, no container). ---- */
 
 .toolbar
@@ -88,7 +88,12 @@
   min-block-size: 64px;
   padding-inline: var(--md-sys-measurement-space200);
   border-radius: var(--md-sys-shape-corner-none);
-  /* min-spacing; `even` spreads the rest (derived, spec §11). */
+  /*
+   * md.comp.toolbar.docked.min-spacing. `even` spreads the rest around the
+   * items too, so the outside space grows past the 16px padding; M3 asks
+   * for a "minimum outside padding of 16dp", so that stays in spec.
+   * `edges` is the space-between arrangement Compose uses.
+   */
   gap: 4px;
   justify-content: space-evenly;
 }
@@ -178,7 +183,7 @@
 
 /* Toolbar FAB: level1 (56px) / level2 (80px collapsed) instead of the
    FAB's level3; +1 level on hover, like every FAB. Size and corners morph
-   on the fast spatial spring (derived, spec §6). */
+   on the fast spatial spring (derived: M3 gives no toolbar motion values). */
 .group .fab[data-color] {
   --_elevation-rest: var(--md-sys-elevation-level1);
   --_elevation-hover: var(--md-sys-elevation-level2);
@@ -251,7 +256,8 @@
 /* ---- Collapse on scroll ---- */
 
 /* With a FAB the toolbar folds away and the FAB grows (56 -> 80). Items
-   stay focusable: focus inside expands the toolbar again (spec §8). */
+   stay focusable: focus inside expands the toolbar again (M3 Accessibility:
+   keep access to toolbar controls while collapsed). */
 .toolbar[data-collapsed][data-has-fab] {
   inline-size: 0;
   padding-inline: 0;
@@ -268,9 +274,28 @@
   margin-block-end: 0;
 }
 
-/* Without a FAB only the key action stays. */
+/* Without a FAB only the key action shows. The other items fold to zero
+   size but stay focusable, so focus inside expands the toolbar again. The
+   negative margin cancels the flex gap each folded item would still add. */
 .toolbar[data-collapsed]:not([data-has-fab]) > :not([data-key]) {
-  display: none;
+  overflow: clip;
+  opacity: 0;
+}
+
+.toolbar[data-collapsed]:not([data-has-fab], [data-orientation='vertical']) > :not([data-key]) {
+  min-inline-size: 0;
+  inline-size: 0;
+  padding-inline: 0;
+  border-inline-width: 0;
+  margin-inline: 0 calc(-1 * var(--md-sys-measurement-space50));
+}
+
+.toolbar[data-collapsed][data-orientation='vertical']:not([data-has-fab]) > :not([data-key]) {
+  min-block-size: 0;
+  block-size: 0;
+  padding-block: 0;
+  border-block-width: 0;
+  margin-block: 0 calc(-1 * var(--md-sys-measurement-space50));
 }
 
 /* ---- Dividers (ToolbarDivider) ---- */

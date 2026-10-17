@@ -29,8 +29,8 @@ import {
 } from './trigger';
 
 /**
- * How the tooltip relates to the trigger for assistive technology (spec §8,
- * icon-buttons.md §8):
+ * How the tooltip relates to the trigger for assistive technology (M3
+ * Tooltips and Icon buttons, Accessibility):
  * - `description`: `aria-describedby` while open (extra information).
  * - `label`: `aria-labelledby`; the tooltip is the trigger's name.
  * - `none`: the tooltip repeats the trigger's name, so it's `aria-hidden`.
@@ -52,7 +52,11 @@ export type TooltipProps = {
   offset?: number;
   /** Hover delay before showing, in ms. Default 500. Focus shows immediately. */
   showDelay?: number;
-  /** Delay before hiding after the pointer leaves, in ms. Default 1500. */
+  /**
+   * Delay before hiding after the pointer leaves, in ms. Default 1500.
+   * Keyboard blur hides at once: Ark closes on the trigger's blur, and
+   * holding that off would also swallow the trigger's own blur handlers.
+   */
   hideDelay?: number;
   /** Controlled open state. */
   open?: boolean;

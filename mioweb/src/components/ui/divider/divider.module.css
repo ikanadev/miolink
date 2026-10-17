@@ -18,7 +18,6 @@
   flex: none;
   margin: 0;
   border: 0;
-  list-style: none; /* when rendered as an <li> by ListDivider */
 }
 
 .root[data-inset='start'] {

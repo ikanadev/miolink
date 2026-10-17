@@ -1,7 +1,7 @@
 /*
  * Badge (md.comp.badge). Small: 6px dot. Large: 16px pill, 16-34px wide,
  * label-small text. On an icon, the anchor is the icon's box and the badge
- * sits at fixed offsets from its upper trailing corner (§4.2).
+ * sits at fixed offsets from its upper trailing corner (M3 Badges, Specs).
  */
 .anchor {
   position: relative;

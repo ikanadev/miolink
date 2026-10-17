@@ -1,4 +1,5 @@
 import { createSignal, For, onCleanup, type Component } from 'solid-js';
+import { Button } from '../../components/ui/buttons/button';
 import { IconButton } from '../../components/ui/buttons/icon-button';
 import { CircularProgress, LinearProgress } from '../../components/ui/loading-and-progress';
 import g from '../gallery.module.css';
@@ -55,11 +56,12 @@ const ProgressIndicatorDemo: Component = () => {
       <p class={g.label}>Linear: indeterminate</p>
       <LinearProgress label="Loading my episodes" />
       <LinearProgress label="Loading my episodes (wavy)" shape="wavy" />
-      <p class={g.label}>Linear: 8px thickness, no stop indicator, no track</p>
+      <p class={g.label}>Linear: 8px thickness, no stop indicator, no track (the stop goes with it)</p>
       <LinearProgress label="Syncing (thick)" value={value()} thickness={8} />
       <LinearProgress label="Syncing (thick, wavy)" value={value()} thickness={8} shape="wavy" />
       <LinearProgress label="Syncing (no stop indicator)" value={value()} stopIndicator={false} />
       <LinearProgress label="Syncing (no track)" track={false} />
+      <LinearProgress label="Syncing (no track, determinate)" value={value()} track={false} />
       <p class={g.label}>Linear: indeterminate, then determinate</p>
       <LinearProgress label="Downloading update" value={simulated()} shape="wavy" />
 
@@ -67,7 +69,7 @@ const ProgressIndicatorDemo: Component = () => {
       <div class={g.row}>
         <CircularProgress label="Uploading file" value={value()} />
         <CircularProgress label="Uploading file (wavy)" value={value()} shape="wavy" />
-        <CircularProgress label="Uploading file (thick)" value={value()} thickness={8} size={56} />
+        <CircularProgress label="Uploading file (thick)" value={value()} thickness={8} size={52} />
         <CircularProgress label="Uploading file (96px, wavy)" value={value()} shape="wavy" size={96} />
       </div>
       <p class={g.label}>Circular: indeterminate</p>
@@ -78,6 +80,22 @@ const ProgressIndicatorDemo: Component = () => {
         <CircularProgress label="Refreshing page (96px, wavy)" shape="wavy" size={96} />
         <CircularProgress label="Downloading update" value={simulated()} shape="wavy" />
       </div>
+      <p class={g.label}>Inside a button: the label color, flat, no track, decorative (the button says it's busy)</p>
+      <div class={g.row}>
+        <Button aria-busy="true">
+          <span style={{ display: 'inline-flex', 'align-items': 'center', gap: '8px' }}>
+            <CircularProgress size={24} color="current" track={false} />
+            Refreshing
+          </span>
+        </Button>
+        <Button color="tonal" aria-busy={running()} onClick={simulate}>
+          <span style={{ display: 'inline-flex', 'align-items': 'center', gap: '8px' }}>
+            <CircularProgress size={24} value={simulated()} color="current" track={false} />
+            Download
+          </span>
+        </Button>
+      </div>
+
       <p class={g.label}>Low and complete values: nothing at 0, a dot as soon as it starts</p>
       <For each={STEPS}>{(v) => <LinearProgress label={`Progress ${v * 100}%`} value={v} />}</For>
       <div class={g.row}>

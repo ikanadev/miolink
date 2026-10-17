@@ -88,7 +88,13 @@ src/
   instead of setting a variable on itself.
 - **Private variables.** Values a component reuses or changes per state live
   in private variables that start with `--_`. State and variant rules change
-  the `--_*` variables, and the properties use them once.
+  the `--_*` variables, and the properties use them once. Declare every
+  private variable's default on the element that reads it and read it
+  without a fallback (`var(--_size)`, not `var(--_size, 48px)`): custom
+  properties inherit, so an undeclared one silently takes the value an
+  ancestor component set under the same name. Never set another
+  component's private variables from outside; give it a prop or data
+  attribute instead (e.g. `color="current"` on the progress indicators).
 - **Variants and state as attributes.** Use `data-*` attributes on the root
   (`data-variant`, `data-size`, ...) and ARIA state (`aria-pressed`,
   `aria-selected`, `:disabled`) as selectors, not one class per variant. Ark
@@ -104,6 +110,13 @@ src/
   `--_state-layer-color`, which defaults to `currentColor` (the content
   color). Set `--_focus-ring-offset` to
   `var(--md-sys-state-focus-indicator-inner-offset)` for full-bleed items.
+  Both are declared on `:root` in `interaction.module.css`, so they always
+  exist and a component can set them on itself or on an ancestor.
+- **State order.** Hover never overrides pressed, dragged, selected or
+  disabled: write state rules in the order enabled, hover, focus, pressed,
+  dragged, selected, disabled, or guard hover with `:not(...)`. Show
+  focus visuals only for keyboard focus (`:focus-visible`), not for Ark's
+  `data-highlighted` / `data-focus` alone.
 - **Disabled colors** use `color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent)`
   (content) and the container opacity from the component's tokens. Don't
   lower the opacity of the whole element.
@@ -115,8 +128,10 @@ src/
 - **Elevation.** `box-shadow: var(--md-sys-elevation-levelN)` only where M3
   asks for a shadow; tonal surfaces are the default separation.
 - **Icons** are `<Icon name="..." />` (Material Symbols ligatures, `filled`,
-  `size`, `mirror` for directional glyphs). Parents can set `--md-icon-size`
-  and `--md-icon-optical-size`.
+  `size`, `weight`, `mirror` for directional glyphs). Parents can set
+  `--md-icon-size`, `--md-icon-optical-size` and `--md-icon-weight`; these
+  three are the only public variables, with defaults declared on `:root` in
+  `icon.module.css`. The grade follows the theme (0 light, -25 dark).
 - **Layout.** Logical properties (`padding-inline`, `inset-inline-start`,
   `border-start-start-radius`) so RTL works. px for spacing and sizes, rem
   (from the type tokens) for text.
@@ -125,15 +140,20 @@ src/
   Switch, Checkbox, ...), style them with the `class` prop and their data
   attributes, and look up props, examples and data attributes through the
   Ark UI MCP server. Overlays render in a `Portal` and use
-  `z-index: calc(1000 + var(--layer-index, 0))` on the content (see Ark's
-  styling guide for positioner and backdrop).
+  `z-index: calc(1000 + var(--layer-index, 0))` on the content and
+  positioner, and `calc(999 + var(--layer-index, 0))` on the scrim (Zag's
+  layer stack sets `--layer-index` on all three).
 - **Solid.** Split own props with `splitProps` and spread the rest on the
   root element. Merge `class` as `` local.class ? `${styles.root} ${local.class}` : styles.root ``.
   Don't destructure props. Resolve slot children with `children()` only when
   you need to inspect them.
 - **Accessibility.** Native elements first; icon-only controls take a
   required `label` used as `aria-label`; follow M3's keyboard interactions for
-  the component.
+  the component. A list only contains list items: wrap separators as
+  `<li role="none">` around the separator element.
+- **Comments.** Cite the M3 page/tab or token name for values (never
+  numbered "§" sections), and mark values that aren't verbatim from M3 as
+  derived.
 - **Exports.** `index.ts` in the component folder exports the component and
   its public types; `components/ui/index.ts` re-exports every folder.
 - **Demo.** Each component has `src/gallery/demos/<name>.demo.tsx` showing
@@ -144,39 +164,39 @@ src/
 | Folder | Component | Ark UI |
 | --- | --- | --- |
 | `icon` | Icon | — |
-| `buttons/button` | Button (elevated/filled/tonal/outlined/text; xsmall–xlarge; round/square; toggle; link; legacy padding) | Toggle |
-| `buttons/icon-button` | IconButton (default, toggle; filled/tonal/outlined/standard; xsmall–xlarge; narrow/default/wide; round/square; link; optional tooltip) | Toggle |
+| `buttons/button` | Button (elevated/filled/tonal/outlined/text; xsmall–xlarge; round/square; toggle; link; legacy padding; `selectedWeight`) | Toggle |
+| `buttons/icon-button` | IconButton (default, toggle; filled/tonal/outlined/standard; xsmall–xlarge; narrow/default/wide; round/square; link; tooltip on by default, off when it is another Ark part's trigger, a `Tooltip` child or a selectable group item; `selectedWeight`) | Toggle |
 | `buttons/split-button` | SplitButton (elevated/filled/tonal/outlined; xsmall–xlarge; label/icon/icon-only leading button; menu) | Menu |
-| `buttons/button-group` | ButtonGroup (standard with press bounce, connected; size/shape for items; none/single/multi selection, required) | ToggleGroup |
+| `buttons/button-group` | ButtonGroup (standard with press bounce, connected; size/shape for items; none/single/multi selection, required; Arrow/Home/End in every mode (RTL); the bounce takes neighbour width from padding so labels never truncate) | ToggleGroup |
 | `buttons/fab` | Fab (3 sizes, 6 colors + surface, lowered, enter/exit via `visible`, tooltip) | — (uses `tooltip`) |
-| `buttons/extended-fab` | ExtendedFab (4 sizes, colors, collapse to FAB with tooltip, `createExtendedOnScroll`, `visible`) | — (uses `tooltip`) |
-| `buttons/fab-menu` | FabMenu, FabMenuItem (FAB morphs into the close button; primary/secondary/tertiary sets; disclosure) | — |
+| `buttons/extended-fab` | ExtendedFab (4 sizes, colors, collapse to FAB with tooltip, `createExtendedOnScroll`, `visible`; surface/branded always baseline size, branded 36px icon) | — (uses `tooltip`) |
+| `buttons/fab-menu` | FabMenu, FabMenuItem (FAB morphs into the close button; primary/secondary/tertiary sets; disclosure; items inert while exiting, Escape at document level, hiding closes and reports) | — |
 | `app-bar` | AppBar (small, medium flexible, large flexible, search; pinned/collapse/enter-always; the search variant renders `SearchBar` from the `search*` props, or hosts a `Search` through `search`) | — |
 | `search` | Search (contained/divided; bar with leading search icon or nav button, up to two trailing icon buttons/avatar; focused view docked ≥600px with scrim, widening bar and clip-revealed results, or full screen with FLIP bar, sticky header, history entry; combobox input with `aria-activedescendant` over `ListItem` options (List's option mode), `SearchGroup` category labels and gaps, header slot for chips, empty state, polite status; Back, Clear, Escape clears highlight then closes, focus returns to the bar), SearchBar (trigger-only pill used by the search app bar) | Dialog (focused view) |
 | `toolbar` | Toolbar, ToolbarAction, ToolbarFab, ToolbarDivider (docked 64px full width with even/center/edges layouts, or floating pill, horizontal/vertical, level3 or flat; standard/vibrant item colors applied to standard icon buttons and text buttons; FAB 8px after it, secondary/tertiary container, 56 → 80px on collapse; `role="toolbar"` roving tabindex with Arrow/Home/End, RTL, arrows left to text fields; trailing actions move into an overflow menu as they stop fitting, plus fixed `menu` items; hide or collapse on scroll, revealed by focus; `fixed` placement with safe-area insets) | Menu (overflow) |
-| `text-field` | TextField (filled/outlined, floating label, icons, prefix/suffix, error, counter, multiline) | Field |
-| `list` | List, ListItem, ListItemAvatar, ListItemImage, ListDivider (expressive/baseline, segmented, selection, expand; combobox option mode for `Search`) | Listbox, Collapsible |
+| `text-field` | TextField (filled/outlined, floating label, icons, prefix/suffix, error (icon announced as Error when there's no message), counter, multiline) | Field |
+| `list` | List, ListItem, ListItemAvatar, ListItemImage, ListDivider (expressive/baseline, segmented, selection, expand; combobox option mode for `Search`; focus ring on highlighted options only after keyboard input) | Listbox, Collapsible |
 | `card` | Card + CardAction (stretched link/button), media and text parts | — |
-| `carousel` | Carousel, CarouselItem (multi-browse and hero with start/center alignment, laid out by the keyline engine in `keylines.ts`: items morph large/medium/small with scroll over a large-width visual (parallax), snap markers, hero one item per swipe; uncontained and uncontained multi-aspect (9:16–16:9) flow rows, free or snapping; full-screen vertical mandatory snap; link or button items with title/label/short label adapting to size over a scrim, outline, disabled (focusable), press radius morph; every item a tab stop announced "i of n", Arrow/Home/End, cross-axis arrows leave, focus scrolls the item to its snap position, RTL; mouse drag to scroll; `onIndexChange` on scrollend; reduced motion turns morphing layouts into same-size rows) | — (Ark's Carousel assumes flow-laid, same-size slides with its own snap points and controls; M3's masked keyline morph needs its own layout) |
+| `carousel` | Carousel, CarouselItem (multi-browse and hero with start/center alignment, laid out by the keyline engine in `keylines.ts`: items morph large/medium/small with scroll over a large-width visual (parallax), snap markers, hero one item per swipe; uncontained and uncontained multi-aspect (9:16–16:9) flow rows, free or snapping; full-screen vertical mandatory snap; link or button items with title/label/short label adapting to size over a scrim, outline, disabled (focusable), press radius morph; presentational track, every item a tab stop announced "i of n", Arrow/Home/End, cross-axis arrows leave, focus scrolls the item to its snap position, RTL; mouse drag to scroll; `onIndexChange` on scrollend; reduced motion turns morphing layouts into same-size rows) | — (Ark's Carousel assumes flow-laid, same-size slides with its own snap points and controls; M3's masked keyline morph needs its own layout) |
 | `checkbox` | Checkbox (unchecked/checked/indeterminate, error incl. `:user-invalid`, disabled, visible or hidden label), CheckboxGroup, CheckboxIcon (decorative box for rows that are the control, e.g. multi-select `ListItem`) | Checkbox |
-| `chip` | AssistChip (icon, link), SuggestionChip, FilterChip (checkmark, remove or menu trailing), InputChip (icon/avatar, remove, Delete/Backspace), all flat/elevated, selected, disabled, dragged; ChipSet (wrap/scroll, none/single/multi selection, required, roving tabindex, focus moves after removal, strong outline / neutral icon options); InputChipField (chips typed into a field, Backspace select/remove, edit) | Toggle, TagsInput |
-| `date-picker` | DatePicker (docked: outlined field(s) + 360px drop-down with month/year menu buttons replacing the grid with lists, prev/next month and year, outside days at 38%, Enter on a date commits; modal: dialog with header (supporting text, live headline, pencil/calendar mode switch), month + year menu opening a 3-column year grid, fixed 6-row grid with month slide; modal date input (`modal-input`, text fields in the dialog); range with a band, hover preview, full-screen vertically scrolling months below 600px (Save/close bar); pending selection committed by OK/Save, discarded by Cancel/Escape/outside; today outline vs selected fill, min/max and `isDateUnavailable`; locale names, digits, typed format (lenient parse on blur/Enter, no masks) and week start; ISO `string[]` value, hidden form inputs) | DatePicker (inline), Popover, Dialog |
-| `time-picker` | TimePicker (modal dialog: dial with hour/minute time selector boxes (radios; Arrow Up/Down, typed digits, Left/Right), AM/PM period selector (native radios, vertical 52px or horizontal 216×38) and a 256px clock face (listbox of options with a roving tab stop; tap/drag with pointer capture, hour → minute auto-advance, 24h inner ring, handle angle on the shortest arc, two-tone label under the handle, between-label minute dot); vertical/horizontal/auto orientation from the viewport, falling back to the input picker alone; input picker with 96×72 numeric fields, auto-advance, error state, OK disabled while invalid; keyboard ↔ clock toggle; 12h/24h from the locale, localized AM/PM and digits; `minuteStep`, min/max at 38%; pending time committed by OK; optional field with lenient typed parsing; `HH:mm` value, hidden form input) | Dialog (Ark has no dial time picker) |
+| `chip` | AssistChip (icon, link), SuggestionChip, FilterChip (checkmark, remove or menu trailing, or the whole chip as the menu button with `menuTrigger="chip"`), InputChip (icon/avatar, remove, Delete/Backspace), all flat/elevated, selected, disabled, dragged; ChipSet (wrap/scroll, none/single/multi selection, required, roving tabindex, focus moves after removal (also async), arrows select in single mode; a remove-only InputChip is one focus stop, strong outline / neutral icon options); InputChipField (outlined text-field shell with notched label, error and disabled states; chips typed into a field, Backspace select/remove, edit) | Toggle, TagsInput |
+| `date-picker` | DatePicker (docked: outlined field(s) + 360px drop-down with month/year menu buttons replacing the grid with lists, prev/next month and year (tooltips with keyboard shortcuts), outside days at 38%, Enter on a date commits; modal: dialog with header (supporting text, live headline, pencil/calendar mode switch), month + year menu opening a 3-column year grid, fixed 6-row grid with month slide; modal date input (`modal-input`, text fields in the dialog); range with a band, hover preview, full-screen vertically scrolling months below 600px (the month window grows as you scroll, bounded by min/max; Save/close bar); pending selection committed by OK/Save, discarded by Cancel/Escape/outside; today outline vs selected fill, min/max and `isDateUnavailable`; locale names, digits, typed format (lenient parse on blur/Enter, no masks) and week start; ISO `string[]` value, hidden form inputs) | DatePicker (inline), Popover, Dialog |
+| `time-picker` | TimePicker (modal dialog: dial with hour/minute time selector boxes (radios; Arrow Up/Down, typed digits, Left/Right), AM/PM period selector (native radios, vertical 52px or horizontal 216×38) and a 256px clock face (listbox of options with a roving tab stop; tap/drag with pointer capture, hour → minute auto-advance, 24h inner ring, handle angle on the shortest arc, two-tone label under the handle, between-label minute dot); vertical/horizontal/auto orientation from the viewport (thresholds and the 16px window margin derived from the picker size), falling back to the input picker alone; input picker with 96×72 numeric fields, auto-advance, error state, OK disabled while invalid; keyboard ↔ clock toggle; 12h/24h from the locale, localized AM/PM and digits; `minuteStep`, min/max at 38%; pending time committed by OK; optional field with lenient typed parsing; `HH:mm` value, hidden form input) | Dialog (Ark has no dial time picker) |
 | `radio-button` | RadioGroup (vertical/horizontal, title, controlled/uncontrolled, required with `:user-invalid` error, error, disabled), RadioButton (visible or hidden label, error, disabled), RadioButtonIcon (decorative icon for rows that are the control, e.g. single-select `ListItem`) | RadioGroup |
 | `switch` | Switch (selected/unselected, icons none/selected/both, handle morph 16/24/28px, disabled, label leading with supporting text, Enter toggles, form value), SwitchIcon (decorative track for rows that are the control, e.g. multi-select `ListItem`) | Switch |
-| `slider` | Slider (standard/centered/range; xsmall–xlarge; horizontal/vertical; stops with end stops colored by segment and hidden under the handle; value indicator with formatter/aria-valuetext; inset icon for standard M–XL that moves past the handle, `iconMin` swap; 4→2px handle on press/focus with 6px gaps; Space + Arrows large step; disabled; form names) | Slider |
+| `slider` | Slider (standard/centered/range; xsmall–xlarge; horizontal/vertical; stops with end stops colored by segment and hidden under the handle; value indicator with formatter/aria-valuetext; inset icon for standard M–XL that moves past the handle, `iconMin` swap; 4→2px handle on press/focus with 6px gaps; Space + Arrows large step; RTL (inherited or `dir`); disabled; form names) | Slider |
 | `tabs` | Tabs, TabList, Tab, TabPanel (primary/secondary; label, icon, icon + label stacked or inline; small/large badges on the icon or after the label; fixed with start/center alignment from 600px, scrollable with 52px offset; FLIP indicator on the fast spatial spring; manual activation; disabled tab) | Tabs |
 | `navigation-bar` | NavigationBar, NavigationBarItem (flexible 64px bar; vertical/horizontal/auto layout at 600px; links or buttons with `aria-current`; pill grows from the icon center, reduced pill on hover; filled/`activeIcon` when active, bold label; small/large badges; controlled/uncontrolled, reselect; hide on scroll, `fixed`; built on `shared/NavigationItem`) | — (native `<nav>`/`<ul>`, Tab navigation) |
 | `navigation-rail` | NavigationRail, NavigationRailItem, NavigationRailSection (collapsed 96/narrow 80px with vertical items ↔ expanded 220–360px with horizontal items via the menu button, measured width animation with content reflow and label fade; modal expanded rail with scrim, growing from the collapsed width; hide-when-collapsed, standard or modal; FAB ↔ extended FAB; badges on the icon or after the label; hug/fill indicator; top/center alignment; divider, no fill; secondary destinations with subheads; links or buttons, Arrow/Home/End; built on `shared/NavigationItem`) | Dialog (modal) |
 | `navigation-drawer` | NavigationDrawer, NavigationDrawerItem, NavigationDrawerSection, NavigationDrawerDivider (legacy, the expanded rail replaces it; 360px sheet on the start edge with end corners, headline, header slot, subheads, full-width dividers; 56px full-width pill fading in place, label-large truncated with an ellipsis, badge text at the end, optional icons; standard permanent or dismissible with width animation and content reflow; modal with scrim sliding in/out on emphasized easing, swipe to dismiss, closes on selection, close reasons; links or buttons, Arrow/Home/End; RTL; built on `shared/NavigationItem`) | Dialog (modal) |
-| `menu` | Menu.* (standard/vibrant, items, checkbox/radio, submenus, groups, context menu) | Menu |
-| `tooltip` | Tooltip (plain), RichTooltip (subhead, actions, persistent) | Tooltip, Popover |
+| `menu` | Menu.* (standard/vibrant, items, checkbox/radio, submenus, groups, context menu; disabled items focusable, not selectable) | Menu |
+| `tooltip` | Tooltip (plain), RichTooltip (subhead, actions, persistent; transient without actions uses role tooltip) | Tooltip, Popover |
 | `dialog` | Dialog.* (basic, full-screen with compact swap, busy, close reasons) | Dialog |
-| `bottom-sheet` | BottomSheet.* (modal with scrim / standard; detents with drag to resize, swipe to dismiss; drag handle button cycling detents; headline, close (modal) or collapse (standard) at full height; busy, dismissible, minimized, close reasons) | Drawer |
+| `bottom-sheet` | BottomSheet.* (modal with scrim / standard; detents with drag to resize, swipe to dismiss; drag handle button cycling detents (a dismissible standard sheet's handle closes it after the tallest detent); headline, close (modal) or collapse (standard) at full height; busy, dismissible, minimized, close reasons) | Drawer |
 | `side-sheet` | SideSheet.* (modal in a portal with scrim / standard in the layout flow, the main content shrinking as it opens; docked or detached; end or start side, RTL; header with optional back, headline, close always; scrolling body, `flush`; actions with divider; standard edge divider; width up to 400px; busy, dismissible, close reasons) | Dialog |
 | `divider` | Divider (full-width/start inset/middle inset, horizontal/vertical, decorative or separator); `ListDivider` composes its styles | — |
-| `snackbar` | `snackbar` / `createSnackbar` + `SnackbarHost` (action, close, queue, replace) | Toast |
+| `snackbar` | `snackbar` / `createSnackbar` + `SnackbarHost` (action, close, queue, replace, `bottomOffset`) | Toast |
 | `badge` | Badge (small dot, large 1-4 chars with `max+`; on an icon or inline; scale in/out; `badgeAccessibleText`) | — |
-| `loading-and-progress/loading-indicator` | LoadingIndicator (7-shape morph, contained, 24–240px, paused, reduced motion) | — |
-| `loading-and-progress/linear-progress` | LinearProgress (determinate/indeterminate, flat/wavy, thickness, track, stop indicator) | — (own `role="progressbar"`) |
-| `loading-and-progress/circular-progress` | CircularProgress (determinate/indeterminate, flat/wavy, 24–240px, thickness, track) | — (own `role="progressbar"`) |
+| `loading-and-progress/loading-indicator` | LoadingIndicator (7-shape morph, contained, 24–240px, paused, reduced motion, `color="current"`, decorative without a label) | — |
+| `loading-and-progress/linear-progress` | LinearProgress (determinate/indeterminate, flat/wavy, thickness, track (the stop indicator hides with it), stop indicator, `color="current"`, decorative without a label) | — (own `role="progressbar"`) |
+| `loading-and-progress/circular-progress` | CircularProgress (determinate/indeterminate, flat/wavy, 24–240px, thickness, track, `color="current"`, decorative without a label) | — (own `role="progressbar"`) |

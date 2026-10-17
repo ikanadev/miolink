@@ -107,7 +107,7 @@ const CardDemo: Component = () => {
         </For>
       </div>
 
-      <p class={g.label}>Link cards (directly actionable link, stretched over the card) with a separate overflow button</p>
+      <p class={g.label}>Link cards (directly actionable link, stretched over the card) with a single overflow menu button, the one control M3 allows on an actionable card</p>
       <ul style={{ ...grid(220), margin: 0, padding: 0 }}>
         <For each={LINKS}>{(link) => <LinkCard link={link} />}</For>
       </ul>

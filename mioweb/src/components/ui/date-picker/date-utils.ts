@@ -102,11 +102,20 @@ export type FieldFormat = {
   /** ISO -> field text in the locale's numeric format. */
   format: (iso: string) => string;
   /**
-   * Field text -> ISO. Lenient (spec §8, no masks): any non-digit separators,
+   * Field text -> ISO. Lenient (M3 Accessibility, no masks): any non-digit separators,
    * 1-2 digit month and day, 2 or 4 digit year, or 6/8 digits without
    * separators. `null` for empty text, `undefined` when it isn't a date.
    */
   parse: (text: string) => string | null | undefined;
+};
+
+/**
+ * Two-digit year -> full year on a sliding window (derived): 20yy unless that
+ * is more than 20 years ahead, then 19yy, so "79" is 1979 and "30" is 2030.
+ */
+const expandYear = (yy: number) => {
+  const year = 2000 + yy;
+  return year > new Date().getFullYear() + 20 ? year - 100 : year;
 };
 
 const fieldFormats = new Map<string, FieldFormat>();
@@ -125,14 +134,13 @@ export const fieldFormat = (locale: string): FieldFormat => {
   });
   const parts = dtf.formatToParts(utcDate('2023-11-22'));
   const order = parts
-    .filter((p): p is Intl.DateTimeFormatPart & { type: DatePart } =>
-      p.type === 'year' || p.type === 'month' || p.type === 'day',
+    .filter(
+      (p): p is Intl.DateTimeFormatPart & { type: DatePart } =>
+        p.type === 'year' || p.type === 'month' || p.type === 'day',
     )
     .map((p) => p.type);
   const pattern = parts
-    .map((p) =>
-      p.type === 'year' ? 'YYYY' : p.type === 'month' ? 'MM' : p.type === 'day' ? 'DD' : p.value,
-    )
+    .map((p) => (p.type === 'year' ? 'YYYY' : p.type === 'month' ? 'MM' : p.type === 'day' ? 'DD' : p.value))
     .join('')
     .replace(BIDI, '')
     .trim();
@@ -156,8 +164,7 @@ export const fieldFormat = (locale: string): FieldFormat => {
     order.forEach((part, i) => (value[part] = groups[i]));
     if (value.month.length > 2 || value.day.length > 2) return undefined;
     if (value.year.length !== 2 && value.year.length !== 4) return undefined;
-    // Derived: two-digit years are in this century.
-    const year = value.year.length === 2 ? 2000 + Number(value.year) : Number(value.year);
+    const year = value.year.length === 2 ? expandYear(Number(value.year)) : Number(value.year);
     const month = Number(value.month);
     const day = Number(value.day);
     if (month < 1 || month > 12 || day < 1 || day > daysInMonth(year, month)) return undefined;

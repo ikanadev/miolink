@@ -5,7 +5,7 @@ import styles from './radio-button.module.css';
 
 /**
  * 20px icon: a ring (r 9 + 2px stroke = 20px outer) and a 10px dot, both
- * derived (spec §4.2, §11).
+ * derived.
  */
 const Glyph: Component = () => (
   <svg class={styles.glyph} viewBox="0 0 20 20" aria-hidden="true">
@@ -35,7 +35,7 @@ export type RadioGroupProps = Omit<
  * `name`, `disabled`, `required`, `readOnly` and `form` to the native radio
  * inputs inside its `RadioButton`s, so exclusivity, arrow keys, Tab to the
  * checked radio, form submission and reset are native. Vertical by default
- * (spec §7); `orientation="horizontal"` lays the radios out in a row.
+ *; `orientation="horizontal"` lays the radios out in a row.
  */
 export const RadioGroup: Component<RadioGroupProps> = (props) => {
   const [local, rest] = splitProps(props, ['label', 'onValueChange', 'error', 'class', 'children', 'orientation']);

@@ -24,8 +24,9 @@
  * padding, minimum height, label typescale and colors, the horizontal
  * tracks (--_leading-track, --_label-track, --_fill-track,
  * --_trailing-track), the label-badge space (--_trailing-badge-space),
- * the reduced hover indicator (--_hover-indicator-opacity) and whether the
- * pill grows from the icon center or fades in place (--_indicator-grow).
+ * the reduced hover indicator (--_hover-indicator-opacity), whether the
+ * pill grows from the icon center or fades in place (--_indicator-grow)
+ * and the focus ring offset (--_focus-ring-offset).
  *
  * Attributes: data-layout (vertical | horizontal), data-no-icon (no icon:
  * horizontal items drop the icon track and gap), data-truncate (horizontal
@@ -51,8 +52,10 @@
   --_label-line-height: var(--md-sys-typescale-label-medium-line-height);
   --_label-tracking: var(--md-sys-typescale-label-medium-tracking);
   --_label-weight: var(--md-sys-typescale-label-medium-weight);
-  /* Bold when selected (bar Accessibility tab), the emphasized label-medium weight. */
-  --_active-label-weight: var(--md-sys-typescale-emphasized-label-medium-weight);
+  /* md.comp.nav-bar / navigation-rail .active.label-text.weight. */
+  --_active-label-weight: var(--md-sys-typescale-label-medium-weight-prominent);
+  /* Badge text keeps the label weight; the active weight never applies to it. */
+  --_badge-text-weight: var(--md-sys-typescale-label-medium-weight);
   /* Horizontal layout: tracks around the pill. 1fr / 1fr centers it; the
      fill track sits inside the pill, after the label and badge. */
   --_leading-track: minmax(0, 1fr);
@@ -69,6 +72,9 @@
   --_hover-indicator-opacity: 1;
   /* State layer and ripple: on-secondary-container for active and inactive items. */
   --_state-layer-color: var(--md-sys-color-on-secondary-container);
+  /* Ring around the indicator. The flexible bar and rail have no offset
+     token; the outer offset is derived. The drawer uses the inner offset. */
+  --_focus-ring-offset: var(--md-sys-state-focus-indicator-outer-offset);
 
   display: grid;
   box-sizing: border-box;
@@ -87,7 +93,7 @@
     var(--md-sys-motion-spring-fast-effects-easing);
 }
 
-/* The focus ring goes on the indicator, not on the whole item (spec §10c). */
+/* The focus ring goes on the indicator, not on the whole item (M3 nav bar Accessibility). */
 .item:focus-visible {
   outline: none;
 }
@@ -114,7 +120,7 @@
     'label label label';
   row-gap: var(--_icon-label-space);
   align-content: start;
-  /* item.vertical.container.between-space read as block padding: 6 + 32 + 4 + 16 + 6 = 64 (spec §11). */
+  /* item.vertical.container.between-space read as block padding: 6 + 32 + 4 + 16 + 6 = 64 (derived). */
   padding-block: var(--_block-padding);
 }
 
@@ -124,7 +130,8 @@
   grid-template-columns:
     var(--_leading-track) var(--_indicator-padding-inline) var(--_icon-size) var(--_icon-label-space)
     var(--_label-track) auto var(--_fill-track) var(--_indicator-padding-inline) var(--_trailing-track);
-  grid-template-rows: var(--_indicator-height);
+  /* Grows when scaled text wraps (Accessibility: items grow vertically). */
+  grid-template-rows: minmax(var(--_indicator-height), auto);
   grid-template-areas: '. indicator indicator indicator indicator indicator indicator indicator .';
   align-content: center;
 }
@@ -146,7 +153,7 @@
   pointer-events: none;
 }
 
-/* The visible pill. Expands from the icon center on one axis only (§6). */
+/* The visible pill. Expands from the icon center on one axis only (M3 nav bar Motion). */
 .indicator::before {
   content: '';
   position: absolute;
@@ -171,7 +178,7 @@
 }
 
 /* Hover on an inactive item shows the indicator in a reduced state: half
-   its width (derived, spec §11). */
+   its width (derived; M3 only says "reduced state"). */
 @media (hover: hover) {
   .item:not([aria-current='page']):hover .indicator::before {
     opacity: var(--_hover-indicator-opacity);
@@ -184,7 +191,7 @@
 
 .item:focus-visible .indicator {
   outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
-  outline-offset: var(--md-sys-state-focus-indicator-outer-offset);
+  outline-offset: var(--_focus-ring-offset);
 }
 
 /* ---- Icon and label ---- */
@@ -212,8 +219,9 @@
   line-height: var(--_label-line-height);
   letter-spacing: var(--_label-tracking);
   text-align: center;
-  /* Labels wrap only when text is scaled up; never truncated (§6). */
-  overflow-wrap: anywhere;
+  /* Labels wrap only when text is scaled up, between words or with a hyphen; never truncated. */
+  overflow-wrap: break-word;
+  hyphens: auto;
   transition: font-weight var(--md-sys-motion-spring-fast-effects-duration)
     var(--md-sys-motion-spring-fast-effects-easing);
 }
@@ -222,17 +230,17 @@
   grid-area: 1 / 5;
   align-self: center;
   text-align: start;
-  white-space: nowrap;
 }
 
-/* Drawer labels truncate rather than wrap or shrink (README, Shared rules). */
+/* Drawer labels truncate rather than wrap or shrink. */
 .item[data-layout='horizontal'][data-truncate] .label {
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 /* Badge after the label (horizontal layout): 4px wrapper + the inline
-   badge's own 4px = 8px gap (derived, rail spec §4.2). */
+   badge's own 4px = 8px gap (derived, M3 nav rail Specs). */
 .trailingBadge {
   grid-area: 1 / 6;
   align-self: center;
@@ -244,7 +252,7 @@
 .badgeText {
   color: var(--_label-color);
   font-family: var(--_label-font);
-  font-weight: var(--_label-weight);
+  font-weight: var(--_badge-text-weight);
   font-size: var(--_label-size);
   line-height: var(--_label-line-height);
   letter-spacing: var(--_label-tracking);

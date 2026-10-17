@@ -200,8 +200,8 @@ const Standard: Component = () => {
         <BottomSheet.Content headline="Now playing" minimized={minimized()}>
           <div style={padded}>
             <p style={text}>
-              A standard sheet coexists with the page: scroll and click behind it. Press the handle to cycle between
-              160px and full height; with one detent it would close instead.
+              A standard sheet coexists with the page: scroll and click behind it. Press the handle to go from 160px to
+              full height, and press it again at full height to close the sheet without dragging.
             </p>
             <For each={Array.from({ length: 16 }, (_, i) => i + 1)}>
               {(n) => <p style={text}>Track {n}</p>}

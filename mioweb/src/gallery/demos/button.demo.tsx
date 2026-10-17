@@ -72,7 +72,7 @@ const ButtonDemo: Component = () => {
           Save
         </Button>
       </div>
-      <p class={g.label}>Sizes (round, square)</p>
+      <p class={g.label}>Sizes (round, outlined square, outlined round)</p>
       <div class={g.row}>
         <For each={SIZES}>
           {(size) => (
@@ -90,6 +90,40 @@ const ButtonDemo: Component = () => {
             </Button>
           )}
         </For>
+      </div>
+      <div class={g.row}>
+        <For each={SIZES}>
+          {(size) => (
+            <Button size={size} color="outlined" icon="edit">
+              Edit
+            </Button>
+          )}
+        </For>
+      </div>
+      <p class={g.label}>Selected toggles per size (round, square becoming a pill)</p>
+      <div class={g.row}>
+        <For each={SIZES}>
+          {(size) => (
+            <Button size={size} icon="favorite" toggle defaultSelected>
+              Saved
+            </Button>
+          )}
+        </For>
+      </div>
+      <div class={g.row}>
+        <For each={SIZES}>
+          {(size) => (
+            <Button size={size} color="tonal" icon="bookmark" toggle shape="square" defaultSelected>
+              Saved
+            </Button>
+          )}
+        </For>
+      </div>
+      <p class={g.label}>Selected weight for a glyph without a filled version (600)</p>
+      <div class={g.row}>
+        <Button color="outlined" icon="check" toggle selectedWeight={600}>
+          Done
+        </Button>
       </div>
       <p class={g.label}>Small padding: default 16px, legacy 24px (not recommended)</p>
       <div class={g.row}>

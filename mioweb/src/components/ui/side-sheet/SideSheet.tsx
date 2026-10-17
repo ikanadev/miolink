@@ -24,7 +24,7 @@ export type SideSheetDir = 'ltr' | 'rtl';
 
 const cx = (...classes: (string | undefined | false)[]) => classes.filter(Boolean).join(' ');
 
-/** Spec: 256px default width, 400px max. */
+/** M3 Specs: 256px default width, 400px max. */
 const DEFAULT_WIDTH = 256;
 const MAX_WIDTH = 400;
 
@@ -218,7 +218,7 @@ export type SideSheetContentProps = Omit<ArkDialog.ContentProps, 'title' | 'chil
   onBack?: () => void;
   /** Accessible name of the back button. Default "Back". */
   backLabel?: string;
-  /** Accessible name of the close button (always present, spec §8). Default "Close". */
+  /** Accessible name of the close button (always present, M3 Accessibility). Default "Close". */
   closeLabel?: string;
   /** Default `end`: the right edge, the left one in RTL. */
   side?: SideSheetSide;

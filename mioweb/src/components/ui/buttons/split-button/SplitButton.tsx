@@ -6,7 +6,7 @@ import base from '../shared/button-base.module.css';
 import type { ButtonSize } from '../shared/types';
 import styles from './split-button.module.css';
 
-/** Button color styles without `text` (spec §2). */
+/** Button color styles without `text` (split buttons have no text style). */
 export type SplitButtonColor = 'elevated' | 'filled' | 'tonal' | 'outlined';
 
 export type SplitButtonProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'children' | 'onClick' | 'onSelect'> & {
@@ -118,7 +118,8 @@ export const SplitButton: Component<SplitButtonProps> = (props) => {
           disabled={local.disabled}
         >
           <Ripple />
-          <Icon class={styles.menuIcon} name="keyboard_arrow_down" filled />
+          {/* M3: the menu button rotates with the standard motion scheme, not the expressive one. */}
+          <Icon class={styles.menuIcon} name="keyboard_arrow_down" filled data-motion-scheme="standard" />
         </MenuTrigger>
       </div>
       <MenuContent>{local.children}</MenuContent>

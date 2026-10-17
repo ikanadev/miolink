@@ -82,6 +82,12 @@ const TimePickerDemo: Component = () => (
         <Example title="12h forced (hourCycle h12)" label="Pickup" hourCycle="h12" defaultValue="06:30" />
         <Example title="5-minute step" label="Slot" minuteStep={5} defaultValue="10:15" />
         <Example
+          title="15-minute step (other minute labels at 38%)"
+          label="Booking"
+          minuteStep={15}
+          defaultValue="10:30"
+        />
+        <Example
           title="Min/max 09:00–17:30 (out of range at 38%)"
           label="Office hours"
           min="09:00"

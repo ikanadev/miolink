@@ -23,7 +23,7 @@
 }
 
 .groupLabel {
-  /* Derived (spec §4.3): title-small group title. */
+  /* Derived: title-small group title. */
   font-family: var(--md-sys-typescale-title-small-font);
   font-weight: var(--md-sys-typescale-title-small-weight);
   font-size: var(--md-sys-typescale-title-small-size);
@@ -38,14 +38,14 @@
   color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
 }
 
-/* Spec §4.2 (derived): vertical stack of 48px rows, no gap. */
+/* Derived: vertical stack of 48px rows, no gap. */
 .items {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
 }
 
-/* Horizontal is allowed with caution (spec §7). Derived: 16px between items. */
+/* Horizontal is allowed with caution. Derived: 16px between items. */
 .group[data-orientation='horizontal'] .items {
   flex-direction: row;
   flex-wrap: wrap;
@@ -60,7 +60,7 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  /* Spec §4.2: row min-height 48px. */
+  /* M3 Specs: row min-height 48px. */
   min-block-size: 48px;
   color: var(--md-sys-color-on-surface);
   cursor: pointer;
@@ -73,7 +73,7 @@
 }
 
 .label {
-  /* Derived (spec §4.3): body-large; no gap beyond the 48px target (§4.2). */
+  /* Derived: body-large; no gap beyond the 48px target. */
   font-family: var(--md-sys-typescale-body-large-font);
   font-weight: var(--md-sys-typescale-body-large-weight);
   font-size: var(--md-sys-typescale-body-large-size);
@@ -82,7 +82,7 @@
   padding-inline-end: 4px; /* derived: keeps the text off the next control */
 }
 
-/* Derived (spec §11): disabled label is on-surface @ 0.38. */
+/* Derived: disabled label is on-surface @ 0.38. */
 .label[data-disabled] {
   color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
 }
@@ -102,12 +102,12 @@
 .icon {
   --_icon-color: var(--md-sys-color-on-surface-variant);
   /* State layer: on-surface when unselected; pressed shows the color of the
-     state being moved to (spec §4.1). */
+     state being moved to. */
   --_state-layer-color: var(--md-sys-color-on-surface);
   --_pressed-color: var(--md-sys-color-primary);
 }
 
-/* Hover, focus and pressed darken the unselected ring (spec §5). Before the
+/* Hover, focus and pressed darken the unselected ring. Before the
    checked and error rules, which override it at the same specificity. */
 .control:is(:hover, [data-hover], [data-focus-visible], [data-active]) {
   --_icon-color: var(--md-sys-color-on-surface);
@@ -119,7 +119,7 @@
   --_pressed-color: var(--md-sys-color-on-surface);
 }
 
-/* Error (derived, spec §11): explicit (`error` -> Ark invalid) or a required
+/* Error (derived): explicit (`error` -> Ark invalid) or a required
    group left empty after a submit attempt (:user-invalid on the input). */
 :is(.control, .icon)[data-invalid],
 .root:has(> input:user-invalid) .control {
@@ -128,7 +128,7 @@
   --_pressed-color: var(--md-sys-color-error);
 }
 
-/* Disabled wins over error (spec §5): on-surface @ 0.38 via color-mix. */
+/* Disabled wins over error: on-surface @ 0.38 via color-mix. */
 :is(.control, .icon)[data-disabled],
 .root:has(> input:user-invalid) .control[data-disabled] {
   --_icon-color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
@@ -146,7 +146,7 @@
   block-size: 40px;
   /* 4px each side: the control occupies the 48x48 target in the row. */
   margin: 4px;
-  /* Derived (spec §11): no shape token, full circle. */
+  /* Derived: no shape token, full circle. */
   border-radius: var(--md-sys-shape-corner-full);
 }
 
@@ -163,7 +163,7 @@
   opacity: var(--md-sys-state-focus-state-layer-opacity);
 }
 
-/* Focus ring around the state layer circle (spec §3, web mapping). */
+/* Focus ring around the state layer circle (web mapping). */
 .control[data-focus-visible] {
   outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
   outline-offset: var(--md-sys-state-focus-indicator-outer-offset);
@@ -194,14 +194,14 @@
   display: block;
   inline-size: 20px;
   block-size: 20px;
-  /* Not mirrored in RTL (spec §6). */
+  /* Not mirrored in RTL. */
 }
 
 .ring {
   fill: none;
   stroke: var(--_icon-color);
-  stroke-width: 2px; /* derived (spec §4.2) */
-  /* Derived (spec §6): ring color on the fast effects spring. */
+  stroke-width: 2px; /* derived */
+  /* Derived: ring color on the fast effects spring. */
   transition: stroke var(--md-sys-motion-spring-fast-effects-duration)
     var(--md-sys-motion-spring-fast-effects-easing);
 }
@@ -211,7 +211,7 @@
   transform-box: fill-box;
   transform-origin: center;
   transform: scale(0);
-  /* Dot out: fast effects, no overshoot (derived, spec §6). */
+  /* Dot out: fast effects, no overshoot (derived). */
   transition:
     transform var(--md-sys-motion-spring-fast-effects-duration)
       var(--md-sys-motion-spring-fast-effects-easing),
@@ -219,7 +219,7 @@
       var(--md-sys-motion-spring-fast-effects-easing);
 }
 
-/* Dot in: fast spatial spring, slight overshoot when expressive (derived, spec §6). */
+/* Dot in: fast spatial spring, slight overshoot when expressive (derived). */
 :is(.control, .icon)[data-state='checked'] .dot {
   transform: scale(1);
   transition:
@@ -229,7 +229,7 @@
       var(--md-sys-motion-spring-fast-effects-easing);
 }
 
-/* Reduced motion (spec §6): no scale, a short opacity/color change. */
+/* Reduced motion: no scale, a short opacity/color change. */
 @media (prefers-reduced-motion: reduce) {
   .ring,
   .dot,

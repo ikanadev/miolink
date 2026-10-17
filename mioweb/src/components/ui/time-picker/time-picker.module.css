@@ -18,7 +18,7 @@
  */
 
 /* The handle angle and ring radius are animated, and the label layer's
-   clip follows them (spec §10d). */
+   clip follows them. */
 @property --_dial-angle {
   syntax: '<angle>';
   inherits: true;
@@ -54,9 +54,19 @@
   composes: container from '../dialog/dialog.module.css';
 }
 
+/*
+ * Derived: 16px window margin on compact widths (M3 compact margin) instead
+ * of the dialog's 24px, so the 328px vertical dial picker fits a 360px window.
+ * TALL_QUERY in TimePicker.tsx assumes this padding.
+ */
+@media (max-width: 599.98px) {
+  .dialogPositioner[data-layout='basic'] {
+    padding: var(--md-sys-measurement-space200);
+  }
+}
+
 /* [data-view] raises these above the composed container rules. */
 .dialog[data-view] {
-  --_container-color: var(--md-sys-color-surface-container-high);
   --_box-width: 96px;
   --_box-height: 80px;
 
@@ -68,7 +78,7 @@
   max-inline-size: 100%;
   padding: var(--md-sys-measurement-space300);
   color: var(--md-sys-color-on-surface);
-  /* The picker never scrolls (spec §6); the auto orientation keeps it in view. */
+  /* The picker never scrolls (M3 Guidelines, Scrolling); the auto orientation keeps it in view. */
   overflow: visible;
 }
 
@@ -271,7 +281,8 @@
   --_label-color: var(--md-sys-color-on-surface);
   --_handle-color: var(--md-sys-color-primary);
   --_on-handle-color: var(--md-sys-color-on-primary);
-  --_spatial: var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing);
+  --_spatial: var(--md-sys-motion-spring-fast-spatial-duration)
+    var(--md-sys-motion-spring-fast-spatial-easing);
 
   grid-area: dial;
   position: relative;
@@ -301,7 +312,7 @@
   transition: none;
 }
 
-/* The dial is always left-to-right (spec §11), so physical-free offsets
+/* The dial is always left-to-right (as a clock face), so physical-free offsets
    from its center are fine here. */
 .track,
 .handle,
@@ -393,10 +404,6 @@
   composes: interactive from '../shared/interaction.module.css';
 }
 
-.value[aria-selected='true'] {
-  --_label-color: var(--_on-handle-color);
-}
-
 /* Derived: values outside min/max (no disabled tokens). Still focusable. */
 .value[aria-disabled='true'] {
   --_label-color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
@@ -478,11 +485,17 @@
   }
 }
 
-/* Any focus, not only keyboard (spec §5): the tokenized 2px outline replaces the ring. */
+/* Any focus, not only keyboard: the tokenized 2px outline (time-input-field.focus.*). */
 .input:focus {
   --_container-color: var(--md-sys-color-primary-container);
   --_label-color: var(--md-sys-color-on-primary-container);
   --_outline-color: var(--md-sys-color-primary);
+}
+
+/* Keyboard focus adds the ring (md.comp.time-input.focus.indicator) outside the outline. */
+.input:focus-visible {
+  outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
+  outline-offset: var(--md-sys-state-focus-indicator-outer-offset);
 }
 
 /* Derived (not tokenized): error outline and supporting text. */
@@ -534,19 +547,24 @@
   margin-inline-end: auto;
 }
 
-.toggle[data-color='standard']:not(:disabled) {
-  --_icon-color: var(--md-sys-color-on-surface-variant);
-}
+/* ---- Utilities ---- */
 
-/* Text buttons in the primary color. */
-.actions [data-color='text']:not(:disabled, [data-disabled], [aria-disabled='true']) {
-  --_label-color: var(--md-sys-color-primary);
+.visuallyHidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ---- Motion ---- */
 
 @media (prefers-reduced-motion: reduce) {
-  /* No handle rotation (spec §6): it jumps. */
+  /* No handle rotation: it jumps. */
   .dial {
     transition: none;
   }
@@ -596,5 +614,9 @@
 
   .input:focus {
     border-color: Highlight;
+  }
+
+  .input:focus-visible {
+    outline-color: Highlight;
   }
 }

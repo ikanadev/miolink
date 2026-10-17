@@ -220,7 +220,8 @@
 .positioner {
   position: fixed;
   inset: 0;
-  z-index: var(--z-index, 1000);
+  /* Zag mirrors the content's --layer-index onto the dialog positioner. */
+  z-index: calc(1000 + var(--layer-index, 0));
   pointer-events: none;
 }
 
@@ -248,6 +249,11 @@
 .view {
   --_container-color: var(--md-sys-color-surface-container-high);
   --_results-max-height: calc(66.667dvh - 58px);
+  --_reveal-radius: var(--md-sys-shape-corner-medium);
+  /* The page bar's offsets for the open/close motion; set inline from its geometry. */
+  --_from-start: 0px;
+  --_from-end: 0px;
+  --_from-y: 0px;
 
   position: absolute;
   z-index: calc(1000 + var(--layer-index, 0));
@@ -358,8 +364,9 @@
 
 .view[data-layout='docked'][data-variant='contained'] .results {
   margin-block-start: var(--md-sys-measurement-space25);
-  min-block-size: 240px;
-  max-block-size: max(240px, var(--_results-max-height));
+  /* Docked container min height 240dp, bar (56) and gap (2) included, as in divided. */
+  min-block-size: calc(240px - 56px - 2px);
+  max-block-size: max(calc(240px - 56px - 2px), var(--_results-max-height));
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-block: var(--md-sys-measurement-space100);
@@ -478,7 +485,6 @@
   z-index: 1;
   flex: none;
   block-size: 72px;
-  padding-inline: var(--md-sys-measurement-space100);
 }
 
 .view[data-layout='full-screen'][data-variant='divided'] .divider {
@@ -495,17 +501,17 @@
 
 @keyframes bar-expand {
   from {
-    margin-inline: var(--_from-start, 0px) var(--_from-end, 0px);
-    translate: 0 var(--_from-y, 0px);
+    margin-inline: var(--_from-start) var(--_from-end);
+    translate: 0 var(--_from-y);
   }
 }
 
 @keyframes reveal {
   from {
-    clip-path: inset(0 0 100% 0 round var(--_reveal-radius, var(--md-sys-shape-corner-medium)));
+    clip-path: inset(0 0 100% 0 round var(--_reveal-radius));
   }
   to {
-    clip-path: inset(0 round var(--_reveal-radius, var(--md-sys-shape-corner-medium)));
+    clip-path: inset(0 round var(--_reveal-radius));
   }
 }
 
@@ -519,6 +525,30 @@
   to {
     opacity: 0;
   }
+}
+
+/*
+ * Closing (contained): the bar narrows back (docked) or moves back to the
+ * page bar (full screen) while the results and background fade. The view's
+ * own fade waits for the bar, since Ark unmounts the view when that ends.
+ * Derived: M3 only specifies the opening motion.
+ */
+.view[data-variant='contained'][data-state='closed'] {
+  animation: fade-out var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing)
+    calc(var(--md-sys-motion-spring-fast-spatial-duration) - var(--md-sys-motion-spring-fast-effects-duration))
+    forwards;
+}
+
+.view[data-variant='contained'][data-state='closed'] .viewBar {
+  animation: bar-expand var(--md-sys-motion-spring-fast-spatial-duration)
+    var(--md-sys-motion-spring-fast-spatial-easing) reverse forwards;
+}
+
+.view[data-variant='contained'][data-state='closed'] .results,
+.view[data-layout='full-screen'][data-variant='contained'][data-state='closed']::before {
+  animation: fade-out var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing) forwards;
 }
 
 /* Reduced motion: no widening, FLIP or clip; fades only. */

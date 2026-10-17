@@ -8,6 +8,7 @@ import {
   SuggestionChip,
 } from '../../components/ui/chip';
 import { Icon } from '../../components/ui/icon';
+import { Menu } from '../../components/ui/menu';
 import g from '../gallery.module.css';
 import type { DemoMeta } from '.';
 
@@ -27,6 +28,10 @@ const ChipDemo: Component = () => {
   const [menuOpen, setMenuOpen] = createSignal(false);
   const [field, setField] = createSignal(['solid', 'ark-ui']);
   const [saved, setSaved] = createSignal(false);
+  const [date, setDate] = createSignal('any');
+  const [dateOpen, setDateOpen] = createSignal(false);
+  const [field2, setField2] = createSignal(['locked', 'read-only']);
+  const dates: Record<string, string> = { any: 'Any date', week: 'Past week', month: 'Past month' };
 
   return (
     <div style={{ display: 'grid', gap: '16px' }}>
@@ -50,7 +55,7 @@ const ChipDemo: Component = () => {
         <FilterChip value="archived" label="Archived" disabled />
       </ChipSet>
 
-      <p class={g.label}>Filter, single-select, required (radiogroup; sort: {sort().join(', ')})</p>
+      <p class={g.label}>Filter, single-select, required (radiogroup, arrows select; sort: {sort().join(', ')})</p>
       <ChipSet label="Sort by" selection="single" required value={sort()} onValueChange={setSort}>
         <FilterChip value="recent" label="Recent" />
         <FilterChip value="name" label="Name" />
@@ -62,6 +67,11 @@ const ChipDemo: Component = () => {
         <FilterChip label="Selected" defaultSelected />
         <FilterChip label="Elevated selected" elevated defaultSelected />
         <FilterChip label="Disabled selected" disabled selected />
+        <FilterChip label="Disabled elevated" elevated disabled />
+        <FilterChip label="Disabled elevated selected" elevated disabled selected />
+        <FilterChip label="Disabled icon" icon="image" disabled />
+        <FilterChip label="Disabled remove" trailing="remove" disabled selected onRemove={() => {}} />
+        <FilterChip label="Disabled menu" trailing="menu" disabled onMenuClick={() => {}} />
         <FilterChip
           label="Any date"
           trailing="menu"
@@ -80,7 +90,35 @@ const ChipDemo: Component = () => {
         </For>
       </ChipSet>
 
-      <p class={g.label}>Input: avatar, icon, selected, disabled (Delete/Backspace removes; arrows move)</p>
+      <p class={g.label}>Filter: the whole chip opens the menu (drop-down chip; selected when not the default)</p>
+      <ChipSet label="Date filter">
+        <Menu.Root open={dateOpen()} onOpenChange={(d) => setDateOpen(d.open)}>
+          <Menu.Trigger
+            asChild={(p) => (
+              <FilterChip
+                {...(p() as Omit<ReturnType<typeof p>, 'style'>)}
+                label={dates[date()]}
+                trailing="menu"
+                menuTrigger="chip"
+                menuExpanded={dateOpen()}
+                selected={date() !== 'any'}
+              />
+            )}
+          />
+          <Menu.Content>
+            <Menu.RadioGroup value={date()} onValueChange={setDate}>
+              <Menu.RadioItem value="any">Any date</Menu.RadioItem>
+              <Menu.RadioItem value="week">Past week</Menu.RadioItem>
+              <Menu.RadioItem value="month">Past month</Menu.RadioItem>
+            </Menu.RadioGroup>
+          </Menu.Content>
+        </Menu.Root>
+      </ChipSet>
+
+      <p class={g.label}>
+        Input: avatar, icon, selected, disabled, dragged (remove-only chips are one stop: Delete/Backspace removes;
+        arrows move)
+      </p>
       <ChipSet label="Recipients">
         <For each={people()}>
           {(person, i) => (
@@ -94,7 +132,17 @@ const ChipDemo: Component = () => {
           )}
         </For>
         <InputChip label="Disabled" icon="person" disabled onRemove={() => {}} />
+        <InputChip label="Disabled selected" icon="person" selected disabled onRemove={() => {}} />
         <InputChip label="Dragged" icon="drag_indicator" dragged onRemove={() => {}} />
+        <InputChip label="Opens details" icon="person" onClick={() => {}} onRemove={() => {}} />
+      </ChipSet>
+
+      <p class={g.label}>Dragged: assist, filter (flat, selected), suggestion</p>
+      <ChipSet label="Dragged chips">
+        <AssistChip label="Assist" icon="event" dragged />
+        <FilterChip label="Filter" dragged />
+        <FilterChip label="Filter selected" dragged defaultSelected />
+        <SuggestionChip label="Suggestion" dragged />
       </ChipSet>
 
       <p class={g.label}>Input chip field (Enter adds; Backspace selects, then removes; double-click edits)</p>
@@ -107,6 +155,16 @@ const ChipDemo: Component = () => {
           icon="sell"
         />
       </div>
+      <div style={{ display: 'grid', gap: '24px', 'max-inline-size': '480px', 'margin-block-start': '8px' }}>
+        <InputChipField label="Disabled" value={field2()} icon="sell" disabled />
+        <InputChipField
+          label="Invalid"
+          placeholder="Add a tag"
+          value={field2()}
+          onValueChange={(d) => setField2(d.value)}
+          invalid
+        />
+      </div>
 
       <p class={g.label}>Suggestion: flat, elevated, disabled; one scrolling row; neutral icons</p>
       <ChipSet label="Suggested replies" layout="scroll" iconColor="neutral">
@@ -117,6 +175,7 @@ const ChipDemo: Component = () => {
         <SuggestionChip label="Let's meet tomorrow" />
         <SuggestionChip label="Can't talk now" />
         <SuggestionChip label="Disabled" disabled />
+        <SuggestionChip label="Disabled icon" icon="favorite" disabled />
       </ChipSet>
 
       <p class={g.label}>Truncation (narrow container)</p>

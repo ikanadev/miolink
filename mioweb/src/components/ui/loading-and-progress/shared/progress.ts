@@ -1,4 +1,4 @@
-import { createEffect, onCleanup, onMount } from 'solid-js';
+import { createEffect, onCleanup, onMount, type JSX } from 'solid-js';
 import {
   createFrameLoop,
   createSpring,
@@ -17,14 +17,45 @@ export const progressFraction = (value: number | undefined, max: number | undefi
   return Math.min(1, Math.max(0, value / m));
 };
 
-/** progressbar ARIA (§8): a 0-100 value when determinate, no value when indeterminate. */
-export const progressAria = (fraction: number | undefined, label: string | undefined) => ({
-  role: 'progressbar' as const,
-  'aria-label': label,
-  'aria-valuemin': fraction === undefined ? undefined : 0,
-  'aria-valuemax': fraction === undefined ? undefined : 100,
-  'aria-valuenow': fraction === undefined ? undefined : Math.round(fraction * 100),
-});
+/**
+ * Indicator color: `default` uses the component's color roles, `current`
+ * paints the active indicator (or shape) with `currentColor`, the label or
+ * icon color of the button it sits in (M3: 3:1 contrast inside buttons).
+ */
+export type IndicatorColor = 'default' | 'current';
+
+type Naming = { label?: string; 'aria-label'?: string; 'aria-labelledby'?: string };
+
+/**
+ * progressbar ARIA: a 0-100 value when determinate, no value when
+ * indeterminate. Without `label`, `aria-label` or `aria-labelledby` the
+ * indicator is decorative instead (`aria-hidden`, no role), for indicators
+ * inside a control that already says it's busy.
+ */
+export const progressAria = (fraction: number | undefined, naming: Naming) => {
+  const label = naming.label || naming['aria-label'];
+  if (!label && !naming['aria-labelledby']) return { 'aria-hidden': 'true' as const };
+  return {
+    role: 'progressbar' as const,
+    'aria-label': label,
+    'aria-valuemin': fraction === undefined ? undefined : 0,
+    'aria-valuemax': fraction === undefined ? undefined : 100,
+    'aria-valuenow': fraction === undefined ? undefined : Math.round(fraction * 100),
+  };
+};
+
+/** Puts private variables before the caller's `style`, object or string. */
+export const withVars = (
+  vars: Record<string, string>,
+  style: JSX.CSSProperties | string | undefined,
+): JSX.CSSProperties | string => {
+  if (typeof style === 'string') {
+    return Object.entries(vars)
+      .map(([name, value]) => `${name}:${value};`)
+      .join('') + style;
+  }
+  return { ...vars, ...style };
+};
 
 export type ProgressFrame = {
   indeterminate: boolean;
@@ -39,7 +70,7 @@ export type ProgressFrame = {
   reduced: boolean;
 };
 
-/* [Compose] values (progress-indicators.md §6.2), not md.sys.motion tokens. */
+/* Compose ProgressIndicator.kt values, not md.sys.motion tokens. */
 const PROGRESS_STIFFNESS = 50;
 const PROGRESS_DAMPING = 1;
 const AMPLITUDE_DURATION = 500; // --md-sys-motion-duration-long2

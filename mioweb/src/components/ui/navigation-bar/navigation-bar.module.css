@@ -2,7 +2,7 @@
  * Navigation bar (md.comp.nav-bar, flexible). Full-width surface-container
  * container, square corners, 64px minimum height (grows with text
  * scaling), no shadow: the level2 elevation token is rendered tonally
- * (spec §4.4). Items come from shared/navigation-item.module.css.
+ * (M3 nav bar Specs). Items come from shared/navigation-item.module.css.
  *
  * Attributes on .bar: data-layout (vertical | horizontal, resolved from
  * `auto`), data-fixed, data-hidden (hide on scroll).
@@ -14,12 +14,12 @@
   border-radius: var(--md-sys-shape-corner-none);
   background: var(--md-sys-color-surface-container);
   padding-block-end: env(safe-area-inset-bottom, 0px);
-  /* Enter/exit on scroll: standard easing, not a bouncy spring (spec §10d);
+  /* Enter/exit on scroll: standard easing, not a bouncy spring (M3 nav bar Motion);
      legacy duration token for an enter/exit transition. */
   transition: translate var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
 }
 
-/* Bottom of the window, under scrims, sheets and dialogs (z-index 2, spec §11). */
+/* Bottom of the window, under scrims, sheets and dialogs (z-index 2, derived). */
 .bar[data-fixed] {
   position: fixed;
   inset-inline: 0;
@@ -27,7 +27,7 @@
   z-index: 2;
 }
 
-/* Never hidden while focus is inside (spec §8). */
+/* Never hidden while focus is inside (M3 nav bar Accessibility). */
 .bar[data-hidden]:not(:focus-within) {
   translate: 0 100%;
 }
@@ -44,12 +44,17 @@
 }
 
 /* Horizontal items: equal columns as wide as the widest pill, the group
-   centered, extra space in the outer margins (derived, spec §4.2). */
+   centered, extra space in the outer margins (derived, M3 nav bar Specs). */
 .bar[data-layout='horizontal'] .list {
   inline-size: max-content;
   max-inline-size: 100%;
   grid-auto-columns: 1fr;
   margin-inline: auto;
+}
+
+/* md.comp.nav-bar.item.horizontal.active-indicator.height (vertical is 32). */
+.bar[data-layout='horizontal'] .listItem > [data-layout='horizontal'] {
+  --_indicator-height: 40px;
 }
 
 .listItem {

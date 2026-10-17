@@ -4,7 +4,7 @@
  * Attributes: data-color, data-size, data-width, data-shape; toggles (Ark
  * Toggle, or ToggleGroup inside a ButtonGroup) add data-state="off" | "on".
  * data-key-pressed (from the Ripple) marks keyboard presses. Radii are
- * numeric (full = height / 2) so the shape morphs animate (spec §11).
+ * numeric (full = height / 2) so the shape morphs animate.
  */
 .root {
   composes: interactive target from '../../shared/interaction.module.css';
@@ -52,7 +52,7 @@
   text-decoration: none;
   vertical-align: middle;
   /* Corners and width: fast spatial spring (pressed corner-size token).
-     Colors: fast effects spring (derived, spec §6). */
+     Colors: fast effects spring (derived). */
   transition:
     border-radius var(--md-sys-motion-spring-fast-spatial-duration)
       var(--md-sys-motion-spring-fast-spatial-easing),
@@ -181,7 +181,7 @@
   --_icon-color: var(--md-sys-color-on-surface-variant);
 }
 
-/* No selected outline token: hidden under the inverse-surface fill (spec §11). */
+/* No selected outline token: hidden under the inverse-surface fill. */
 .root[data-color='outlined'][data-state='on'] {
   --_outline-color: transparent;
   --_container-color: var(--md-sys-color-inverse-surface);
@@ -207,7 +207,7 @@
   --_container-color: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent);
 }
 
-/* Standard and unselected outlined keep no fill; the outline stays (spec §4.1). */
+/* Standard and unselected outlined keep no fill; the outline stays (M3 Specs: color). */
 .root:is([data-color='standard'], [data-color='outlined']:not([data-state='on'])):is(
     :disabled,
     [data-disabled],

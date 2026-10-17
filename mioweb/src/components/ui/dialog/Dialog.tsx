@@ -15,6 +15,7 @@ import { Portal } from 'solid-js/web';
 import { Button, type ButtonProps } from '../buttons/button';
 import { Icon } from '../icon/Icon';
 import { IconButton } from '../buttons/icon-button';
+import { CircularProgress } from '../loading-and-progress';
 import styles from './dialog.module.css';
 
 export type DialogVariant = 'basic' | 'full-screen';
@@ -25,7 +26,7 @@ export type DialogDividers = 'auto' | 'always' | 'never';
 
 const cx = (...classes: (string | undefined)[]) => classes.filter(Boolean).join(' ');
 
-/** Compact window class (spec: full-screen dialogs are for compact windows only). */
+/** Compact window class (M3: full-screen dialogs are for compact windows only). */
 const COMPACT_QUERY = '(max-width: 599.98px)';
 
 type DialogState = {
@@ -33,7 +34,6 @@ type DialogState = {
   position: Accessor<DialogPosition>;
   busy: Accessor<boolean>;
   setReason: (reason: DialogCloseReason) => void;
-  setContentEl: (el: HTMLElement) => void;
 };
 
 const DialogStateContext = createContext<DialogState>();
@@ -89,7 +89,7 @@ export type DialogRootProps = Omit<
 
 /**
  * Holds the open state and behavior (Ark UI `Dialog`): focus trap, initial
- * and returned focus, Escape, scroll lock and inert background. Content is
+ * focus on the first interactive element (or `initialFocusEl`), returned focus, Escape, scroll lock and inert background. Content is
  * mounted only while open (`lazyMount` and `unmountOnExit` default to true),
  * so form state resets on reopen.
  */
@@ -108,7 +108,6 @@ export const DialogRoot = (props: DialogRootProps) => {
     'onInteractOutside',
     'lazyMount',
     'unmountOnExit',
-    'initialFocusEl',
     'children',
   ]);
 
@@ -140,21 +139,11 @@ export const DialogRoot = (props: DialogRootProps) => {
   };
   onCleanup(() => clearTimeout(reasonTimer));
 
-  // Alertdialogs focus the first close action (the safest choice), like Ark's CloseTrigger.
-  const [contentEl, setContentEl] = createSignal<HTMLElement>();
-  const initialFocusEl = () =>
-    local.initialFocusEl?.() ??
-    (role() === 'alertdialog'
-      ? contentEl()?.querySelector<HTMLElement>('[data-dialog-close]:not([aria-disabled="true"])')
-      : undefined) ??
-    null;
-
   const state: DialogState = {
     layout: () => (variant() === 'full-screen' && compact() ? 'full-screen' : 'basic'),
     position: () => local.position ?? 'center',
     busy,
     setReason,
-    setContentEl,
   };
 
   return (
@@ -163,7 +152,6 @@ export const DialogRoot = (props: DialogRootProps) => {
         {...rest}
         open={open()}
         role={role()}
-        initialFocusEl={initialFocusEl}
         lazyMount={local.lazyMount ?? true}
         unmountOnExit={local.unmountOnExit ?? true}
         closeOnEscape={dismissible()}
@@ -286,10 +274,7 @@ export const DialogContent = (props: DialogContentProps) => {
       >
         <ArkDialog.Content
           {...rest}
-          ref={(el: HTMLDivElement) => {
-            state.setContentEl(el);
-            if (typeof local.ref === 'function') (local.ref as (el: HTMLDivElement) => void)(el);
-          }}
+          ref={local.ref}
           class={cx(styles.container, local.class)}
           data-layout={state.layout()}
           data-icon={local.icon && !fullScreen() ? '' : undefined}
@@ -348,9 +333,11 @@ export const DialogContent = (props: DialogContentProps) => {
           </ScrollBody>
 
           <Show when={showActions()}>
+            {/* Stacked, the confirming action is on top, so it also comes first in tab order. */}
             <div class={styles.actions}>
+              <Show when={local.stackedActions && hasConfirm()}>{local.confirmAction}</Show>
               {actions()}
-              <Show when={hasConfirm()}>{local.confirmAction}</Show>
+              <Show when={!local.stackedActions && hasConfirm()}>{local.confirmAction}</Show>
             </div>
           </Show>
 
@@ -423,8 +410,7 @@ export type DialogActionProps = ButtonProps & {
 
 /**
  * A dialog action: a text button by default (any Button color works). With
- * `close` it closes the dialog; the first one gets initial focus in an
- * alertdialog. Use `type="submit" form="<id>"` to submit a form in the body.
+ * `close` it closes the dialog. Use `type="submit" form="<id>"` to submit a form in the body.
  */
 export const DialogAction = (props: DialogActionProps) => {
   const [local, rest] = splitProps(props, ['close', 'busy', 'color', 'class', 'children', 'onClick']);
@@ -461,7 +447,10 @@ export const DialogAction = (props: DialogActionProps) => {
     >
       <span class={styles.actionLabel}>{local.children}</span>
       <Show when={local.busy}>
-        <span class={styles.progress} aria-hidden="true" />
+        {/* The button already names the action and sets aria-busy. */}
+        <span class={styles.progress} aria-hidden="true">
+          <CircularProgress label="Working" color="current" track={false} size={24} />
+        </span>
       </Show>
     </Button>
   );
