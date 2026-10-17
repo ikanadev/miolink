@@ -1,0 +1,47 @@
+/*
+ * Global styles: fonts, Material 3 design tokens and the document base.
+ * Imported once from src/index.tsx. Components (src/components/ui) read only
+ * --md-sys-* tokens.
+ */
+@import '@fontsource/roboto/400.css';
+@import '@fontsource/roboto/500.css';
+@import '@fontsource/roboto/700.css';
+@import 'material-symbols/outlined.css';
+
+@import './tokens/palette.css';
+@import './tokens/color.css';
+@import './tokens/typography.css';
+@import './tokens/shape.css';
+@import './tokens/elevation.css';
+@import './tokens/state.css';
+@import './tokens/spacing.css';
+@import './tokens/motion.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-weight: var(--md-sys-typescale-body-large-weight);
+  font-size: var(--md-sys-typescale-body-large-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  letter-spacing: var(--md-sys-typescale-body-large-tracking);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}

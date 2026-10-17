@@ -1,0 +1,439 @@
+/*
+ * Dialog. Spec: m3-guidelines/components/dialogs.md
+ *
+ * Structure (in a portal): .scrim (Ark Backdrop) + .positioner (Ark
+ * Positioner) > .container (Ark Content) > .header (icon, headline) or .bar
+ * (full-screen: close, headline, confirming action), .body (the only part
+ * that scrolls), .actions or .bottomBar.
+ *
+ * Attributes: .positioner and .container data-layout="basic" | "full-screen";
+ * .positioner data-position; .container data-icon, data-header,
+ * data-actions, data-scrolled, data-overflow, data-dividers, data-stacked,
+ * data-state (Ark), aria-busy.
+ */
+
+/* ---- Scrim ---- */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-index, 1000) - 1);
+  /* Scrim role at 32% (guidelines, Elevation). */
+  background: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
+}
+
+/* Derived: the scrim fades with the container's enter/exit timing. */
+.scrim[data-state='open'] {
+  animation: fade-in var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-linear);
+}
+
+.scrim[data-state='closed'] {
+  animation: fade-out var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-linear);
+}
+
+/* ---- Positioner ---- */
+
+.positioner {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-index, 1000);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  /* Derived: 24px between a basic dialog and the window edges (medium margin). */
+  padding: var(--md-sys-measurement-space300);
+}
+
+/* Custom position (medium and expanded windows): 56px from the edge. */
+@media (min-width: 600px) {
+  .positioner[data-position='start'] {
+    justify-content: flex-start;
+    padding-inline: var(--md-sys-measurement-space700);
+  }
+
+  .positioner[data-position='end'] {
+    justify-content: flex-end;
+    padding-inline: var(--md-sys-measurement-space700);
+  }
+}
+
+.positioner[data-layout='full-screen'] {
+  padding: 0;
+}
+
+/* ---- Container ---- */
+
+.container {
+  --_container-color: var(--md-sys-color-surface-container-high);
+  --_elevation: var(--md-sys-elevation-level3);
+  --_shape: var(--md-sys-shape-corner-extra-large);
+  --_icon-color: var(--md-sys-color-secondary);
+  --_icon-size: 24px;
+  --_headline-color: var(--md-sys-color-on-surface);
+  --_supporting-text-color: var(--md-sys-color-on-surface-variant);
+  --_action-color: var(--md-sys-color-primary);
+  /* Derived: dividers are not tokenized; standard M3 divider color. */
+  --_divider-color: var(--md-sys-color-outline-variant);
+  --_padding: var(--md-sys-measurement-space300);
+  --_headline-font: var(--md-sys-typescale-headline-small-font);
+  --_headline-weight: var(--md-sys-typescale-headline-small-weight);
+  --_headline-size: var(--md-sys-typescale-headline-small-size);
+  --_headline-line-height: var(--md-sys-typescale-headline-small-line-height);
+  --_headline-tracking: var(--md-sys-typescale-headline-small-tracking);
+
+  position: relative;
+  z-index: calc(1000 + var(--layer-index, 0));
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  inline-size: fit-content;
+  min-inline-size: min(280px, 100%);
+  max-inline-size: min(560px, 100%);
+  /* Never taller than the window: only the body scrolls. */
+  max-block-size: 100%;
+  overflow: hidden;
+  border-radius: var(--_shape);
+  background: var(--_container-color);
+  box-shadow: var(--_elevation);
+  color: var(--_supporting-text-color);
+  outline: none;
+}
+
+.scrim[hidden],
+.container[hidden] {
+  display: none;
+}
+
+.container[data-layout='full-screen'] {
+  --_container-color: var(--md-sys-color-surface);
+  --_elevation: var(--md-sys-elevation-level0);
+  --_shape: var(--md-sys-shape-corner-none);
+  --_headline-color: var(--md-sys-color-on-surface);
+  --_header-color: var(--md-sys-color-surface);
+  --_header-elevation: var(--md-sys-elevation-level0);
+  --_supporting-text-color: var(--md-sys-color-on-surface-variant);
+  --_headline-font: var(--md-sys-typescale-title-large-font);
+  --_headline-weight: var(--md-sys-typescale-title-large-weight);
+  --_headline-size: var(--md-sys-typescale-title-large-size);
+  --_headline-line-height: var(--md-sys-typescale-title-large-line-height);
+  --_headline-tracking: var(--md-sys-typescale-title-large-tracking);
+
+  /* Full-screen dialogs exist only in compact windows (< 600px), so the
+     560px max width only applies once they swap to a basic dialog. */
+  inline-size: 100%;
+  block-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: none;
+}
+
+.container[data-layout='full-screen'][data-scrolled] {
+  --_header-color: var(--md-sys-color-surface-container);
+  --_header-elevation: var(--md-sys-elevation-level2);
+}
+
+/* ---- Basic: icon and headline (pinned at the top) ---- */
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--md-sys-measurement-space200);
+  padding: var(--_padding) var(--_padding) var(--md-sys-measurement-space200);
+}
+
+/* With a hero icon, the icon, headline and supporting text center. */
+.container[data-icon] .header {
+  align-items: center;
+  text-align: center;
+}
+
+.container[data-icon] .supportingText {
+  text-align: center;
+}
+
+.icon {
+  --md-icon-size: var(--_icon-size);
+  --md-icon-optical-size: 24;
+  color: var(--_icon-color);
+}
+
+.headline,
+.barHeadline {
+  margin: 0;
+  color: var(--_headline-color);
+  font-family: var(--_headline-font);
+  font-weight: var(--_headline-weight);
+  font-size: var(--_headline-size);
+  line-height: var(--_headline-line-height);
+  letter-spacing: var(--_headline-tracking);
+}
+
+.headline {
+  overflow-wrap: anywhere;
+}
+
+/* ---- Body (scrolls) ---- */
+
+.body {
+  display: grid;
+  align-content: start;
+  /* Derived: 16px between supporting text and further content. */
+  gap: var(--md-sys-measurement-space200);
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow-y: auto;
+  /* Scrolling never chains to the (locked) page. */
+  overscroll-behavior: contain;
+  padding-inline: var(--_padding);
+  /* Transparent until shown, so dividers don't shift the layout. */
+  border-block: 1px solid transparent;
+  outline: none;
+}
+
+.container:not([data-header]) .body {
+  padding-block-start: var(--_padding);
+}
+
+.container:not([data-actions]) .body {
+  padding-block-end: var(--_padding);
+}
+
+.container[data-layout='basic'][data-dividers='auto'][data-overflow] .body,
+.container[data-layout='basic'][data-dividers='always'] .body {
+  border-block-color: var(--_divider-color);
+}
+
+.body:focus-visible {
+  outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
+  outline-offset: var(--md-sys-state-focus-indicator-inner-offset);
+}
+
+.supportingText {
+  margin: 0;
+  color: var(--_supporting-text-color);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-weight: var(--md-sys-typescale-body-medium-weight);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+}
+
+.container[data-layout='full-screen'] .body {
+  padding: var(--_padding);
+  border-block: 0;
+}
+
+/* ---- Basic: actions (pinned at the bottom) ---- */
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--md-sys-measurement-space100);
+  padding: var(--_padding);
+}
+
+/* Text buttons in the action color; their state layers follow the label color. */
+.actions [data-color='text']:not(:disabled, [data-disabled], [aria-disabled='true']),
+.bottomBar [data-color='text']:not(:disabled, [data-disabled], [aria-disabled='true']) {
+  --_label-color: var(--_action-color);
+  --_icon-color: var(--_action-color);
+}
+
+/* Stacked: confirming above dismissive, at the trailing edge. */
+.container[data-stacked] .actions {
+  flex-direction: column-reverse;
+  align-items: flex-end;
+}
+
+/* ---- Full-screen: header bar ---- */
+
+.bar {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  /* Derived from the small app bar: 4px edge spaces, 4px after the close button. */
+  gap: var(--md-sys-measurement-space50);
+  flex-shrink: 0;
+  min-block-size: 56px;
+  padding-inline: var(--md-sys-measurement-space50);
+  background: var(--_header-color);
+  box-shadow: var(--_header-elevation);
+  transition:
+    background-color var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects-easing),
+    box-shadow var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects-easing);
+}
+
+.bar [data-color='standard']:not([data-state='on'], :disabled, [data-disabled], [aria-disabled='true']) {
+  --_icon-color: var(--md-sys-color-on-surface);
+}
+
+.barHeadline {
+  grid-column: 2;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.barAction {
+  grid-column: 3;
+  display: flex;
+  align-items: center;
+}
+
+/* ---- Full-screen: bottom action bar ---- */
+
+.bottomBar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--md-sys-measurement-space100);
+  min-block-size: 56px;
+  /* Derived: same side padding as the content. */
+  padding-inline: var(--_padding);
+  border-block-start: 1px solid transparent;
+}
+
+.container[data-overflow] .bottomBar {
+  border-block-start-color: var(--_divider-color);
+}
+
+/* ---- Actions: busy ---- */
+
+.action {
+  position: relative;
+}
+
+/* The label stays in the accessibility tree (opacity, not visibility). */
+.action[data-busy] .actionLabel {
+  opacity: 0;
+}
+
+/* Derived: a circular indeterminate indicator until a loading indicator component exists. */
+.progress {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  inline-size: 20px;
+  block-size: 20px;
+  margin: auto;
+  border: 2px solid var(--_action-color, var(--md-sys-color-primary));
+  border-block-start-color: transparent;
+  border-radius: var(--md-sys-shape-corner-full);
+  animation: spin 1s linear infinite;
+}
+
+/* ---- Motion ---- */
+
+/*
+ * Enter/exit (within bounds), derived: the basic container expands downward
+ * (clip reveal, no scale) and fades, with emphasized decelerate on enter
+ * (400ms) and emphasized accelerate on exit (200ms). The clip extends 24px
+ * past the box so the shadow isn't cut. Exit uses one animation: Ark
+ * unmounts on its animationend.
+ */
+.container[data-state='open'] {
+  animation:
+    reveal var(--md-sys-motion-duration-medium4) var(--md-sys-motion-easing-emphasized-decelerate),
+    fade-in var(--md-sys-motion-duration-short3) var(--md-sys-motion-easing-linear);
+}
+
+.container[data-state='closed'] {
+  animation: collapse var(--md-sys-motion-duration-short4)
+    var(--md-sys-motion-easing-emphasized-accelerate);
+}
+
+/* Derived: full-screen slides up a little from the bottom while fading. */
+.container[data-layout='full-screen'][data-state='open'] {
+  animation:
+    slide-in var(--md-sys-motion-duration-medium4) var(--md-sys-motion-easing-emphasized-decelerate),
+    fade-in var(--md-sys-motion-duration-short3) var(--md-sys-motion-easing-linear);
+}
+
+.container[data-layout='full-screen'][data-state='closed'] {
+  animation: slide-out var(--md-sys-motion-duration-short4)
+    var(--md-sys-motion-easing-emphasized-accelerate);
+}
+
+/* Reduced motion: fade only. */
+@media (prefers-reduced-motion: reduce) {
+  .container[data-layout][data-state='open'] {
+    animation: fade-in var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-linear);
+  }
+
+  .container[data-layout][data-state='closed'] {
+    animation: fade-out var(--md-sys-motion-duration-short3) var(--md-sys-motion-easing-linear);
+  }
+
+  .progress {
+    animation-duration: 2s;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes reveal {
+  from {
+    clip-path: inset(-24px -24px 65% -24px round calc(var(--_shape) + 24px));
+  }
+  to {
+    clip-path: inset(-24px round calc(var(--_shape) + 24px));
+  }
+}
+
+@keyframes collapse {
+  from {
+    clip-path: inset(-24px round calc(var(--_shape) + 24px));
+  }
+  to {
+    opacity: 0;
+    clip-path: inset(-24px -24px 65% -24px round calc(var(--_shape) + 24px));
+  }
+}
+
+@keyframes slide-in {
+  from {
+    translate: 0 var(--md-sys-measurement-space800);
+  }
+}
+
+@keyframes slide-out {
+  to {
+    opacity: 0;
+    translate: 0 var(--md-sys-measurement-space800);
+  }
+}
+
+@keyframes spin {
+  to {
+    rotate: 1turn;
+  }
+}
+
+@media (forced-colors: active) {
+  .container {
+    border: 1px solid CanvasText;
+  }
+
+  .progress {
+    border-color: ButtonText;
+    border-block-start-color: transparent;
+  }
+}

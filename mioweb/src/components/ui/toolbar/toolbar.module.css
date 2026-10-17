@@ -1,0 +1,323 @@
+/*
+ * Toolbar. Spec: m3-guidelines/components/toolbars.md
+ *
+ * .toolbar (role="toolbar") attributes: data-variant (docked | floating),
+ * data-orientation (horizontal | vertical), data-color (standard |
+ * vibrant), data-layout (docked: even | center | edges), data-elevated
+ * (floating), data-side (vertical: start | end), data-fixed, data-hidden,
+ * data-collapsed, data-has-fab. With a FAB, .group wraps the toolbar and
+ * the FAB and takes data-fixed, data-hidden and data-collapsed instead.
+ *
+ * The toolbar has no interaction of its own; placed items keep theirs.
+ */
+
+.toolbar {
+  /* ---- color: standard (default) ---- */
+  --_toolbar-container: var(--md-sys-color-surface-container);
+  --_item-container: var(--md-sys-color-surface-container);
+  --_item-color: var(--md-sys-color-on-surface-variant);
+  --_item-selected-container: var(--md-sys-color-secondary-container);
+  --_item-selected-color: var(--md-sys-color-on-secondary-container);
+  --_elevation: none;
+
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  margin: 0;
+  background: var(--_toolbar-container);
+  box-shadow: var(--_elevation);
+  /* Hide/show: default spatial spring (partial-screen movement); shadow:
+     default effects spring; collapse: fast spatial spring for the size and
+     fast effects for opacity. The spec gives no motion values (derived, §6). */
+  transition:
+    translate var(--md-sys-motion-spring-default-spatial-duration)
+      var(--md-sys-motion-spring-default-spatial-easing),
+    box-shadow var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects-easing),
+    inline-size var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial-easing),
+    block-size var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial-easing),
+    padding var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial-easing),
+    margin var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial-easing),
+    opacity var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.toolbar[data-color='vibrant'] {
+  --_toolbar-container: var(--md-sys-color-primary-container);
+  --_item-container: var(--md-sys-color-primary-container);
+  --_item-color: var(--md-sys-color-on-primary-container);
+  --_item-selected-container: var(--md-sys-color-surface-container);
+  --_item-selected-color: var(--md-sys-color-on-surface);
+}
+
+/* ---- Items: standard icon buttons and text buttons take the toolbar's
+   colors (md.comp.toolbar.<color>.*). Filled, tonal and outlined items keep
+   their own colors for emphasis (spec §5). Disabled items keep their own
+   disabled colors (on-surface 38%, no container). ---- */
+
+.toolbar
+  :is([data-color='standard'], [data-color='text'])[data-size]:not(
+    :disabled,
+    [data-disabled],
+    [aria-disabled='true']
+  ) {
+  --_container-color: var(--_item-container);
+  --_icon-color: var(--_item-color);
+  --_label-color: var(--_item-color);
+}
+
+.toolbar
+  [data-color='standard'][data-size][data-state='on']:not(:disabled, [data-disabled], [aria-disabled='true']) {
+  --_container-color: var(--_item-selected-container);
+  --_icon-color: var(--_item-selected-color);
+}
+
+/* Actions moved to the overflow menu. */
+.toolbar [data-overflowed] {
+  display: none;
+}
+
+/* ---- Docked: full width, 64px, 16px edge padding, square corners, no shadow ---- */
+
+.toolbar[data-variant='docked'] {
+  inline-size: 100%;
+  min-block-size: 64px;
+  padding-inline: var(--md-sys-measurement-space200);
+  border-radius: var(--md-sys-shape-corner-none);
+  /* min-spacing; `even` spreads the rest (derived, spec §11). */
+  gap: 4px;
+  justify-content: space-evenly;
+}
+
+.toolbar[data-variant='docked'][data-layout='center'] {
+  justify-content: center;
+  gap: 32px; /* max-spacing */
+}
+
+.toolbar[data-variant='docked'][data-layout='edges'] {
+  justify-content: space-between;
+}
+
+/* Bottom of the window, under scrims, sheets and dialogs (like the navigation bar). */
+.toolbar[data-variant='docked'][data-fixed] {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: 2;
+  min-block-size: calc(64px + env(safe-area-inset-bottom, 0px));
+  padding-block-end: env(safe-area-inset-bottom, 0px);
+}
+
+/* ---- Floating: pill, 64px cross size, 8px padding, 4px gap, level3 ---- */
+
+.toolbar[data-variant='floating'] {
+  --_elevation: var(--md-sys-elevation-level3);
+
+  display: inline-flex;
+  /* Lets the collapse animate between auto and 0 where supported; elsewhere
+     it switches without animation. */
+  interpolate-size: allow-keywords;
+  vertical-align: middle;
+  block-size: 64px;
+  padding-inline: var(--md-sys-measurement-space100);
+  border-radius: var(--md-sys-shape-corner-full);
+  gap: var(--md-sys-measurement-space50);
+  max-inline-size: calc(100% - 2 * var(--md-sys-measurement-space200));
+}
+
+.toolbar[data-variant='floating'][data-orientation='vertical'] {
+  flex-direction: column;
+  block-size: auto;
+  inline-size: 64px;
+  padding-inline: 0;
+  padding-block: var(--md-sys-measurement-space100);
+  max-inline-size: none;
+  max-block-size: calc(100% - 2 * var(--md-sys-measurement-space300));
+}
+
+.toolbar[data-elevated='false'] {
+  --_elevation: none;
+}
+
+/* Inside the group the toolbar shrinks so its overflow can be measured. */
+.toolbar[data-has-fab] {
+  flex: 0 1 auto;
+  min-inline-size: 0;
+  min-block-size: 0;
+  max-inline-size: 100%;
+  margin-inline-end: var(--md-sys-measurement-space100); /* fab.between-space */
+}
+
+.toolbar[data-has-fab][data-orientation='vertical'] {
+  max-inline-size: none;
+  max-block-size: 100%;
+  margin-inline-end: 0;
+  margin-block-end: var(--md-sys-measurement-space100);
+}
+
+/* ---- Group: toolbar + FAB ---- */
+
+.group {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  max-inline-size: calc(100% - 2 * var(--md-sys-measurement-space200));
+  transition: translate var(--md-sys-motion-spring-default-spatial-duration)
+    var(--md-sys-motion-spring-default-spatial-easing);
+}
+
+.group[data-orientation='vertical'] {
+  flex-direction: column;
+  max-inline-size: none;
+  max-block-size: calc(100% - 2 * var(--md-sys-measurement-space300));
+}
+
+/* Toolbar FAB: level1 (56px) / level2 (80px collapsed) instead of the
+   FAB's level3; +1 level on hover, like every FAB. Size and corners morph
+   on the fast spatial spring (derived, spec §6). */
+.group .fab[data-color] {
+  --_elevation-rest: var(--md-sys-elevation-level1);
+  --_elevation-hover: var(--md-sys-elevation-level2);
+  --_transition-extra:
+    inline-size var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial-easing),
+    block-size var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial-easing),
+    border-radius var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial-easing);
+}
+
+.group .fab[data-color][data-size='medium'] {
+  --_elevation-rest: var(--md-sys-elevation-level2);
+  --_elevation-hover: var(--md-sys-elevation-level3);
+}
+
+/* ---- Fixed placement (floating): 16px from the bottom, centered;
+   vertical: 24px from the side, centered vertically ---- */
+
+:is(.toolbar[data-variant='floating'], .group)[data-fixed] {
+  position: fixed;
+  z-index: 2;
+  inset-inline: 0;
+  inset-block-end: calc(var(--md-sys-measurement-space200) + env(safe-area-inset-bottom, 0px));
+  inline-size: fit-content;
+  margin-inline: auto;
+}
+
+:is(.toolbar[data-variant='floating'], .group)[data-fixed][data-orientation='vertical'] {
+  inset-block: 0;
+  inset-inline: auto var(--md-sys-measurement-space300);
+  block-size: fit-content;
+  margin-block: auto;
+  margin-inline: 0;
+}
+
+:is(.toolbar[data-variant='floating'], .group)[data-fixed][data-orientation='vertical'][data-side='start'] {
+  inset-inline: var(--md-sys-measurement-space300) auto;
+}
+
+/* ---- Hide on scroll ---- */
+
+:is(.toolbar, .group) {
+  --_hide-x: 0;
+  --_hide-y: calc(100% + var(--md-sys-measurement-space200) + env(safe-area-inset-bottom, 0px));
+}
+
+.toolbar[data-variant='docked'] {
+  --_hide-y: 100%;
+}
+
+:is(.toolbar, .group)[data-orientation='vertical'] {
+  --_hide-x: calc(100% + var(--md-sys-measurement-space300));
+  --_hide-y: 0;
+}
+
+:is(.toolbar, .group)[data-orientation='vertical']:is([data-side='start'], :dir(rtl)) {
+  --_hide-x: calc(-100% - var(--md-sys-measurement-space300));
+}
+
+:is(.toolbar, .group)[data-orientation='vertical'][data-side='start']:dir(rtl) {
+  --_hide-x: calc(100% + var(--md-sys-measurement-space300));
+}
+
+:is(.toolbar, .group)[data-hidden] {
+  translate: var(--_hide-x) var(--_hide-y);
+}
+
+/* ---- Collapse on scroll ---- */
+
+/* With a FAB the toolbar folds away and the FAB grows (56 -> 80). Items
+   stay focusable: focus inside expands the toolbar again (spec §8). */
+.toolbar[data-collapsed][data-has-fab] {
+  inline-size: 0;
+  padding-inline: 0;
+  margin-inline-end: 0;
+  opacity: 0;
+  overflow: clip;
+  --_elevation: none;
+}
+
+.toolbar[data-collapsed][data-has-fab][data-orientation='vertical'] {
+  inline-size: 64px;
+  block-size: 0;
+  padding-block: 0;
+  margin-block-end: 0;
+}
+
+/* Without a FAB only the key action stays. */
+.toolbar[data-collapsed]:not([data-has-fab]) > :not([data-key]) {
+  display: none;
+}
+
+/* ---- Dividers (ToolbarDivider) ---- */
+
+.toolbar .divider[data-orientation='horizontal'] {
+  align-self: stretch;
+}
+
+.toolbar .divider[data-orientation='vertical'] {
+  margin-inline: var(--md-sys-measurement-space50);
+}
+
+.toolbar[data-orientation='vertical'] .divider {
+  margin-block: var(--md-sys-measurement-space50);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Fade instead of sliding; the slide happens once the fade is done. */
+  :is(.toolbar, .group)[data-hidden] {
+    opacity: 0;
+    transition:
+      opacity var(--md-sys-motion-spring-fast-effects-duration) linear,
+      translate 0s var(--md-sys-motion-spring-fast-effects-duration);
+  }
+
+  :is(.toolbar, .group):not([data-hidden]) {
+    transition:
+      opacity var(--md-sys-motion-spring-fast-effects-duration) linear,
+      translate 0s;
+  }
+}
+
+@media (forced-colors: active) {
+  .toolbar {
+    border: 1px solid CanvasText;
+    box-shadow: none;
+  }
+
+  .toolbar[data-variant='docked'] {
+    border-width: 1px 0 0;
+  }
+
+  .toolbar[data-collapsed][data-has-fab] {
+    border-width: 0;
+  }
+
+  .group .fab {
+    border: 1px solid ButtonText;
+  }
+}

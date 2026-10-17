@@ -1,0 +1,561 @@
+/*
+ * Search. Spec: m3-guidelines/components/search.md
+ *
+ * Structure:
+ *   .root (<search>, the bar's pane: 24px inline margins)
+ *     .bar (SearchBarFrame: 56px pill) > .leading, .field (> Ripple, input
+ *       or the trigger button's .hint), .trailing
+ *   portal: .positioner (Ark Positioner, fixed, full window)
+ *     .scrim (docked only)
+ *     .view (Ark Content) > .bar.viewBar (Back, input, Clear/trailing),
+ *       .divider (divided), .results > .header, .listbox (> .group > options), .empty
+ *
+ * The field is not positioned, so the Ripple inside it and the state layer
+ * (::before on .bar) cover the whole pill and stay under the nested icon
+ * buttons.
+ *
+ * Attributes: .root data-variant, data-layout, data-open; .bar
+ * data-leading, data-trailing; .positioner and .view data-layout, .view
+ * data-variant and data-state (Ark); .scrim data-state.
+ */
+
+/* ---- Pane ---- */
+
+.root {
+  --_margin: var(--md-sys-measurement-space300); /* 24px unfocused */
+
+  display: block;
+  box-sizing: border-box;
+  padding-inline: var(--_margin);
+}
+
+/* While the view is open, its own bar covers this one; this keeps its place. */
+.root[data-open] > .bar {
+  visibility: hidden;
+}
+
+/* ---- Bar (pill) ---- */
+
+.bar {
+  --_container-color: var(--md-sys-color-surface-container-high);
+  --_state-layer-color: var(--md-sys-color-on-surface);
+  --_leading-space: var(--md-sys-measurement-space200);
+  --_trailing-space: var(--md-sys-measurement-space200);
+
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-measurement-space50);
+  box-sizing: border-box;
+  inline-size: 100%;
+  max-inline-size: 720px;
+  block-size: 56px;
+  /* Derived: a bar narrower than its pane (720px max) is centered in it. */
+  margin-inline: auto;
+  padding-inline: var(--_leading-space) var(--_trailing-space);
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--_container-color);
+  color: var(--md-sys-color-on-surface);
+  transition: background-color var(--md-sys-motion-spring-default-effects-duration)
+    var(--md-sys-motion-spring-default-effects-easing);
+}
+
+/* 4px at an edge holding an icon button, icon or avatar; 16px otherwise. */
+.bar[data-leading] {
+  --_leading-space: var(--md-sys-measurement-space50);
+}
+
+.bar[data-trailing] {
+  --_trailing-space: var(--md-sys-measurement-space50);
+}
+
+/* State layer over the whole pill, driven by the field only. */
+.bar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--_state-layer-color);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+@media (hover: hover) {
+  .bar:has(> .field:hover)::before {
+    opacity: var(--md-sys-state-hover-state-layer-opacity);
+  }
+}
+
+/* Keyboard focus before opening: focus opacity (derived) and the ring. */
+.bar:has(> .field:focus-visible, > .field > .input:focus-visible)::before {
+  opacity: var(--md-sys-state-focus-state-layer-opacity);
+}
+
+.bar:has(> .field:focus-visible, > .field > .input:focus-visible) {
+  outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
+  outline-offset: var(--md-sys-state-focus-indicator-outer-offset);
+}
+
+/* ---- Slots ---- */
+
+.leading,
+.trailing {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0;
+}
+
+.leading {
+  color: var(--md-sys-color-on-surface);
+}
+
+.trailing {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.leading [data-color='standard']:not([data-state='on'], :disabled, [data-disabled], [aria-disabled='true']) {
+  --_icon-color: var(--md-sys-color-on-surface);
+}
+
+.trailing [data-color='standard']:not([data-state='on'], :disabled, [data-disabled], [aria-disabled='true']) {
+  --_icon-color: var(--md-sys-color-on-surface-variant);
+}
+
+/* A decorative icon takes a 48px slot, like an icon button's target. */
+.leading > :not(button, a, img, [data-avatar]),
+.trailing > :not(button, a, img, [data-avatar]) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 48px;
+  block-size: 48px;
+}
+
+/* Avatar: 30px round inside a 48px target. */
+.leading > :is(img, [data-avatar]),
+.trailing > :is(img, [data-avatar]) {
+  box-sizing: border-box;
+  inline-size: 30px;
+  block-size: 30px;
+  margin: 9px;
+  border-radius: var(--md-sys-shape-corner-full);
+  object-fit: cover;
+}
+
+/* ---- Field ---- */
+
+/* Not positioned (see the header); inherits the pill radius for its Ripple. */
+.field {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  align-self: stretch;
+  min-inline-size: 0;
+  border-radius: inherit;
+  cursor: text;
+}
+
+.trigger {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hint,
+.input {
+  flex: 1;
+  min-inline-size: 0;
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-weight: var(--md-sys-typescale-body-large-weight);
+  font-size: var(--md-sys-typescale-body-large-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  letter-spacing: var(--md-sys-typescale-body-large-tracking);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hint {
+  overflow: hidden;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.input {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--md-sys-color-on-surface);
+  /* Derived: text-field caret convention. */
+  caret-color: var(--md-sys-color-primary);
+  outline: none;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.input::placeholder {
+  color: var(--md-sys-color-on-surface-variant);
+  opacity: 1;
+}
+
+/* The Clear button replaces the browser's cancel button. */
+.input::-webkit-search-cancel-button,
+.input::-webkit-search-decoration {
+  appearance: none;
+}
+
+/* ---- Focused view ---- */
+
+.positioner {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-index, 1000);
+  pointer-events: none;
+}
+
+.positioner > * {
+  pointer-events: auto;
+}
+
+/* Docked: scrim role at 32% (derived, guidelines convention). */
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
+}
+
+.scrim[data-state='open'] {
+  animation: fade-in var(--md-sys-motion-spring-default-effects-duration)
+    var(--md-sys-motion-spring-default-effects-easing);
+}
+
+.scrim[data-state='closed'] {
+  animation: fade-out var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing) forwards;
+}
+
+.view {
+  --_container-color: var(--md-sys-color-surface-container-high);
+  --_results-max-height: calc(66.667dvh - 58px);
+
+  position: absolute;
+  z-index: calc(1000 + var(--layer-index, 0));
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  color: var(--md-sys-color-on-surface);
+  outline: none;
+}
+
+.view[data-state='closed'] {
+  animation: fade-out var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing) forwards;
+}
+
+/* The view's bar: no state layer or ring (its children keep theirs). */
+.viewBar {
+  max-inline-size: none;
+}
+
+.viewBar::before {
+  display: none;
+}
+
+.viewBar:has(> .field > .input:focus-visible) {
+  outline: none;
+}
+
+.viewBar .field {
+  cursor: text;
+}
+
+.results {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.header:not(:empty) {
+  padding: var(--md-sys-measurement-space150) var(--md-sys-measurement-space200);
+}
+
+.listbox {
+  display: flex;
+  flex-direction: column;
+  /* Derived: gaps separate groups of results. */
+  gap: var(--md-sys-measurement-space200);
+  outline: none;
+}
+
+.listbox:empty {
+  display: none;
+}
+
+/* Options sit on the view's surface. */
+.listbox [role='option'] {
+  --_container-color: transparent;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Derived: category label, title-small on-surface-variant, list insets. */
+.groupLabel {
+  padding: var(--md-sys-measurement-space150) var(--md-sys-measurement-space200)
+    var(--md-sys-measurement-space50);
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-title-small-font);
+  font-weight: var(--md-sys-typescale-title-small-weight);
+  font-size: var(--md-sys-typescale-title-small-size);
+  line-height: var(--md-sys-typescale-title-small-line-height);
+  letter-spacing: var(--md-sys-typescale-title-small-tracking);
+}
+
+.empty {
+  padding: var(--md-sys-measurement-space300) var(--md-sys-measurement-space200);
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-weight: var(--md-sys-typescale-body-medium-weight);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+  text-align: center;
+}
+
+.view .divider {
+  --_color: var(--md-sys-color-outline);
+}
+
+.visuallyHidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---- Contained, docked: bar widens, results below in their own container ---- */
+
+.view[data-layout='docked'][data-variant='contained'] .viewBar {
+  animation: bar-expand var(--md-sys-motion-spring-fast-spatial-duration)
+    var(--md-sys-motion-spring-fast-spatial-easing);
+}
+
+.view[data-layout='docked'][data-variant='contained'] .results {
+  margin-block-start: var(--md-sys-measurement-space25);
+  min-block-size: 240px;
+  max-block-size: max(240px, var(--_results-max-height));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-block: var(--md-sys-measurement-space100);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--_container-color);
+  /* Derived: level3 shadow, a floating panel over the scrim. */
+  box-shadow: var(--md-sys-elevation-level3);
+}
+
+.view[data-layout='docked'][data-state='open'] .results,
+.view[data-layout='docked'][data-variant='divided'][data-state='open'] {
+  animation:
+    reveal var(--md-sys-motion-spring-default-spatial-duration)
+      var(--md-sys-motion-spring-default-spatial-easing),
+    fade-in var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+/* ---- Divided, docked: header + divider + results in one surface ---- */
+
+.view[data-layout='docked'][data-variant='divided'] {
+  --_reveal-radius: var(--md-sys-shape-corner-extra-large);
+
+  overflow: hidden;
+  border-radius: var(--md-sys-shape-corner-extra-large);
+  background: var(--_container-color);
+  box-shadow: var(--md-sys-elevation-level3);
+}
+
+.view[data-variant='divided'] .viewBar {
+  border-radius: var(--md-sys-shape-corner-none);
+}
+
+.view[data-layout='docked'][data-variant='divided'] .results {
+  min-block-size: calc(240px - 56px);
+  max-block-size: max(calc(240px - 56px), var(--_results-max-height));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-block: var(--md-sys-measurement-space100);
+}
+
+/* Inside a divided container the reveal runs once, on the container. */
+.view[data-layout='docked'][data-variant='divided'] .results {
+  animation: none;
+}
+
+/* ---- Full screen ---- */
+
+.view[data-layout='full-screen'] {
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: var(--md-sys-shape-corner-none);
+}
+
+/* The background fades in on its own layer, so the bar can move over it. */
+.view[data-layout='full-screen']::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--md-sys-color-surface-container-low);
+  animation: fade-in var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.view[data-layout='full-screen'][data-variant='contained'] {
+  padding: var(--md-sys-measurement-space150);
+  padding-block-start: 0;
+}
+
+.view[data-layout='full-screen'][data-variant='contained'] .viewBar {
+  position: sticky;
+  inset-block-start: var(--md-sys-measurement-space150);
+  z-index: 1;
+  flex: none;
+  margin-block-start: var(--md-sys-measurement-space150);
+  /* FLIP: from the page bar's place to the top (derived: fast spatial). */
+  animation: bar-expand var(--md-sys-motion-spring-fast-spatial-duration)
+    var(--md-sys-motion-spring-fast-spatial-easing);
+}
+
+/* Covers the results scrolling beneath the sticky bar's top gap. */
+.view[data-layout='full-screen'][data-variant='contained'] .viewBar::after {
+  content: '';
+  position: absolute;
+  inset-inline: calc(-1 * var(--md-sys-measurement-space150));
+  inset-block-end: 100%;
+  z-index: -2;
+  block-size: var(--md-sys-measurement-space150);
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.view[data-layout='full-screen'][data-variant='contained'] .results {
+  padding-block-start: var(--md-sys-measurement-space150);
+}
+
+.view[data-layout='full-screen'] .results {
+  animation: fade-in var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+/* Options scrolled into view clear the sticky bar. */
+.view[data-layout='full-screen'] [role='option'] {
+  scroll-margin-block: 80px var(--md-sys-measurement-space150);
+}
+
+/* Divided full screen: a 72px header on surface-container-high, no margins. */
+.view[data-layout='full-screen'][data-variant='divided']::before {
+  background: var(--_container-color);
+}
+
+.view[data-layout='full-screen'][data-variant='divided'] .viewBar {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  flex: none;
+  block-size: 72px;
+  padding-inline: var(--md-sys-measurement-space100);
+}
+
+.view[data-layout='full-screen'][data-variant='divided'] .divider {
+  position: sticky;
+  inset-block-start: 72px;
+  z-index: 1;
+}
+
+.view[data-layout='full-screen'][data-variant='divided'] .results {
+  padding-block: var(--md-sys-measurement-space100);
+}
+
+/* ---- Motion ---- */
+
+@keyframes bar-expand {
+  from {
+    margin-inline: var(--_from-start, 0px) var(--_from-end, 0px);
+    translate: 0 var(--_from-y, 0px);
+  }
+}
+
+@keyframes reveal {
+  from {
+    clip-path: inset(0 0 100% 0 round var(--_reveal-radius, var(--md-sys-shape-corner-medium)));
+  }
+  to {
+    clip-path: inset(0 round var(--_reveal-radius, var(--md-sys-shape-corner-medium)));
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* Reduced motion: no widening, FLIP or clip; fades only. */
+@media (prefers-reduced-motion: reduce) {
+  .view[data-layout][data-variant] .viewBar {
+    animation: none;
+  }
+
+  .view[data-layout='docked'][data-state='open'] .results,
+  .view[data-layout='docked'][data-variant='divided'][data-state='open'] {
+    animation: fade-in var(--md-sys-motion-spring-fast-effects-duration) linear;
+  }
+}
+
+@media (forced-colors: active) {
+  .bar {
+    border: 1px solid CanvasText;
+  }
+
+  .bar::before {
+    display: none;
+  }
+
+  .bar:has(> .field:focus-visible, > .field > .input:focus-visible) {
+    outline-color: Highlight;
+  }
+
+  .view[data-layout='docked'] .results,
+  .view[data-layout='docked'][data-variant='divided'] {
+    border: 1px solid CanvasText;
+  }
+
+  .scrim {
+    forced-color-adjust: none;
+  }
+
+  .input::placeholder {
+    color: GrayText;
+  }
+}

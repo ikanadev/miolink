@@ -1,0 +1,50 @@
+/*
+ * Button. Spec: m3-guidelines/components/buttons/buttons.md
+ *
+ * Size, color, elevation and disabled styles come from the shared base.
+ * This file adds the shape state machine (rest round/square, selected swap,
+ * pressed), full width and the legacy small padding.
+ *
+ * Attributes: data-color, data-size, data-shape, data-padding="wide",
+ * data-full-width; toggles (Ark Toggle, or ToggleGroup inside a ButtonGroup)
+ * add data-state="off" | "on". Selection is styled from data-state, not
+ * aria-pressed, because toggles with a selectedLabel omit aria-pressed and
+ * single-select group items use aria-checked. data-key-pressed (from the
+ * Ripple) marks keyboard presses.
+ */
+.root {
+  composes: base from '../shared/button-base.module.css';
+
+  /* Never narrower than the label (spec §7). Groups lift this. */
+  min-inline-size: max-content;
+}
+
+.root[data-full-width] {
+  display: flex;
+  inline-size: 100%;
+}
+
+/* Legacy 24dp small padding: opt-in only, not recommended (spec §4.2). */
+.root[data-size='small'][data-padding='wide'] {
+  --_leading: 24px;
+  --_trailing: 24px;
+}
+
+/* ---- Shape: rest, selected (round <-> square swap), pressed ---- */
+
+.root[data-shape='square'] {
+  --_radius: var(--_r-square);
+}
+
+.root[data-shape='round'][data-state='on'] {
+  --_radius: var(--_r-selected-round);
+}
+
+.root[data-shape='square'][data-state='on'] {
+  --_radius: var(--_full);
+}
+
+/* Pressed wins over rest and selected; disabled buttons never morph. */
+.root[data-shape]:is(:active, [data-key-pressed]):not(:disabled, [data-disabled], [aria-disabled='true']) {
+  --_radius: var(--_r-pressed);
+}

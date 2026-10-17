@@ -1,0 +1,131 @@
+/*
+ * Button group. Spec: m3-guidelines/components/buttons/button-groups.md
+ *
+ * Attributes: data-variant (standard | connected), data-size, data-shape.
+ * Items are Button / IconButton elements (direct children); their size and
+ * shape come from the group through context. Selection state is the items'
+ * data-state ("on" | "off", from Ark ToggleGroup).
+ *
+ * Standard: gap per size; the pressed item grows 15% and its neighbours
+ * shrink (ButtonGroup.tsx animates inline-size). Connected: 2px gap, equal
+ * widths filling the parent, outer corners full (round) or sized (square),
+ * inner corners per size, pressed and selected (height / 2) overrides.
+ */
+.root {
+  /* ---- size: small (default) ---- */
+  --_bg-height: 40px;
+  --_bg-gap: var(--md-sys-measurement-space150);
+  --_bg-inner: var(--md-sys-shape-corner-value-small);
+  --_bg-inner-pressed: var(--md-sys-shape-corner-value-extra-small);
+
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.root[data-size='xsmall'] {
+  --_bg-height: 32px;
+  /* 18dp has no sys token (spec §11). */
+  --_bg-gap: 18px;
+  /* Token 8dp over the diagram's 4dp (spec §11). */
+  --_bg-inner: var(--md-sys-shape-corner-value-small);
+  --_bg-inner-pressed: var(--md-sys-shape-corner-value-extra-small);
+}
+
+.root[data-size='medium'] {
+  --_bg-height: 56px;
+  --_bg-gap: var(--md-sys-measurement-space100);
+  --_bg-inner: var(--md-sys-shape-corner-value-small);
+  --_bg-inner-pressed: var(--md-sys-shape-corner-value-extra-small);
+}
+
+.root[data-size='large'] {
+  --_bg-height: 96px;
+  --_bg-gap: var(--md-sys-measurement-space100);
+  --_bg-inner: var(--md-sys-shape-corner-value-large);
+  --_bg-inner-pressed: var(--md-sys-shape-corner-value-medium);
+}
+
+.root[data-size='xlarge'] {
+  --_bg-height: 136px;
+  --_bg-gap: var(--md-sys-measurement-space100);
+  --_bg-inner: var(--md-sys-shape-corner-value-large-increased);
+  --_bg-inner-pressed: var(--md-sys-shape-corner-value-large);
+}
+
+/* ---- Standard ---- */
+
+.root[data-variant='standard'] {
+  gap: var(--_bg-gap);
+}
+
+/* Let neighbours shrink below their label while an item grows; the label
+   clips instead of wrapping. */
+.root[data-variant='standard'] > * {
+  min-inline-size: 0;
+}
+
+/* ---- Connected ---- */
+
+.root[data-variant='connected'] {
+  display: flex;
+  inline-size: 100%;
+  gap: var(--md-sys-measurement-space25);
+}
+
+/* Two attribute selectors keep these above the items' own shape rules; the
+   longhands replace their border-radius. */
+.root[data-variant='connected'][data-size] > * {
+  --_bg-outer: calc(var(--_bg-height) / 2);
+  --_bg-i: var(--_bg-inner);
+
+  flex: 1 1 0;
+  min-inline-size: 0;
+  border-start-start-radius: var(--_bg-i);
+  border-end-start-radius: var(--_bg-i);
+  border-start-end-radius: var(--_bg-i);
+  border-end-end-radius: var(--_bg-i);
+}
+
+/* XS and S: 48px wide items for the touch target (spec §4.2). */
+.root[data-variant='connected']:is([data-size='xsmall'], [data-size='small']) > * {
+  min-inline-size: 48px;
+}
+
+/* Square group: outer corners equal the inner ones at rest (spec §11). */
+.root[data-variant='connected'][data-shape='square'] > * {
+  --_bg-outer: var(--_bg-inner);
+}
+
+.root[data-variant='connected'][data-size] > :first-child {
+  border-start-start-radius: var(--_bg-outer);
+  border-end-start-radius: var(--_bg-outer);
+}
+
+.root[data-variant='connected'][data-size] > :last-child {
+  border-start-end-radius: var(--_bg-outer);
+  border-end-end-radius: var(--_bg-outer);
+}
+
+/* Selected: inner corners go to height / 2 (a pill); in a square group the
+   outer corners too (spec §4.2). */
+.root[data-variant='connected'][data-size] > [data-state='on'] {
+  --_bg-i: calc(var(--_bg-height) / 2);
+}
+
+.root[data-variant='connected'][data-shape='square'] > [data-state='on'] {
+  --_bg-outer: calc(var(--_bg-height) / 2);
+}
+
+/* Pressed: only the inner corners change, and win over selected. */
+.root[data-variant='connected'][data-size]
+  > :is(:active, [data-key-pressed]):not(:disabled, [data-disabled], [aria-disabled='true']) {
+  --_bg-i: var(--_bg-inner-pressed);
+}
+
+@media (forced-colors: active) {
+  .root[data-variant='connected'] > * {
+    border: 1px solid ButtonText;
+  }
+}

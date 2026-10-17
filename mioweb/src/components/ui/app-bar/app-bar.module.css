@@ -1,0 +1,316 @@
+/*
+ * App bar. Spec: m3-guidelines/components/app-bars.md
+ *
+ * Structure: .root (sticky header) > .bar (64px row: leading, headline or
+ * search, trailing) + .expanded (flexible variants: image, headline,
+ * subtitle). A collapsing flexible bar sticks at top: -<expanded height>
+ * and .bar slides down by --_collapse (set from scroll) so it stays on
+ * screen while the expanded headline scrolls away under it.
+ *
+ * Attributes: data-variant, data-centered, data-collapsible,
+ * data-collapsed, data-scrolled, data-hidden, data-transparent,
+ * data-subtitle.
+ */
+.root {
+  --_container-color: var(--md-sys-color-surface);
+  --_title-color: var(--md-sys-color-on-surface);
+  --_subtitle-color: var(--md-sys-color-on-surface-variant);
+  --_leading-space: var(--md-sys-measurement-space50);
+  --_trailing-space: var(--md-sys-measurement-space50);
+  --_icon-button-space: var(--md-sys-measurement-space0);
+  --_bar-height: 64px;
+  --_search-container-color: var(--md-sys-color-surface-container);
+
+  /* Small: title-large, subtitle label-medium */
+  --_title-font: var(--md-sys-typescale-title-large-font);
+  --_title-weight: var(--md-sys-typescale-title-large-weight);
+  --_title-size: var(--md-sys-typescale-title-large-size);
+  --_title-line-height: var(--md-sys-typescale-title-large-line-height);
+  --_title-tracking: var(--md-sys-typescale-title-large-tracking);
+  --_subtitle-font: var(--md-sys-typescale-label-medium-font);
+  --_subtitle-weight: var(--md-sys-typescale-label-medium-weight);
+  --_subtitle-size: var(--md-sys-typescale-label-medium-size);
+  --_subtitle-line-height: var(--md-sys-typescale-label-medium-line-height);
+  --_subtitle-tracking: var(--md-sys-typescale-label-medium-tracking);
+
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  inline-size: 100%;
+  border-radius: var(--md-sys-shape-corner-none);
+  background: var(--_container-color);
+  color: var(--_title-color);
+  transition:
+    background-color var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects-easing),
+    translate var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized);
+}
+
+.root[data-scrolled] {
+  --_container-color: var(--md-sys-color-surface-container);
+  --_search-container-color: var(--md-sys-color-surface-container-highest);
+}
+
+.root[data-transparent][data-scrolled] {
+  --_container-color: transparent;
+}
+
+.root[data-collapsible] {
+  top: calc(-1 * var(--_extra));
+}
+
+/* enter-always: slide off while scrolling down; any focused child brings it back. */
+.root[data-hidden]:not(:focus-within) {
+  translate: 0 -100%;
+}
+
+/* ---- Bar row ---- */
+
+.bar {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'leading center trailing';
+  align-items: center;
+  min-block-size: var(--_bar-height);
+  padding-inline: var(--_leading-space) var(--_trailing-space);
+  background: var(--_container-color);
+  translate: 0 var(--_collapse, 0px);
+  transition: background-color var(--md-sys-motion-spring-default-effects-duration)
+    var(--md-sys-motion-spring-default-effects-easing);
+}
+
+/* Centered text. The search container keeps its width; only its hint centers. */
+.root[data-centered]:not([data-variant='search']) .bar {
+  grid-template-columns: 1fr auto 1fr;
+}
+
+.leading,
+.trailing {
+  display: flex;
+  align-items: center;
+  gap: var(--_icon-button-space);
+}
+
+.leading {
+  grid-area: leading;
+  justify-self: start;
+}
+
+/* Standard icon buttons take the slot's icon color. */
+.leading [data-color='standard']:not([data-state='on'], :disabled, [data-disabled], [aria-disabled='true']) {
+  --_icon-color: var(--md-sys-color-on-surface);
+}
+
+.trailing {
+  grid-area: trailing;
+  justify-self: end;
+}
+
+.trailing [data-color='standard']:not([data-state='on'], :disabled, [data-disabled], [aria-disabled='true']) {
+  --_icon-color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Avatars in the trailing slot are 32px; keep a 48px target around them. */
+.trailing > :is(img, [data-avatar]) {
+  inline-size: 32px;
+  block-size: 32px;
+  margin: 8px;
+  border-radius: var(--md-sys-shape-corner-full);
+  object-fit: cover;
+}
+
+/* ---- Headline (small, and the collapsed title of flexible bars) ---- */
+
+.headline {
+  grid-area: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-inline-size: 0;
+  /* 16px from the edge without a leading button (4 + 12), right after it otherwise. */
+  padding-inline: 12px;
+}
+
+.bar[data-leading] .headline {
+  padding-inline-start: 0;
+}
+
+.bar[data-trailing] .headline {
+  padding-inline-end: 0;
+}
+
+.root[data-centered] .headline {
+  align-items: center;
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  color: var(--_title-color);
+  font-family: var(--_title-font);
+  font-weight: var(--_title-weight);
+  font-size: var(--_title-size);
+  line-height: var(--_title-line-height);
+  letter-spacing: var(--_title-tracking);
+}
+
+.headline .title {
+  white-space: nowrap;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--_subtitle-color);
+  font-family: var(--_subtitle-font);
+  font-weight: var(--_subtitle-weight);
+  font-size: var(--_subtitle-size);
+  line-height: var(--_subtitle-line-height);
+  letter-spacing: var(--_subtitle-tracking);
+}
+
+.headline .subtitle {
+  white-space: nowrap;
+}
+
+.headline :is(img, svg) {
+  display: block;
+  max-block-size: 40px;
+}
+
+/* The collapsed title uses the small bar's type and fades in once collapsed. */
+.collapsedTitle {
+  font-family: var(--md-sys-typescale-title-large-font);
+  font-weight: var(--md-sys-typescale-title-large-weight);
+  font-size: var(--md-sys-typescale-title-large-size);
+  line-height: var(--md-sys-typescale-title-large-line-height);
+  letter-spacing: var(--md-sys-typescale-title-large-tracking);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transition: opacity var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.root[data-collapsed] .collapsedTitle {
+  opacity: 1;
+}
+
+/* ---- Flexible: expanded headline area ---- */
+
+.root[data-variant='medium-flexible'] {
+  --_title-font: var(--md-sys-typescale-headline-medium-font);
+  --_title-weight: var(--md-sys-typescale-headline-medium-weight);
+  --_title-size: var(--md-sys-typescale-headline-medium-size);
+  --_title-line-height: var(--md-sys-typescale-headline-medium-line-height);
+  --_title-tracking: var(--md-sys-typescale-headline-medium-tracking);
+  --_subtitle-font: var(--md-sys-typescale-label-large-font);
+  --_subtitle-weight: var(--md-sys-typescale-label-large-weight);
+  --_subtitle-size: var(--md-sys-typescale-label-large-size);
+  --_subtitle-line-height: var(--md-sys-typescale-label-large-line-height);
+  --_subtitle-tracking: var(--md-sys-typescale-label-large-tracking);
+  --_subtitle-gap: 4px;
+  /* container 112px, 136px with subtitle; the bar row is 64px of it */
+  --_expanded-min-height: calc(112px - 64px);
+}
+
+.root[data-variant='medium-flexible'][data-subtitle] {
+  --_expanded-min-height: calc(
+    136px - 64px
+  );
+}
+
+.root[data-variant='large-flexible'] {
+  --_title-font: var(--md-sys-typescale-display-small-font);
+  --_title-weight: var(--md-sys-typescale-display-small-weight);
+  --_title-size: var(--md-sys-typescale-display-small-size);
+  --_title-line-height: var(--md-sys-typescale-display-small-line-height);
+  --_title-tracking: var(--md-sys-typescale-display-small-tracking);
+  --_subtitle-font: var(--md-sys-typescale-title-medium-font);
+  --_subtitle-weight: var(--md-sys-typescale-title-medium-weight);
+  --_subtitle-size: var(--md-sys-typescale-title-medium-size);
+  --_subtitle-line-height: var(--md-sys-typescale-title-medium-line-height);
+  --_subtitle-tracking: var(--md-sys-typescale-title-medium-tracking);
+  --_subtitle-gap: 8px;
+  --_expanded-min-height: calc(120px - 64px);
+}
+
+.root[data-variant='large-flexible'][data-subtitle] {
+  --_expanded-min-height: calc(
+    152px - 64px
+  );
+}
+
+.expanded {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-block-size: var(--_expanded-min-height);
+  padding: 0 16px 12px;
+  opacity: calc(1 - var(--_progress, 0));
+}
+
+.root[data-centered] .expanded {
+  align-items: center;
+  text-align: center;
+}
+
+.expanded .title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.expanded .subtitle {
+  margin-block-start: var(--_subtitle-gap);
+}
+
+.image {
+  margin-block-end: 8px;
+}
+
+.image :is(img, svg) {
+  display: block;
+  max-block-size: 48px;
+}
+
+/* ---- Search app bar ---- */
+
+/* The bar itself is SearchBar or Search (search/); this slot sizes and colors it. */
+.searchSlot {
+  grid-area: center;
+  display: flex;
+  justify-content: center;
+  min-inline-size: 0;
+  padding-inline: 4px;
+}
+
+/* All the space up to 312px, then half of it. */
+.searchSlot > * {
+  flex: none;
+  inline-size: max(min(100%, 312px), 50%);
+}
+
+/* A Search keeps no pane margins here: the slot sets the spacing. */
+.searchSlot > [data-search-root] {
+  --_margin: 0px;
+}
+
+.searchSlot [data-search-bar] {
+  --_container-color: var(--_search-container-color);
+  max-inline-size: none;
+}
+
+.root[data-centered] .searchSlot [data-search-hint] {
+  text-align: center;
+}
+
+@media (forced-colors: active) {
+  .root[data-scrolled] {
+    border-block-end: 1px solid CanvasText;
+  }
+}

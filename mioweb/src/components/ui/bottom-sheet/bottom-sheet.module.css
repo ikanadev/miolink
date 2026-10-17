@@ -1,0 +1,311 @@
+/*
+ * Bottom sheet. Spec: m3-guidelines/components/sheets/bottom-sheets.md
+ *
+ * Structure (in a portal): .scrim (Ark Drawer Backdrop, modal only) +
+ * .positioner (Ark Positioner) > .container (Ark Content) > .handleRegion
+ * (Ark Grabber, top 48px) > .handle (button) > .handleBar (Ark
+ * GrabberIndicator); .header (headline, close/collapse); .body (scrolls).
+ *
+ * Attributes: .positioner and .container data-variant="modal" | "standard";
+ * .container data-minimized, data-handle, data-header, data-full (expanded
+ * to its max height), data-state, data-dragging, data-swiping and
+ * data-expanded (Ark), aria-busy.
+ *
+ * Ark sets the content's inline transform from --drawer-translate-y (the
+ * current detent's offset plus the drag) and turns transitions off while
+ * dragging.
+ */
+
+/* ---- Scrim ---- */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-index, 1000) - 1);
+  /* Scrim role at 32% (guidelines, Scrim / modal layer recipe). */
+  background: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
+  transition: opacity var(--md-sys-motion-spring-default-effects-duration)
+    var(--md-sys-motion-spring-default-effects-easing);
+}
+
+/* Derived: the scrim lightens as the sheet is swiped toward closing. */
+.scrim[data-swiping] {
+  opacity: calc(1 - var(--drawer-swipe-progress, 0));
+  transition: none;
+}
+
+.scrim[data-state='open'] {
+  animation: fade-in var(--md-sys-motion-spring-default-effects-duration)
+    var(--md-sys-motion-spring-default-effects-easing);
+}
+
+.scrim[data-state='closed'] {
+  animation: fade-out var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-linear);
+}
+
+/* ---- Positioner ---- */
+
+.positioner {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-index, 1000);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* Standard sheets let the page underneath take pointer input (Ark also sets it inline). */
+.positioner[data-variant='standard'] {
+  pointer-events: none;
+}
+
+/* ---- Container ---- */
+
+.container {
+  --_container-color: var(--md-sys-color-surface-container-low);
+  --_shape: var(--md-sys-shape-corner-extra-large-top);
+  --_elevation: var(--md-sys-elevation-level1);
+  --_handle-color: var(--md-sys-color-on-surface-variant);
+  --_headline-color: var(--md-sys-color-on-surface);
+  --_content-color: var(--md-sys-color-on-surface-variant);
+  --_max-width: 640px;
+  --_side-margin: 0px;
+  --_top-margin: 72px;
+  /* Derived: content extends this far below the sheet so overdragging up shows no gap. */
+  --_bleed: 48px;
+
+  position: relative;
+  z-index: calc(1000 + var(--layer-index, 0));
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  inline-size: min(100% - 2 * var(--_side-margin), var(--_max-width));
+  max-block-size: calc(100dvh - var(--_top-margin));
+  border-radius: var(--_shape);
+  background: var(--_container-color);
+  box-shadow: var(--_elevation);
+  color: var(--_content-color);
+  outline: none;
+  pointer-events: auto;
+  /* Snap to a detent (or back) after a drag or a handle press. */
+  transition: transform var(--md-sys-motion-spring-default-spatial-duration)
+    var(--md-sys-motion-spring-default-spatial-easing);
+}
+
+/* Spec: windows wider than 640px get 56px top and side margins; the sheet is centered. */
+@media (min-width: 641px) {
+  .container {
+    --_side-margin: 56px;
+    --_top-margin: 56px;
+  }
+}
+
+.container::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 100%;
+  block-size: var(--_bleed);
+  background: inherit;
+  pointer-events: none;
+}
+
+.container[data-minimized] {
+  --_shape: var(--md-sys-shape-corner-none);
+}
+
+.scrim[hidden],
+.positioner[hidden],
+.container[hidden] {
+  display: none;
+}
+
+/* ---- Drag handle (top 48px: 22 + 4 + 22) ---- */
+
+.handleRegion {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  block-size: 48px;
+  cursor: grab;
+  user-select: none;
+}
+
+.container[data-dragging] .handleRegion {
+  cursor: grabbing;
+}
+
+.handle {
+  composes: interactive from '../shared/interaction.module.css';
+  display: grid;
+  place-items: center;
+  /* Derived: a 48x48 pill around the 32x4 bar carries the state layer and focus ring. */
+  inline-size: 48px;
+  block-size: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: none;
+  color: var(--_handle-color);
+  cursor: inherit;
+}
+
+/* Derived: dragged state layer while the sheet is dragged. */
+.container[data-dragging] .handle::before {
+  opacity: var(--md-sys-state-dragged-state-layer-opacity);
+}
+
+.handleBar {
+  inline-size: 32px;
+  block-size: 4px;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: currentColor;
+}
+
+.srOnly {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---- Header ---- */
+
+.header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--md-sys-measurement-space100);
+  /* Derived: 56px row, 24px start padding (content inset), 12px end padding (icon button). */
+  min-block-size: 56px;
+  padding-inline: var(--md-sys-measurement-space300) var(--md-sys-measurement-space150);
+}
+
+.container:not([data-handle]) .header {
+  padding-block-start: var(--md-sys-measurement-space200);
+}
+
+.headline {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  margin: 0;
+  color: var(--_headline-color);
+  /* Derived: the spec has no typography; title-large like a small app bar title. */
+  font-family: var(--md-sys-typescale-title-large-font);
+  font-weight: var(--md-sys-typescale-title-large-weight);
+  font-size: var(--md-sys-typescale-title-large-size);
+  line-height: var(--md-sys-typescale-title-large-line-height);
+  letter-spacing: var(--md-sys-typescale-title-large-tracking);
+  overflow-wrap: anywhere;
+}
+
+.headerAction {
+  display: flex;
+  margin-inline-start: auto;
+}
+
+.header [data-color='standard']:not([data-state='on'], :disabled, [data-disabled], [aria-disabled='true']) {
+  --_icon-color: var(--md-sys-color-on-surface);
+}
+
+/* ---- Body (scrolls) ---- */
+
+.body {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow-y: auto;
+  /* Scrolling never chains to the page. */
+  overscroll-behavior: contain;
+  /* Derived: keep content above the home indicator. */
+  padding-block-end: env(safe-area-inset-bottom, 0px);
+  outline: none;
+}
+
+.container:not([data-handle], [data-header]) .body {
+  /* Derived: content clears the 28px top corners when there's no handle or header. */
+  padding-block-start: var(--md-sys-measurement-space200);
+}
+
+.body:focus-visible {
+  outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
+  outline-offset: var(--md-sys-state-focus-indicator-inner-offset);
+}
+
+/* ---- Motion ---- */
+
+/*
+ * Enter/exit beyond bounds: slides up from the bottom edge and back down,
+ * without overshoot (spec: common transitions don't bounce), on the legacy
+ * emphasized curves: decelerate 400ms in, accelerate 200ms out (derived
+ * from the legacy table, as the spec suggests). Ark unmounts on the exit
+ * animation's end. The keyframes start/end at the current detent offset.
+ */
+.container[data-state='open'] {
+  animation: slide-in var(--md-sys-motion-duration-medium4)
+    var(--md-sys-motion-easing-emphasized-decelerate);
+}
+
+.container[data-state='closed'] {
+  animation: slide-out var(--md-sys-motion-duration-short4)
+    var(--md-sys-motion-easing-emphasized-accelerate);
+}
+
+/* Reduced motion: fade instead of slide, detents snap instantly. */
+@media (prefers-reduced-motion: reduce) {
+  .container {
+    transition: none;
+  }
+
+  .container[data-state='open'] {
+    animation: fade-in var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+  }
+
+  .container[data-state='closed'] {
+    animation: fade-out var(--md-sys-motion-duration-short3) var(--md-sys-motion-easing-linear);
+  }
+}
+
+@keyframes slide-in {
+  from {
+    transform: translate3d(0, 100%, 0);
+  }
+  to {
+    transform: translate3d(0, var(--drawer-translate-y, 0px), 0);
+  }
+}
+
+@keyframes slide-out {
+  from {
+    transform: translate3d(0, var(--drawer-translate-y, 0px), 0);
+  }
+  to {
+    transform: translate3d(0, 100%, 0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@media (forced-colors: active) {
+  .container {
+    border: 1px solid CanvasText;
+    border-block-end: 0;
+  }
+
+  .handleBar {
+    background: CanvasText;
+  }
+}

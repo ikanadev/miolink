@@ -1,0 +1,497 @@
+/*
+ * Slider. Spec: m3-guidelines/components/sliders.md
+ *
+ * Ark parts: .root (Slider.RootProvider) carries data-orientation,
+ * data-disabled, data-dragging and Ark's inline --slider-thumb-offset-N
+ * (handle centers from the axis start: inline start, or the bottom when
+ * vertical). Slider sets data-variant, data-size, data-labeled, data-narrow
+ * (index of the 2px handle), data-moving (pointer drag in progress) and
+ * data-icon-place ("active" | "inactive" | "none").
+ *
+ * .control (Slider.Control) is the hit area: the whole track box, at least
+ * 48px across (spec §4.2). .track (Slider.Track) holds the .segment spans
+ * (data-pos picks their extent, data-active their color), the .stop dots
+ * (data-state "active" | "inactive" | "hidden", data-end at the extremes)
+ * and the inset .icon. .handle (Slider.Thumb, data-index) is the focusable
+ * role="slider" pill, positioned by Ark, holding the .valueIndicator.
+ *
+ * No state layer and no ripple: the handle width change and the value
+ * indicator are the interaction feedback (spec §4.1).
+ */
+
+.root {
+  /* Size set (XS default, spec §4.2). */
+  --_track: 16px;
+  --_outer: 8px;
+  --_handle-h: 44px;
+  --_icon-size: 24px;
+  --_icon-pad: 6px;
+
+  --_inner: 2px;
+  --_gap: var(--md-sys-measurement-space75);
+  --_hw0: 4px;
+  --_hw1: 4px;
+  --_c0: var(--slider-thumb-offset-0);
+  --_c1: var(--slider-thumb-offset-1, 100%);
+
+  --_active-color: var(--md-sys-color-primary);
+  --_inactive-color: var(--md-sys-color-secondary-container);
+  --_handle-color: var(--md-sys-color-primary);
+  --_stop-active-color: var(--md-sys-color-on-primary);
+  --_stop-inactive-color: var(--md-sys-color-on-secondary-container);
+
+  --_spatial: var(--md-sys-motion-spring-fast-spatial-duration)
+    var(--md-sys-motion-spring-fast-spatial-easing);
+  --_effects: var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
+
+  display: block;
+  /* Derived (spec §11): minimum track length. */
+  min-inline-size: 120px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.root[data-size='small'] {
+  --_track: 24px;
+  --_outer: 8px;
+  --_handle-h: 44px;
+}
+
+.root[data-size='medium'] {
+  --_track: 40px;
+  --_outer: 12px;
+  /* Spec §4.2 conflict: measurement table 52px over the 44px token. */
+  --_handle-h: 52px;
+}
+
+.root[data-size='large'] {
+  --_track: 56px;
+  --_outer: 16px;
+  --_handle-h: 68px;
+}
+
+.root[data-size='xlarge'] {
+  --_track: 96px;
+  --_outer: 28px;
+  --_handle-h: 108px;
+  --_icon-size: 32px;
+  --_icon-pad: 8px;
+}
+
+/* Focused or pressed handle narrows to 2px (spec §4.2); the gap stays 6px
+   from its edge, so the tracks lengthen by 1px. */
+.root[data-narrow='0'] {
+  --_hw0: 2px;
+}
+
+.root[data-narrow='1'] {
+  --_hw1: 2px;
+}
+
+.root[data-disabled] {
+  --_active-color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+  --_inactive-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
+  --_handle-color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+  --_stop-active-color: var(--md-sys-color-inverse-on-surface);
+  --_stop-inactive-color: var(--md-sys-color-on-surface);
+}
+
+.root[data-orientation='vertical'] {
+  display: inline-block;
+  min-inline-size: 0;
+  /* Derived: a default length; set block-size on the slider to change it. */
+  block-size: 200px;
+  min-block-size: 120px;
+  vertical-align: top;
+}
+
+/* ---- Hit area ---- */
+
+.control {
+  block-size: max(var(--_handle-h), 48px);
+  cursor: pointer;
+}
+
+.control[data-orientation='vertical'] {
+  inline-size: max(var(--_handle-h), 48px);
+  block-size: 100%;
+}
+
+.control[data-disabled] {
+  cursor: default;
+}
+
+/* ---- Track and segments ---- */
+
+.track {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 50%;
+  translate: 0 -50%;
+  block-size: var(--_track);
+}
+
+.track[data-orientation='vertical'] {
+  inset-inline: auto;
+  inset-block: 0;
+  left: 50%;
+  translate: -50% 0;
+  inline-size: var(--_track);
+  block-size: auto;
+}
+
+/*
+ * Each segment spans [--_start, --_end] along the axis (spec §4.2 "Derived
+ * geometry"), with --_r-start / --_r-end for its two ends: the outer radius
+ * at a track end, 2px next to a handle. Radii larger than a short segment
+ * are clamped by the browser, so its shape adjusts near the edge.
+ */
+.segment {
+  --_r-start: var(--_inner);
+  --_r-end: var(--_inner);
+
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: var(--_start);
+  inline-size: max(0px, calc(var(--_end) - var(--_start)));
+  border-start-start-radius: var(--_r-start);
+  border-end-start-radius: var(--_r-start);
+  border-start-end-radius: var(--_r-end);
+  border-end-end-radius: var(--_r-end);
+  background-color: var(--_inactive-color);
+  transition:
+    inset-inline-start var(--_spatial),
+    inline-size var(--_spatial),
+    background-color var(--_effects);
+}
+
+.segment[data-active] {
+  background-color: var(--_active-color);
+}
+
+.segment[data-pos='before0'] {
+  --_start: 0px;
+  --_end: calc(var(--_c0) - var(--_hw0) / 2 - var(--_gap));
+  --_r-start: var(--_outer);
+}
+
+.segment[data-pos='after0'] {
+  --_start: calc(var(--_c0) + var(--_hw0) / 2 + var(--_gap));
+  --_end: 100%;
+  --_r-end: var(--_outer);
+}
+
+.segment[data-pos='between'] {
+  --_start: calc(var(--_c0) + var(--_hw0) / 2 + var(--_gap));
+  --_end: calc(var(--_c1) - var(--_hw1) / 2 - var(--_gap));
+}
+
+.segment[data-pos='after1'] {
+  --_start: calc(var(--_c1) + var(--_hw1) / 2 + var(--_gap));
+  --_end: 100%;
+  --_r-end: var(--_outer);
+}
+
+/* Centered: active from the middle to the handle's gap edge, drawn over the
+   inactive track with no gap at the middle (spec §11, derived). */
+.segment[data-pos='center'] {
+  --_start: min(50%, calc(var(--_c0) + var(--_hw0) / 2 + var(--_gap)));
+  --_end: max(50%, calc(var(--_c0) - var(--_hw0) / 2 - var(--_gap)));
+}
+
+/* Vertical: the axis runs bottom to top. */
+.track[data-orientation='vertical'] .segment {
+  inset-inline: 0;
+  inset-block: auto;
+  bottom: var(--_start);
+  inline-size: auto;
+  block-size: max(0px, calc(var(--_end) - var(--_start)));
+  border-radius: var(--_r-end) var(--_r-end) var(--_r-start) var(--_r-start);
+  transition:
+    bottom var(--_spatial),
+    block-size var(--_spatial),
+    background-color var(--_effects);
+}
+
+/* ---- Stops ---- */
+
+.stop {
+  position: absolute;
+  inset-block-start: 50%;
+  /* Same travel as the handle centers (spec §4.2). */
+  inset-inline-start: calc(2px + var(--_p) * (100% - 4px));
+  translate: -50% -50%;
+  inline-size: 4px;
+  block-size: 4px;
+  border-radius: var(--md-sys-shape-corner-full);
+  background-color: var(--_stop-inactive-color);
+  pointer-events: none;
+}
+
+.stop:dir(rtl) {
+  translate: 50% -50%;
+}
+
+.stop[data-state='active'] {
+  background-color: var(--_stop-active-color);
+}
+
+/* Stops under a handle and its gaps are hidden (spec §4.2). */
+.stop[data-state='hidden'] {
+  visibility: hidden;
+}
+
+/* Extreme stops: 4px from the track end to the dot's edge (spec §4.2). */
+.stop[data-end] {
+  translate: 0 -50%;
+}
+
+.stop[data-end='start'] {
+  inset-inline-start: var(--md-sys-measurement-space50);
+}
+
+.stop[data-end='end'] {
+  inset-inline-start: auto;
+  inset-inline-end: var(--md-sys-measurement-space50);
+}
+
+.track[data-orientation='vertical'] .stop {
+  inset-block-start: auto;
+  inset-inline-start: 50%;
+  bottom: calc(2px + var(--_p) * (100% - 4px));
+  translate: -50% 50%;
+}
+
+.track[data-orientation='vertical'] .stop[data-end] {
+  translate: -50% 0;
+}
+
+.track[data-orientation='vertical'] .stop[data-end='start'] {
+  bottom: var(--md-sys-measurement-space50);
+}
+
+.track[data-orientation='vertical'] .stop[data-end='end'] {
+  inset-inline-end: auto;
+  bottom: auto;
+  top: var(--md-sys-measurement-space50);
+}
+
+/* ---- Inset icon (standard M/L/XL only, spec §7) ---- */
+
+.icon {
+  --md-icon-size: var(--_icon-size);
+  --md-icon-optical-size: 24;
+
+  position: absolute;
+  inset-block-start: 50%;
+  translate: 0 -50%;
+  inset-inline-start: var(--_icon-pad);
+  /* Derived (spec §4.1): on-primary on the active track. */
+  color: var(--_stop-active-color);
+  pointer-events: none;
+  transition:
+    inset-inline-start var(--_spatial),
+    color var(--_effects);
+}
+
+.root[data-size='xlarge'] .icon {
+  --md-icon-optical-size: 32;
+}
+
+/* Too short to fit: moves after the handle, on the inactive track. */
+.root[data-icon-place='inactive'] .icon {
+  inset-inline-start: calc(var(--_c0) + var(--_hw0) / 2 + var(--_gap) + var(--_icon-pad));
+  color: var(--_stop-inactive-color);
+}
+
+.root[data-icon-place='none'] .icon {
+  visibility: hidden;
+}
+
+.root[data-disabled] .icon {
+  /* Derived (spec §4.1): disabled icons match the disabled stops at 38%. */
+  opacity: 0.38;
+}
+
+.track[data-orientation='vertical'] .icon {
+  inset-block-start: auto;
+  inset-inline-start: 50%;
+  bottom: var(--_icon-pad);
+  translate: -50% 0;
+  transition:
+    bottom var(--_spatial),
+    color var(--_effects);
+}
+
+.root[data-icon-place='inactive'] .track[data-orientation='vertical'] .icon {
+  inset-inline-start: 50%;
+  bottom: calc(var(--_c0) + var(--_hw0) / 2 + var(--_gap) + var(--_icon-pad));
+}
+
+/* ---- Handle ---- */
+
+/* Ark sets position, the axis offset and the centering transform. */
+.handle {
+  --_hw: var(--_hw0);
+
+  inset-block-start: 50%;
+  translate: 0 -50%;
+  box-sizing: border-box;
+  inline-size: var(--_hw);
+  block-size: var(--_handle-h);
+  border-radius: var(--md-sys-shape-corner-full);
+  background-color: var(--_handle-color);
+  outline: none;
+  transition:
+    inset-inline-start var(--_spatial),
+    inline-size var(--_spatial),
+    background-color var(--_effects);
+}
+
+.handle[data-index='1'] {
+  --_hw: var(--_hw1);
+}
+
+.handle[data-orientation='vertical'] {
+  inset-block-start: auto;
+  left: 50%;
+  translate: -50% 0;
+  inline-size: var(--_handle-h);
+  block-size: var(--_hw);
+  transition:
+    bottom var(--_spatial),
+    block-size var(--_spatial),
+    background-color var(--_effects);
+}
+
+/* Derived (spec §5): system focus ring around the handle pill. */
+.handle:focus-visible {
+  outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
+  outline-offset: var(--md-sys-state-focus-indicator-outer-offset);
+}
+
+/* During a pointer drag positions follow the pointer 1:1; widths still
+   animate (spec §6). */
+.root[data-moving] .segment,
+.root[data-moving] .icon {
+  transition: background-color var(--_effects), color var(--_effects);
+}
+
+.root[data-moving] .handle {
+  transition:
+    inline-size var(--_spatial),
+    background-color var(--_effects);
+}
+
+.root[data-moving] .handle[data-orientation='vertical'] {
+  transition:
+    block-size var(--_spatial),
+    background-color var(--_effects);
+}
+
+/* ---- Value indicator ---- */
+
+.valueIndicator {
+  position: absolute;
+  /* Spec §4.2: 12px between the handle's top and the container. */
+  bottom: calc(100% + var(--md-sys-measurement-space150));
+  left: 50%;
+  translate: -50% 0;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  /* Derived (spec §4.3): grows past 48px for long values. */
+  min-inline-size: 48px;
+  block-size: 44px;
+  padding-inline: 4px;
+  /* Derived (spec §4.2): pill. */
+  border-radius: var(--md-sys-shape-corner-full);
+  background-color: var(--md-sys-color-inverse-surface);
+  color: var(--md-sys-color-inverse-on-surface);
+  /* Spec §4.3: label-large font/size/line-height, body-large weight/tracking. */
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-weight: var(--md-sys-typescale-body-large-weight);
+  font-size: var(--md-sys-typescale-label-large-size);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-body-large-tracking);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  scale: 0.8;
+  transform-origin: bottom center;
+  transition:
+    opacity var(--_effects),
+    scale var(--_effects);
+}
+
+/* Derived (spec §10a): beside the handle, on the inline-start side. */
+.handle[data-orientation='vertical'] .valueIndicator {
+  bottom: auto;
+  left: auto;
+  top: 50%;
+  right: calc(100% + var(--md-sys-measurement-space150));
+  translate: 0 -50%;
+  transform-origin: right center;
+}
+
+/* Only the pressed or keyboard-focused handle shows its value (spec §5). */
+.root[data-labeled]:not([data-disabled])[data-narrow='0'] .handle[data-index='0'] .valueIndicator,
+.root[data-labeled]:not([data-disabled])[data-narrow='1'] .handle[data-index='1'] .valueIndicator {
+  opacity: 1;
+  scale: 1;
+}
+
+/* ---- Reduced motion (spec §6) ---- */
+
+@media (prefers-reduced-motion: reduce) {
+  /* No position or width animation; overrides the per-orientation and
+     drag transitions above. */
+  .root :is(.segment, .icon, .handle) {
+    transition-duration: 0s !important;
+  }
+
+  .valueIndicator {
+    scale: 1;
+    transition: opacity var(--md-sys-motion-duration-short1) linear;
+  }
+}
+
+/* ---- Forced colors ---- */
+
+@media (forced-colors: active) {
+  .root {
+    --_active-color: Highlight;
+    --_inactive-color: Canvas;
+    --_handle-color: Highlight;
+    --_stop-active-color: HighlightText;
+    --_stop-inactive-color: CanvasText;
+    forced-color-adjust: none;
+  }
+
+  .root[data-disabled] {
+    --_active-color: GrayText;
+    --_handle-color: GrayText;
+    --_stop-active-color: Canvas;
+    --_stop-inactive-color: GrayText;
+  }
+
+  .segment:not([data-active]) {
+    box-sizing: border-box;
+    border: 1px solid CanvasText;
+  }
+
+  .root[data-disabled] .segment:not([data-active]) {
+    border-color: GrayText;
+  }
+
+  .valueIndicator {
+    border: 1px solid CanvasText;
+    background-color: Canvas;
+    color: CanvasText;
+  }
+
+  .handle:focus-visible {
+    outline-color: Highlight;
+  }
+}

@@ -1,0 +1,239 @@
+/*
+ * Icon button. Spec: m3-guidelines/components/buttons/icon-buttons.md
+ *
+ * Attributes: data-color, data-size, data-width, data-shape; toggles (Ark
+ * Toggle, or ToggleGroup inside a ButtonGroup) add data-state="off" | "on".
+ * data-key-pressed (from the Ripple) marks keyboard presses. Radii are
+ * numeric (full = height / 2) so the shape morphs animate (spec §11).
+ */
+.root {
+  composes: interactive target from '../../shared/interaction.module.css';
+
+  /* ---- size: small (default) ---- */
+  --_height: 40px;
+  --_icon-size: 24px;
+  --_icon-optical-size: 24;
+  --_space-narrow: var(--md-sys-measurement-space50);
+  --_space-default: var(--md-sys-measurement-space100);
+  --_space-wide: var(--md-sys-measurement-space175);
+  --_outline-width: 1px;
+  --_r-square: var(--md-sys-shape-corner-medium);
+  --_r-pressed: var(--md-sys-shape-corner-small);
+  --_r-selected-round: var(--md-sys-shape-corner-medium);
+  --_full: calc(var(--_height) / 2);
+
+  --_space: var(--_space-default);
+  --_radius: var(--_full);
+  --_border-width: 0px;
+
+  /* ---- color: filled (default) ---- */
+  --_container-color: var(--md-sys-color-primary);
+  --_icon-color: var(--md-sys-color-on-primary);
+  --_outline-color: transparent;
+  /* Own value, so a parent's state layer color isn't inherited when nested. */
+  --_state-layer-color: var(--_icon-color);
+  --md-icon-size: var(--_icon-size);
+  --md-icon-optical-size: var(--_icon-optical-size);
+
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  block-size: var(--_height);
+  /* Width = leading + icon + trailing (equal spaces); the outline is inside. */
+  inline-size: calc(var(--_space) * 2 + var(--_icon-size));
+  margin: 0;
+  padding: 0;
+  border: var(--_border-width) solid var(--_outline-color);
+  border-radius: var(--_radius);
+  background: var(--_container-color);
+  color: var(--_icon-color);
+  text-decoration: none;
+  vertical-align: middle;
+  /* Corners and width: fast spatial spring (pressed corner-size token).
+     Colors: fast effects spring (derived, spec §6). */
+  transition:
+    border-radius var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial-easing),
+    inline-size var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial-easing),
+    background-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    border-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+/* ---- Size ---- */
+
+.root[data-size='xsmall'] {
+  --_height: 32px;
+  --_icon-size: 20px;
+  --_icon-optical-size: 20;
+  --_space-narrow: var(--md-sys-measurement-space50);
+  --_space-default: var(--md-sys-measurement-space75);
+  --_space-wide: var(--md-sys-measurement-space125);
+  --_outline-width: 1px;
+  --_r-square: var(--md-sys-shape-corner-medium);
+  --_r-pressed: var(--md-sys-shape-corner-small);
+  --_r-selected-round: var(--md-sys-shape-corner-medium);
+}
+
+.root[data-size='medium'] {
+  --_height: 56px;
+  --_icon-size: 24px;
+  --_icon-optical-size: 24;
+  --_space-narrow: var(--md-sys-measurement-space150);
+  --_space-default: var(--md-sys-measurement-space200);
+  --_space-wide: var(--md-sys-measurement-space300);
+  --_outline-width: 1px;
+  --_r-square: var(--md-sys-shape-corner-large);
+  --_r-pressed: var(--md-sys-shape-corner-medium);
+  --_r-selected-round: var(--md-sys-shape-corner-large);
+}
+
+.root[data-size='large'] {
+  --_height: 96px;
+  --_icon-size: 32px;
+  --_icon-optical-size: 32;
+  --_space-narrow: var(--md-sys-measurement-space200);
+  --_space-default: var(--md-sys-measurement-space400);
+  --_space-wide: var(--md-sys-measurement-space600);
+  --_outline-width: 2px;
+  --_r-square: var(--md-sys-shape-corner-extra-large);
+  --_r-pressed: var(--md-sys-shape-corner-large);
+  --_r-selected-round: var(--md-sys-shape-corner-extra-large);
+}
+
+.root[data-size='xlarge'] {
+  --_height: 136px;
+  --_icon-size: 40px;
+  --_icon-optical-size: 40;
+  --_space-narrow: var(--md-sys-measurement-space400);
+  --_space-default: var(--md-sys-measurement-space600);
+  --_space-wide: var(--md-sys-measurement-space900);
+  --_outline-width: 3px;
+  --_r-square: var(--md-sys-shape-corner-extra-large);
+  --_r-pressed: var(--md-sys-shape-corner-large);
+  --_r-selected-round: var(--md-sys-shape-corner-extra-large);
+}
+
+/* ---- Width ---- */
+
+.root[data-width='narrow'] {
+  --_space: var(--_space-narrow);
+}
+
+.root[data-width='wide'] {
+  --_space: var(--_space-wide);
+}
+
+/* ---- Shape: rest, selected (round <-> square swap), pressed ---- */
+
+.root[data-shape='square'] {
+  --_radius: var(--_r-square);
+}
+
+.root[data-shape='round'][data-state='on'] {
+  --_radius: var(--_r-selected-round);
+}
+
+.root[data-shape='square'][data-state='on'] {
+  --_radius: var(--_full);
+}
+
+.root[data-shape]:is(:active, [data-key-pressed]):not(:disabled, [data-disabled], [aria-disabled='true']) {
+  --_radius: var(--_r-pressed);
+}
+
+/* ---- Color: filled ---- */
+
+.root[data-color='filled'][data-state='off'] {
+  --_container-color: var(--md-sys-color-surface-container);
+  --_icon-color: var(--md-sys-color-on-surface-variant);
+}
+
+.root[data-color='filled'][data-state='on'] {
+  --_container-color: var(--md-sys-color-primary);
+  --_icon-color: var(--md-sys-color-on-primary);
+}
+
+/* ---- Color: tonal ---- */
+
+.root[data-color='tonal'] {
+  --_container-color: var(--md-sys-color-secondary-container);
+  --_icon-color: var(--md-sys-color-on-secondary-container);
+}
+
+.root[data-color='tonal'][data-state='on'] {
+  --_container-color: var(--md-sys-color-secondary);
+  --_icon-color: var(--md-sys-color-on-secondary);
+}
+
+/* ---- Color: outlined ---- */
+
+.root[data-color='outlined'] {
+  --_container-color: transparent;
+  --_border-width: var(--_outline-width);
+  --_outline-color: var(--md-sys-color-outline-variant);
+  --_icon-color: var(--md-sys-color-on-surface-variant);
+}
+
+/* No selected outline token: hidden under the inverse-surface fill (spec §11). */
+.root[data-color='outlined'][data-state='on'] {
+  --_outline-color: transparent;
+  --_container-color: var(--md-sys-color-inverse-surface);
+  --_icon-color: var(--md-sys-color-inverse-on-surface);
+}
+
+/* ---- Color: standard (no container at rest) ---- */
+
+.root[data-color='standard'] {
+  --_container-color: transparent;
+  --_icon-color: var(--md-sys-color-on-surface-variant);
+}
+
+.root[data-color='standard'][data-state='on'] {
+  --_icon-color: var(--md-sys-color-primary);
+}
+
+/* ---- Disabled ---- */
+
+/* [data-color] keeps these above the color and selection rules. */
+.root[data-color]:is(:disabled, [data-disabled], [aria-disabled='true']) {
+  --_icon-color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+  --_container-color: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent);
+}
+
+/* Standard and unselected outlined keep no fill; the outline stays (spec §4.1). */
+.root:is([data-color='standard'], [data-color='outlined']:not([data-state='on'])):is(
+    :disabled,
+    [data-disabled],
+    [aria-disabled='true']
+  ) {
+  --_container-color: transparent;
+}
+
+@media (forced-colors: active) {
+  .root {
+    border: max(1px, var(--_border-width)) solid ButtonText;
+  }
+
+  .root[data-color='standard'] {
+    border-color: transparent;
+  }
+
+  .root[data-state='on'] {
+    forced-color-adjust: none;
+    border-color: Highlight;
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .root:is(:disabled, [data-disabled]) {
+    border-color: GrayText;
+    color: GrayText;
+  }
+}

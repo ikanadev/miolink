@@ -1,0 +1,84 @@
+.main {
+  display: grid;
+  gap: 48px;
+  max-inline-size: 1040px;
+  margin-inline: auto;
+  padding: 16px 16px 96px;
+}
+
+@media (min-width: 600px) {
+  .main {
+    padding-inline: 24px;
+  }
+}
+
+.toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  font-size: var(--md-sys-typescale-label-large-size);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+}
+
+.toc a {
+  color: var(--md-sys-color-primary);
+}
+
+.section {
+  display: grid;
+  gap: 16px;
+  scroll-margin-top: 80px;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-family: var(--md-sys-typescale-headline-small-font);
+  font-weight: var(--md-sys-typescale-headline-small-weight);
+  font-size: var(--md-sys-typescale-headline-small-size);
+  line-height: var(--md-sys-typescale-headline-small-line-height);
+  letter-spacing: var(--md-sys-typescale-headline-small-tracking);
+}
+
+/* Shared helpers for demos */
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.label {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  font-size: var(--md-sys-typescale-label-large-size);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+}
+
+/* A small scrolling "screen" to show scroll behavior of bars. */
+.frame {
+  isolation: isolate;
+  block-size: 360px;
+  overflow: auto;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-large);
+  background: var(--md-sys-color-surface);
+}
+
+.filler {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.filler > div {
+  block-size: 72px;
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface-container-highest);
+}

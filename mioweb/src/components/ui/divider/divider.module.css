@@ -1,0 +1,53 @@
+/*
+ * M3 divider (m3-guidelines/components/divider.md): a 1px outline-variant
+ * line. Drawn with a border, not a background, so it stays visible in
+ * forced colors and print.
+ *
+ * Insets live in --_inset-start / --_inset-end. To align an inset divider
+ * with list content (e.g. text after a 40px avatar), override them with
+ * `class` or inline `style`.
+ */
+.root {
+  --_color: var(--md-sys-color-outline-variant);
+  --_thickness: 1px; /* md.comp.divider.thickness */
+  --_inset-start: var(--md-sys-measurement-space0);
+  --_inset-end: var(--md-sys-measurement-space0);
+
+  display: block;
+  box-sizing: border-box;
+  flex: none;
+  margin: 0;
+  border: 0;
+  list-style: none; /* when rendered as an <li> by ListDivider */
+}
+
+.root[data-inset='start'] {
+  --_inset-start: var(--md-sys-measurement-space200);
+}
+
+.root[data-inset='middle'] {
+  --_inset-start: var(--md-sys-measurement-space200);
+  --_inset-end: var(--md-sys-measurement-space200);
+}
+
+.root:not([data-orientation='vertical']) {
+  block-size: 0;
+  inline-size: auto; /* fills the container minus the insets */
+  margin-inline: var(--_inset-start) var(--_inset-end);
+  border-block-start: var(--_thickness) solid var(--_color);
+}
+
+/* derived: the spec leaves vertical insets open; they map to block-start/end. */
+.root[data-orientation='vertical'] {
+  inline-size: 0;
+  block-size: auto;
+  align-self: stretch;
+  margin-block: var(--_inset-start) var(--_inset-end);
+  border-inline-start: var(--_thickness) solid var(--_color);
+}
+
+@media (forced-colors: active) {
+  .root {
+    --_color: CanvasText;
+  }
+}

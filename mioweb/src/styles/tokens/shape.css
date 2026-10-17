@@ -1,0 +1,42 @@
+/*
+ * Shape (md.sys.shape.*): the corner radius scale. "full" is a large length
+ * instead of 50% so non-square elements get pill ends and radii stay
+ * animatable between lengths.
+ *
+ * corner-* tokens describe a whole shape; corner-value-* tokens are the same
+ * steps as a single radius, for individual and inner corners (apply them with
+ * the logical longhands, border-start-start-radius etc., so they flip in RTL)
+ * and for interpolating radii in shape morphs. corner-value has no "full".
+ */
+:root {
+  --md-sys-shape-corner-none: 0px;
+  --md-sys-shape-corner-extra-small: 4px;
+  --md-sys-shape-corner-small: 8px;
+  --md-sys-shape-corner-medium: 12px;
+  --md-sys-shape-corner-large: 16px;
+  --md-sys-shape-corner-large-increased: 20px;
+  --md-sys-shape-corner-extra-large: 28px;
+  --md-sys-shape-corner-extra-large-increased: 32px;
+  --md-sys-shape-corner-extra-extra-large: 48px;
+  --md-sys-shape-corner-full: 9999px;
+
+  /* border-radius shorthands, in its physical order (top-left, top-right,
+     bottom-right, bottom-left). -start/-end are the LTR values; they don't
+     flip in RTL, so mirrored layouts set the logical longhands from
+     corner-value-large instead. */
+  --md-sys-shape-corner-extra-small-top: 4px 4px 0 0;
+  --md-sys-shape-corner-large-top: 16px 16px 0 0;
+  --md-sys-shape-corner-large-start: 16px 0 0 16px;
+  --md-sys-shape-corner-large-end: 0 16px 16px 0;
+  --md-sys-shape-corner-extra-large-top: 28px 28px 0 0;
+
+  --md-sys-shape-corner-value-none: 0px;
+  --md-sys-shape-corner-value-extra-small: 4px;
+  --md-sys-shape-corner-value-small: 8px;
+  --md-sys-shape-corner-value-medium: 12px;
+  --md-sys-shape-corner-value-large: 16px;
+  --md-sys-shape-corner-value-large-increased: 20px;
+  --md-sys-shape-corner-value-extra-large: 28px;
+  --md-sys-shape-corner-value-extra-large-increased: 32px;
+  --md-sys-shape-corner-value-extra-extra-large: 48px;
+}

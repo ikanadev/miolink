@@ -1,0 +1,385 @@
+/*
+ * Side sheet. Spec: m3-guidelines/components/sheets/side-sheets.md
+ *
+ * Structure: modal sheets render in a portal as .scrim (Ark Backdrop) +
+ * .positioner (Ark Positioner, fixed over the window); standard sheets render
+ * .positioner in place, as a flex item whose inline size animates so the
+ * main content next to it shrinks. Inside: .container (Ark Content) >
+ * .header (back, .headline, close), .body (scrolls), .divider + .actions.
+ *
+ * Attributes: .positioner and .container data-variant="modal" | "standard",
+ * data-side="end" | "start", data-detached; .positioner data-state (set by
+ * the component); .container data-state (Ark), data-divider (standard edge
+ * divider), data-back, data-flush, aria-busy. Both carry dir.
+ */
+
+/* ---- Scrim (modal) ---- */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-index, 1000) - 1);
+  /* Scrim role at 32% (guidelines, Scrim / modal layer recipe). */
+  background: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
+}
+
+.scrim[data-state='open'] {
+  animation: fade-in var(--md-sys-motion-spring-default-effects-duration)
+    var(--md-sys-motion-spring-default-effects-easing);
+}
+
+.scrim[data-state='closed'] {
+  animation: fade-out var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-linear);
+}
+
+/* ---- Positioner ---- */
+
+.positioner {
+  --_margin: 0px;
+  /* Spec §9: min(width, 400px, 100vw - margins); the component caps --_width at 400px. */
+  --_inline-size: min(var(--_width, 256px), 100vw - 2 * var(--_margin));
+
+  display: flex;
+  box-sizing: border-box;
+  padding: var(--_margin);
+}
+
+.positioner[data-detached] {
+  /* Spec: detached sheets sit 16px from the window edges. */
+  --_margin: var(--md-sys-measurement-space200);
+}
+
+.positioner[data-variant='modal'] {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-index, 1000);
+  justify-content: flex-end;
+}
+
+.positioner[data-variant='modal'][data-side='start'] {
+  justify-content: flex-start;
+}
+
+/*
+ * Standard: a flex item next to the main content, as tall as the row and
+ * at most the window (sticky, so the sheet stays in view while the page
+ * scrolls). Its inline size animates; the fixed-width container inside
+ * stays pinned to the window edge and is clipped, which reads as a slide.
+ */
+.positioner[data-variant='standard'] {
+  position: sticky;
+  inset-block-start: 0;
+  flex: none;
+  align-self: stretch;
+  justify-content: flex-start;
+  inline-size: calc(var(--_inline-size) + 2 * var(--_margin));
+  max-block-size: 100dvh;
+  /* The inline margins go on the container, so a closed sheet takes no space. */
+  padding-inline: 0;
+  overflow: hidden;
+}
+
+.positioner[data-variant='standard'][data-side='start'] {
+  justify-content: flex-end;
+}
+
+.positioner[data-variant='standard'][data-state='closed'] {
+  inline-size: 0;
+}
+
+/* ---- Container ---- */
+
+.container {
+  --_container-color: var(--md-sys-color-surface-container-low);
+  --_elevation: var(--md-sys-elevation-level1);
+  /* Modal docked: corner.large on the inner side (corner.large.start for an end sheet, logical here so RTL mirrors it). */
+  --_radius-start: var(--md-sys-shape-corner-large);
+  --_radius-end: var(--md-sys-shape-corner-none);
+  --_headline-color: var(--md-sys-color-on-surface-variant);
+  /* Derived: content color not specified; on-surface-variant like the headline and bottom sheet. */
+  --_content-color: var(--md-sys-color-on-surface-variant);
+  /* Spec §11: the divider token is outline (the color diagram says outline-variant). */
+  --_divider-color: var(--md-sys-color-outline);
+  --_padding-inline: var(--md-sys-measurement-space300);
+  /* Off-screen offset for enter/exit: the sheet's width plus the detached margin, toward its edge. */
+  --_offscreen: calc(100% + var(--_margin, 0px));
+
+  position: relative;
+  z-index: calc(1000 + var(--layer-index, 0));
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  box-sizing: border-box;
+  inline-size: var(--_inline-size);
+  block-size: 100%;
+  overflow: hidden;
+  border-start-start-radius: var(--_radius-start);
+  border-end-start-radius: var(--_radius-start);
+  border-start-end-radius: var(--_radius-end);
+  border-end-end-radius: var(--_radius-end);
+  background: var(--_container-color);
+  box-shadow: var(--_elevation);
+  color: var(--_content-color);
+  outline: none;
+}
+
+.container[data-side='start'] {
+  --_radius-start: var(--md-sys-shape-corner-none);
+  --_radius-end: var(--md-sys-shape-corner-large);
+}
+
+.container[data-variant='standard'] {
+  --_container-color: var(--md-sys-color-surface);
+  --_elevation: var(--md-sys-elevation-level0);
+  --_radius-start: var(--md-sys-shape-corner-none);
+  --_radius-end: var(--md-sys-shape-corner-none);
+
+  /* Not an overlay: no stacking above the page. */
+  z-index: auto;
+  margin-inline: var(--_margin, 0px);
+}
+
+.container[data-detached] {
+  --_radius-start: var(--md-sys-shape-corner-large);
+  --_radius-end: var(--md-sys-shape-corner-large);
+}
+
+/* Derived: the standard sheet's optional divider (anatomy 1) on the edge facing the main content. */
+.container[data-variant='standard'][data-divider]:not([data-detached]) {
+  border-inline-start: 1px solid var(--_divider-color);
+}
+
+.container[data-variant='standard'][data-divider][data-side='start']:not([data-detached]) {
+  border-inline-start: 0;
+  border-inline-end: 1px solid var(--_divider-color);
+}
+
+.scrim[hidden],
+.container[hidden] {
+  display: none;
+}
+
+/* ---- Header ---- */
+
+.header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--md-sys-measurement-space150);
+  box-sizing: border-box;
+  /* Derived (spec §11): 72px row = 48px icon-button targets + 12px block padding. */
+  min-block-size: var(--md-sys-measurement-space900);
+  padding-block: var(--md-sys-measurement-space150);
+  padding-inline: var(--_padding-inline);
+}
+
+/* Spec: 16px start padding with a back button. */
+.container[data-back] .header {
+  padding-inline-start: var(--md-sys-measurement-space200);
+}
+
+.headline {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  margin: 0;
+  color: var(--_headline-color);
+  font-family: var(--md-sys-typescale-title-large-font);
+  font-weight: var(--md-sys-typescale-title-large-weight);
+  font-size: var(--md-sys-typescale-title-large-size);
+  line-height: var(--md-sys-typescale-title-large-line-height);
+  letter-spacing: var(--md-sys-typescale-title-large-tracking);
+  /* Derived (spec §11): one line with an ellipsis; the full text is the title attribute / accessible name. */
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  /* Initial focus target (tabindex -1), not an interactive control. */
+  outline: none;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+/* ---- Body (scrolls) ---- */
+
+.body {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* Scrolling never chains to the page. */
+  overscroll-behavior: contain;
+  padding-inline: var(--_padding-inline);
+  outline: none;
+}
+
+.container[data-flush] .body {
+  padding-inline: 0;
+}
+
+/* Derived: without actions, the content ends 24px above the bottom edge. */
+.body:last-child {
+  padding-block-end: var(--md-sys-measurement-space300);
+}
+
+.body:focus-visible {
+  outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
+  outline-offset: var(--md-sys-state-focus-indicator-inner-offset);
+}
+
+/* ---- Actions ---- */
+
+.divider {
+  flex-shrink: 0;
+  margin: 0;
+  border: 0;
+  border-block-start: 1px solid var(--_divider-color);
+}
+
+.actions {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  /* Spec: start-aligned. */
+  justify-content: flex-start;
+  /* Derived (spec §11): 8px between action buttons. */
+  gap: var(--md-sys-measurement-space100);
+  box-sizing: border-box;
+  /* Spec: 72px area, 16px top / 24px bottom padding (padding wins with 40px buttons, §11). */
+  min-block-size: var(--md-sys-measurement-space900);
+  padding: var(--md-sys-measurement-space200) var(--_padding-inline) var(--md-sys-measurement-space300);
+}
+
+/* ---- Motion ---- */
+
+/*
+ * Enter/exit beyond bounds, without overshoot (spec §6: common transitions
+ * don't bounce): emphasized decelerate 400ms in, emphasized accelerate
+ * 200ms out (derived from the legacy table, as the spec suggests). Ark
+ * unmounts on the container's exit animation end.
+ *
+ * Modal: the container slides from its edge. --_slide is +1 toward the
+ * right and -1 toward the left.
+ */
+.container {
+  --_slide: 1;
+}
+
+.container[data-side='end']:dir(rtl),
+.container[data-side='start']:dir(ltr) {
+  --_slide: -1;
+}
+
+.container[data-variant='modal'][data-state='open'] {
+  animation: slide-in var(--md-sys-motion-duration-medium4)
+    var(--md-sys-motion-easing-emphasized-decelerate);
+}
+
+.container[data-variant='modal'][data-state='closed'] {
+  animation: slide-out var(--md-sys-motion-duration-short4)
+    var(--md-sys-motion-easing-emphasized-accelerate);
+}
+
+/*
+ * Standard: the positioner's inline size grows and shrinks in sync, so the
+ * main content resizes with it. The container runs a no-op animation of the
+ * same length so Ark keeps it mounted until the positioner has shrunk.
+ */
+.positioner[data-variant='standard'][data-state='open'] {
+  animation: grow var(--md-sys-motion-duration-medium4)
+    var(--md-sys-motion-easing-emphasized-decelerate);
+}
+
+.positioner[data-variant='standard'][data-state='closed'] {
+  animation: shrink var(--md-sys-motion-duration-short4)
+    var(--md-sys-motion-easing-emphasized-accelerate);
+}
+
+.container[data-variant='standard'][data-state='closed'] {
+  animation: hold var(--md-sys-motion-duration-short4) linear;
+}
+
+/* Reduced motion: fade instead of slide; the main content resizes instantly. */
+@media (prefers-reduced-motion: reduce) {
+  .positioner[data-variant='standard'][data-state] {
+    animation: none;
+  }
+
+  .container[data-variant][data-state='open'] {
+    animation: fade-in var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+  }
+
+  .container[data-variant='modal'][data-state='closed'] {
+    animation: fade-out var(--md-sys-motion-duration-short3) var(--md-sys-motion-easing-linear);
+  }
+
+  .container[data-variant='standard'][data-state='closed'] {
+    animation: none;
+  }
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(calc(var(--_offscreen) * var(--_slide)));
+  }
+}
+
+@keyframes slide-out {
+  to {
+    transform: translateX(calc(var(--_offscreen) * var(--_slide)));
+  }
+}
+
+@keyframes grow {
+  from {
+    inline-size: 0;
+  }
+}
+
+@keyframes shrink {
+  from {
+    inline-size: calc(var(--_inline-size) + 2 * var(--_margin));
+  }
+  to {
+    inline-size: 0;
+  }
+}
+
+@keyframes hold {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@media (forced-colors: active) {
+  .container[data-variant='modal'] {
+    border-inline-start: 1px solid CanvasText;
+  }
+
+  .container[data-variant='modal'][data-side='start'] {
+    border-inline-start: 0;
+    border-inline-end: 1px solid CanvasText;
+  }
+
+  .container[data-detached] {
+    border: 1px solid CanvasText;
+  }
+
+  .divider {
+    border-color: CanvasText;
+  }
+}

@@ -1,0 +1,172 @@
+/*
+ * Snackbar. Spec: m3-guidelines/components/snackbar.md
+ *
+ * .group is Ark's toast region (fixed, inline styles from Ark; its offsets
+ * read --_margin and --_bottom-offset below). .root is one snackbar, with
+ * Ark's data-state ("open" | "closed") and data-mounted, plus
+ * data-has-actions and data-long-action. The group has data-align
+ * ("center" | "start") for medium and wider windows.
+ */
+.group {
+  /* Layout margins: 16px compact, 24px medium and up (guidelines, Layout). */
+  --_margin: var(--md-sys-measurement-space200);
+  --_bottom-offset: var(--md-snackbar-bottom-offset, 0px);
+
+  /* Ark sets the maximum z-index inline; overlays use the shared layer scale. */
+  z-index: calc(1000 + var(--layer-index, 0)) !important;
+  outline: none;
+}
+
+@media (min-width: 600px) {
+  .group {
+    --_margin: var(--md-sys-measurement-space300);
+  }
+}
+
+.root {
+  --_container-color: var(--md-sys-color-inverse-surface);
+  --_elevation: var(--md-sys-elevation-level3);
+  --_shape: var(--md-sys-shape-corner-extra-small);
+  --_height: 48px;
+  --_text-color: var(--md-sys-color-inverse-on-surface);
+  --_text-font: var(--md-sys-typescale-body-medium-font);
+  --_text-weight: var(--md-sys-typescale-body-medium-weight);
+  --_text-size: var(--md-sys-typescale-body-medium-size);
+  --_text-line-height: var(--md-sys-typescale-body-medium-line-height);
+  --_text-tracking: var(--md-sys-typescale-body-medium-tracking);
+  --_action-color: var(--md-sys-color-inverse-primary);
+  --_close-color: var(--md-sys-color-inverse-on-surface);
+  /* Paddings aren't in the spec (4.2, derived): 16 start, 8 end with buttons,
+     14 above and below the text, so two lines make the 68px token height. */
+  --_leading-space: var(--md-sys-measurement-space200);
+  --_trailing-space: var(--md-sys-measurement-space200);
+  --_text-block-space: var(--md-sys-measurement-space175);
+  /* Enter: a short rise from the bottom edge (derived, spec 6). */
+  --_enter-distance: var(--md-sys-measurement-space100);
+
+  display: flex;
+  align-items: center;
+  column-gap: var(--md-sys-measurement-space100);
+  box-sizing: border-box;
+  min-block-size: var(--_height);
+  inset-inline: 0;
+  padding-inline: var(--_leading-space) var(--_trailing-space);
+  border-radius: var(--_shape);
+  background: var(--_container-color);
+  box-shadow: var(--_elevation);
+  color: var(--_text-color);
+  outline: none;
+  opacity: 0;
+  translate: 0 var(--_enter-distance);
+}
+
+/* The action is a text button in inverse-primary (its state layer follows
+   the label color), the close icon a standard icon button. */
+.root [data-color='text']:not(:disabled, [data-disabled], [aria-disabled='true']) {
+  --_label-color: var(--_action-color);
+}
+
+.root [data-color='standard']:not([data-state='on'], :disabled, [data-disabled], [aria-disabled='true']) {
+  --_icon-color: var(--_close-color);
+}
+
+.root[data-has-actions] {
+  --_trailing-space: var(--md-sys-measurement-space100);
+}
+
+.text {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  padding-block: var(--_text-block-space);
+  font-family: var(--_text-font);
+  font-weight: var(--_text-weight);
+  font-size: var(--_text-size);
+  line-height: var(--_text-line-height);
+  letter-spacing: var(--_text-tracking);
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  /* 4px between the 40px buttons keeps their 48px targets apart (derived). */
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--md-sys-measurement-space50);
+  margin-inline-start: auto;
+  /* The secondary focus ring has too little contrast on inverse-surface
+     (spec 5, derived): use inverse-primary inside the snackbar. */
+  --md-sys-color-secondary: var(--md-sys-color-inverse-primary);
+}
+
+/* ---- Longer action: on its own line, at the end (spec 2) ---- */
+
+.root[data-long-action] {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.root[data-long-action] .text {
+  padding-inline-end: var(--md-sys-measurement-space100);
+  padding-block-end: 0;
+}
+
+.root[data-long-action] .actions {
+  padding-block: var(--md-sys-measurement-space50);
+}
+
+/* ---- Width: compact fills the width; wider windows fit the text ---- */
+
+/* 344-672px, as common M3 web implementations (derived; spec 4.2 gives no values). */
+@media (min-width: 600px) {
+  .root {
+    inset-inline: 0 auto;
+    inline-size: max-content;
+    min-inline-size: min(100%, 344px);
+    max-inline-size: min(100%, 672px);
+  }
+
+  .group[data-align='center'] .root {
+    inset-inline: 0;
+    margin-inline: auto;
+  }
+}
+
+/* ---- Keyboard focus (Ark makes the snackbar focusable) ---- */
+
+.root:focus-visible {
+  outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
+  outline-offset: var(--md-sys-state-focus-indicator-outer-offset);
+}
+
+/* ---- Enter and exit (spec 6; legacy enter/exit tokens) ---- */
+
+.root[data-mounted][data-state='open'] {
+  opacity: 1;
+  translate: none;
+  transition:
+    opacity var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-standard-decelerate),
+    translate var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-standard-decelerate);
+}
+
+/* Fade out in place. The duration matches the manager's removeDelay. */
+.root[data-state='closed'] {
+  opacity: 0;
+  translate: none;
+  transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard-accelerate);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    --_enter-distance: 0px;
+  }
+}
+
+@media (forced-colors: active) {
+  .root {
+    border: 1px solid CanvasText;
+  }
+
+  .root:focus-visible {
+    outline-color: Highlight;
+  }
+}

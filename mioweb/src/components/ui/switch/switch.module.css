@@ -1,0 +1,311 @@
+/*
+ * Switch. Spec: m3-guidelines/components/switch.md
+ *
+ * Ark parts: .root is the <label> (Switch.Root) holding the label text,
+ * then .control, the 52x32 track (Switch.Control), and a visually hidden
+ * native input (role="switch") that takes focus. Inside the track,
+ * .handleContainer is a 32x32 box at the inline start, moved 20px to the
+ * end when checked (spec §4.2), holding the 40px .stateLayer (with the
+ * Ripple) and the .handle (Switch.Thumb). Root, Control, Label and Thumb
+ * carry Ark's data-state ("checked" | "unchecked"), data-hover,
+ * data-focus-visible, data-active and data-disabled. data-key-pressed (set
+ * by Switch while Space or Enter is held) marks keyboard presses.
+ * data-icons ("none" | "selected" | "both") on .control picks the handle
+ * icons.
+ *
+ * .icon (SwitchIcon) is a decorative .control that carries data-state,
+ * data-disabled and data-icons itself.
+ */
+
+/* ---- Label row ---- */
+
+.root {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Derived (spec §11): 16px between the text and the switch. */
+  gap: 16px;
+  /* Spec §3: 48px tall target. */
+  min-block-size: 48px;
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  vertical-align: middle;
+}
+
+.root[data-disabled] {
+  cursor: default;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+/* Derived (spec §4.3): body-large label, body-medium supporting text. */
+.label {
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-weight: var(--md-sys-typescale-body-large-weight);
+  font-size: var(--md-sys-typescale-body-large-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  letter-spacing: var(--md-sys-typescale-body-large-tracking);
+}
+
+.supporting {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-weight: var(--md-sys-typescale-body-medium-weight);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+}
+
+/* Derived (spec §10c): disabled text is on-surface @ 0.38. */
+:is(.label, .supporting)[data-disabled] {
+  color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+}
+
+.hiddenLabel {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---- Colors and sizes per state (carriers: .control and .icon) ---- */
+
+.control {
+  --_track-color: var(--md-sys-color-surface-container-highest);
+  --_outline-color: var(--md-sys-color-outline);
+  --_handle-color: var(--md-sys-color-outline);
+  --_icon-color: var(--md-sys-color-surface-container-highest);
+  /* Spec §4.1: the pressed layer keeps the current selection's color. */
+  --_state-layer-color: var(--md-sys-color-on-surface);
+  --_handle-size: 16px;
+  --_offset: 0px;
+}
+
+.control[data-icons='both'] {
+  --_handle-size: 24px;
+}
+
+.control[data-state='checked'] {
+  --_track-color: var(--md-sys-color-primary);
+  /* Derived (spec §4.1): no visible outline when selected. */
+  --_outline-color: var(--md-sys-color-primary);
+  --_handle-color: var(--md-sys-color-on-primary);
+  --_icon-color: var(--md-sys-color-primary);
+  --_state-layer-color: var(--md-sys-color-primary);
+  --_handle-size: 24px;
+  /* Track width - track height: handle centers 16px from either end. */
+  --_offset: 20px;
+}
+
+/* Hover, focus and pressed change the handle color (spec §5). */
+.control:is([data-hover], [data-focus-visible], [data-active], [data-key-pressed]) {
+  --_handle-color: var(--md-sys-color-on-surface-variant);
+}
+
+.control[data-state='checked']:is([data-hover], [data-focus-visible], [data-active], [data-key-pressed]) {
+  --_handle-color: var(--md-sys-color-primary-container);
+}
+
+/* Pressed wins over every other size (spec §4.2). */
+.control:is([data-active], [data-key-pressed]):not([data-disabled]) {
+  --_handle-size: 28px;
+}
+
+/* Disabled: opacities through color-mix, not on the elements (spec §4.1). */
+.control[data-disabled] {
+  --_track-color: color-mix(in srgb, var(--md-sys-color-surface-container-highest) 12%, transparent);
+  --_outline-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
+  --_handle-color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+  --_icon-color: color-mix(in srgb, var(--md-sys-color-surface-container-highest) 38%, transparent);
+}
+
+.control[data-disabled][data-state='checked'] {
+  --_track-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
+  --_outline-color: transparent;
+  --_handle-color: var(--md-sys-color-surface);
+  --_icon-color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+}
+
+/* ---- Track ---- */
+
+.control {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  box-sizing: border-box;
+  inline-size: 52px;
+  block-size: 32px;
+  border-radius: var(--md-sys-shape-corner-full);
+  background-color: var(--_track-color);
+  /* 2px outline drawn inside the 52x32 box. */
+  box-shadow: inset 0 0 0 2px var(--_outline-color);
+  transition:
+    background-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    box-shadow var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+/* Focus lives on the hidden input; the ring follows the track pill
+   (spec §3, derived). */
+.control[data-focus-visible] {
+  outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
+  outline-offset: var(--md-sys-state-focus-indicator-outer-offset);
+}
+
+.icon {
+  vertical-align: middle;
+}
+
+/* ---- Handle ---- */
+
+.handleContainer {
+  position: absolute;
+  inset-block: 0;
+  /* Logical offset, so RTL starts at the right and slides left (spec §6). */
+  inset-inline-start: var(--_offset);
+  display: grid;
+  place-items: center;
+  inline-size: 32px;
+  transition: inset-inline-start var(--md-sys-motion-spring-fast-spatial-duration)
+    var(--md-sys-motion-spring-fast-spatial-easing);
+}
+
+.stateLayer {
+  composes: interactive from '../shared/interaction.module.css';
+  position: absolute;
+  /* 40px circle centered on the 32px container (spec §4.2). */
+  inset: -4px;
+  border-radius: var(--md-sys-shape-corner-full);
+}
+
+/* Ark's attributes cover the whole label row (derived: the label is part
+   of the hit area), so they drive the state layer instead of :hover. */
+@media (hover: hover) {
+  .control[data-hover]:not([data-disabled]) .stateLayer::before {
+    opacity: var(--md-sys-state-hover-state-layer-opacity);
+  }
+}
+
+.control[data-focus-visible] .stateLayer::before {
+  opacity: var(--md-sys-state-focus-state-layer-opacity);
+}
+
+/* Keyboard presses don't reach the Ripple (focus is on the input). */
+.control[data-key-pressed] .stateLayer::before {
+  opacity: var(--md-sys-state-pressed-state-layer-opacity);
+}
+
+.control[data-disabled] .stateLayer {
+  display: none;
+}
+
+.handle {
+  position: relative;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  inline-size: var(--_handle-size);
+  block-size: var(--_handle-size);
+  border-radius: var(--md-sys-shape-corner-full);
+  background-color: var(--_handle-color);
+  /* Spec §6: fast spatial spring for size, fast effects for color. */
+  transition:
+    inline-size var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial-easing),
+    block-size var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial-easing),
+    background-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.handleIcon {
+  grid-area: 1 / 1;
+  color: var(--_icon-color);
+  opacity: 0;
+  /* Derived (spec §6): icons scale in from 0.5. */
+  scale: 0.5;
+  transition:
+    opacity var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    scale var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.control:not([data-icons='none'])[data-state='checked'] .onIcon,
+.control[data-icons='both']:not([data-state='checked']) .offIcon {
+  opacity: 1;
+  scale: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Spec §6: snap position and size, keep short color changes. motion.css
+     already shortens the springs; this removes the overshoot entirely. */
+  .handleContainer,
+  .handle {
+    transition-property: background-color;
+  }
+
+  .handleIcon {
+    scale: 1;
+  }
+
+  .control,
+  .handle,
+  .handleIcon {
+    transition-duration: var(--md-sys-motion-duration-short1);
+  }
+}
+
+/* ---- Forced colors ---- */
+
+@media (forced-colors: active) {
+  .control {
+    --_track-color: Canvas;
+    --_outline-color: CanvasText;
+    --_handle-color: CanvasText;
+    --_icon-color: Canvas;
+    forced-color-adjust: none;
+    /* box-shadow is dropped in forced colors; draw the outline as a border. */
+    border: 2px solid var(--_outline-color);
+  }
+
+  .control[data-state='checked'] {
+    --_track-color: Highlight;
+    --_outline-color: Highlight;
+    --_handle-color: HighlightText;
+    --_icon-color: Highlight;
+  }
+
+  .control[data-disabled],
+  .control[data-disabled][data-state='checked'] {
+    --_track-color: Canvas;
+    --_outline-color: GrayText;
+    --_handle-color: GrayText;
+    --_icon-color: Canvas;
+  }
+
+  /* The border takes 2px from each side: keep the handle centers. */
+  .handleContainer {
+    inset-block: -2px;
+    margin-inline-start: -2px;
+  }
+
+  .stateLayer {
+    display: none;
+  }
+
+  .control[data-focus-visible] {
+    outline-color: Highlight;
+  }
+}

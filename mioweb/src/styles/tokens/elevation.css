@@ -1,0 +1,20 @@
+/*
+ * Elevation (md.sys.elevation.*). M3 tokens only define the distance (0, 1,
+ * 3, 6, 8, 12dp); these box-shadows are the usual web rendering of each
+ * level (key + ambient shadow), tinted with the shadow color role. Levels 4
+ * and 5 are for interaction states only (hover, dragged). Most separation in
+ * M3 comes from surface container colors, not shadows: components at a level
+ * that the spec expresses as a color fill (e.g. a scrolled app bar) don't use
+ * these.
+ */
+:root {
+  --_md-shadow-key: color-mix(in srgb, var(--md-sys-color-shadow) 30%, transparent);
+  --_md-shadow-ambient: color-mix(in srgb, var(--md-sys-color-shadow) 15%, transparent);
+
+  --md-sys-elevation-level0: none;
+  --md-sys-elevation-level1: 0 1px 2px 0 var(--_md-shadow-key), 0 1px 3px 1px var(--_md-shadow-ambient);
+  --md-sys-elevation-level2: 0 1px 2px 0 var(--_md-shadow-key), 0 2px 6px 2px var(--_md-shadow-ambient);
+  --md-sys-elevation-level3: 0 1px 3px 0 var(--_md-shadow-key), 0 4px 8px 3px var(--_md-shadow-ambient);
+  --md-sys-elevation-level4: 0 2px 3px 0 var(--_md-shadow-key), 0 6px 10px 4px var(--_md-shadow-ambient);
+  --md-sys-elevation-level5: 0 4px 4px 0 var(--_md-shadow-key), 0 8px 12px 6px var(--_md-shadow-ambient);
+}

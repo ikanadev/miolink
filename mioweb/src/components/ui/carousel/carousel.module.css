@@ -1,0 +1,384 @@
+/*
+ * Carousel. Spec: m3-guidelines/components/carousel.md
+ *
+ * Structure: .root (section) > .scroller (scroll container) > .track (ul)
+ * > .item (li) > .mask (the link or button: shape, container, state layer
+ * on ::before, outline on ::after, <Ripple />) > .visual (the image, at the
+ * large item width and centered in the mask, so it parallaxes as the mask
+ * changes width) + .text (title, label, short label over a scrim).
+ *
+ * Keyline layouts (multi-browse, hero): items are absolutely positioned;
+ * JS sets each item's transform, inline size, data-size and data-offscreen,
+ * the track's inline size, --_large, and zero-width .snap markers in the
+ * scroller. Flow layouts (uncontained, full-screen, and multi-browse/hero
+ * with reduced motion) are flex rows/columns; JS only sets --_item-size.
+ *
+ * Attributes: data-layout, data-align, data-snap, data-outline,
+ * data-reduced, data-dragging (root); data-size, data-offscreen (item).
+ */
+.root {
+  --_padding-start: 16px;
+  --_padding-end: 16px;
+  --_padding-block: 8px;
+  --_gap: 8px;
+  --_shape: var(--md-sys-shape-corner-extra-large);
+  /* derived: "tapping changes the shape slightly" -> 28 to 20dp */
+  --_pressed-shape: var(--md-sys-shape-corner-large-increased);
+  --_container-color: var(--md-sys-color-surface);
+  --_elevation: var(--md-sys-elevation-level0);
+  --_outline-width: 0px;
+  --_outline-color: var(--md-sys-color-outline);
+  --_disabled-container-opacity: 0.38;
+
+  position: relative;
+  display: block;
+  /* derived default height (spec gives none); set block-size to change it */
+  block-size: 220px;
+  min-inline-size: 0;
+  /* The track is as wide as the scroll range; keep it out of the parent's intrinsic width. */
+  contain: inline-size;
+}
+
+.root[data-outline] {
+  --_outline-width: 1px;
+}
+
+/* Uncontained: items bleed past the trailing edge. */
+.root:is([data-layout='uncontained'], [data-layout='uncontained-multi-aspect']) {
+  --_padding-end: 0px;
+}
+
+/* derived: edge to edge, no radius */
+.root[data-layout='full-screen'] {
+  --_padding-start: 0px;
+  --_padding-end: 0px;
+  --_padding-block: 0px;
+  --_gap: 16px;
+  --_shape: var(--md-sys-shape-corner-none);
+  --_pressed-shape: var(--md-sys-shape-corner-none);
+
+  block-size: 100dvh;
+}
+
+/* ---- Scroller and track ---- */
+
+.scroller {
+  position: relative;
+  box-sizing: border-box;
+  block-size: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  outline: none;
+}
+
+.scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.root:is([data-snap='false'], [data-dragging]) .scroller {
+  scroll-snap-type: none;
+}
+
+.root[data-dragging] {
+  cursor: grabbing;
+}
+
+.track {
+  position: relative;
+  box-sizing: border-box;
+  block-size: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: clip;
+}
+
+.snap {
+  position: absolute;
+  inset-block-start: 0;
+  inline-size: 1px;
+  block-size: 1px;
+  pointer-events: none;
+  scroll-snap-align: start;
+}
+
+/* Hero scrolls one item per swipe. */
+.root[data-layout='hero'] .snap {
+  scroll-snap-stop: always;
+}
+
+.item {
+  position: absolute;
+  inset-block: var(--_padding-block);
+  inset-inline-start: 0;
+  margin: 0;
+  padding: 0;
+  /* Not `paint`: it would clip the hover shadow and the focus ring. */
+  contain: layout style;
+  will-change: transform;
+}
+
+/* ---- Flow layouts ---- */
+
+.root:is([data-layout^='uncontained'], [data-reduced]) .scroller {
+  padding-block: var(--_padding-block);
+  padding-inline: var(--_padding-start) var(--_padding-end);
+  scroll-padding-inline: var(--_padding-start) var(--_padding-end);
+}
+
+.root:is([data-layout^='uncontained'], [data-reduced]) .track {
+  display: flex;
+  gap: var(--_gap);
+  inline-size: max-content;
+  overflow: visible;
+}
+
+.root:is([data-layout^='uncontained'], [data-reduced]) .item {
+  position: relative;
+  inset: auto;
+  flex: none;
+  inline-size: var(--_item-size, 186px);
+  block-size: 100%;
+  scroll-snap-align: start;
+  will-change: auto;
+}
+
+/* Width from the height and the item's ratio (clamped to 9:16 ... 16:9 in JS). */
+.root[data-layout='uncontained-multi-aspect'] .item {
+  inline-size: auto;
+  aspect-ratio: var(--_ratio, 1);
+}
+
+.root[data-layout='full-screen'] .scroller {
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+  scroll-snap-type: y mandatory;
+}
+
+.root[data-layout='full-screen'] .track {
+  display: flex;
+  flex-direction: column;
+  gap: var(--_gap);
+  overflow: visible;
+}
+
+.root[data-layout='full-screen'] .item {
+  position: relative;
+  inset: auto;
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  will-change: auto;
+}
+
+/* ---- Mask (the item's link or button) ---- */
+
+.mask {
+  composes: interactive from '../shared/interaction.module.css';
+
+  /* Read by the state layer and the <Ripple />. */
+  --_state-layer-color: var(--md-sys-color-on-surface);
+
+  display: block;
+  box-sizing: border-box;
+  inline-size: 100%;
+  block-size: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: none;
+  border-radius: var(--_shape);
+  background: var(--_container-color);
+  box-shadow: var(--_elevation);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  text-decoration: none;
+  -webkit-user-select: none;
+  user-select: none;
+  transition:
+    border-radius var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial-easing),
+    box-shadow var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.root[data-layout='full-screen'] .mask {
+  --_focus-ring-offset: var(--md-sys-state-focus-indicator-inner-offset);
+}
+
+/* Outline above the visual (an inset shadow would paint under it). */
+.mask::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border: var(--_outline-width) solid var(--_outline-color);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+@media (hover: hover) {
+  .mask:hover {
+    --_elevation: var(--md-sys-elevation-level1);
+  }
+}
+
+.mask:focus-visible {
+  --_outline-color: var(--md-sys-color-on-surface);
+}
+
+.mask:is(:active, [data-key-pressed]) {
+  --_elevation: var(--md-sys-elevation-level0);
+  --_outline-color: var(--md-sys-color-outline);
+
+  border-radius: var(--_pressed-shape);
+}
+
+.mask[aria-disabled='true'] {
+  --_container-color: color-mix(
+    in srgb,
+    var(--md-sys-color-surface) calc(var(--_disabled-container-opacity) * 100%),
+    transparent
+  );
+  --_outline-color: color-mix(in srgb, var(--md-sys-color-outline) 12%, transparent);
+}
+
+/* ---- Visual ---- */
+
+/* Below the state layer and ripple (z-index -1), above the container. */
+.visual {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: calc(50% - var(--_large, 100%) / 2);
+  z-index: -2;
+  display: block;
+  inline-size: var(--_large, 100%);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.visual > :is(img, video, picture, svg) {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+/* derived: the visual fades with the disabled container */
+.mask[aria-disabled='true'] .visual {
+  opacity: 0.38;
+}
+
+/* ---- Text ---- */
+
+/*
+ * derived: light text on a scrim gradient. The text uses the dark scheme's
+ * on-surface so it stays light over the scrim in both themes.
+ */
+.text {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 32px 16px 16px;
+  color-scheme: dark;
+  color: var(--md-sys-color-on-surface);
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--md-sys-color-scrim) 60%, transparent),
+    transparent
+  );
+  pointer-events: none;
+}
+
+.mask[aria-disabled='true'] .text {
+  color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+}
+
+.title,
+.label,
+.labelShort {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* derived: title-medium */
+.title {
+  font-family: var(--md-sys-typescale-title-medium-font);
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+  font-size: var(--md-sys-typescale-title-medium-size);
+  line-height: var(--md-sys-typescale-title-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-title-medium-tracking);
+}
+
+/* derived: label-large */
+.label {
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  font-size: var(--md-sys-typescale-label-large-size);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+}
+
+/* derived: label-medium, small items only */
+.labelShort {
+  display: none;
+  font-family: var(--md-sys-typescale-label-medium-font);
+  font-weight: var(--md-sys-typescale-label-medium-weight);
+  font-size: var(--md-sys-typescale-label-medium-size);
+  line-height: var(--md-sys-typescale-label-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-label-medium-tracking);
+}
+
+/* Text adapts to the item size: large title + label, medium label, small short label. */
+.item:is([data-size='medium'], [data-size='small']) .title,
+.item[data-size='small'] .label {
+  display: none;
+}
+
+.item[data-size='small'] .labelShort {
+  display: block;
+}
+
+/* derived: a 40-56px item has no room for 16px insets */
+.item[data-size='small'] .text {
+  padding-inline: 4px;
+  text-align: center;
+}
+
+.item[data-size='small'] .text:not(:has(.labelShort)) {
+  display: none;
+}
+
+/* ---- Reduced motion: no shape morph ---- */
+
+@media (prefers-reduced-motion: reduce) {
+  .mask {
+    transition: none;
+  }
+
+  .mask:is(:active, [data-key-pressed]) {
+    border-radius: var(--_shape);
+  }
+}
+
+@media (forced-colors: active) {
+  .mask::after {
+    border: 1px solid CanvasText;
+  }
+
+  .mask[aria-disabled='true']::after {
+    border-color: GrayText;
+  }
+
+  .text {
+    background: Canvas;
+    color: CanvasText;
+  }
+}

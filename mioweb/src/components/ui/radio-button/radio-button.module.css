@@ -1,0 +1,279 @@
+/*
+ * Radio button. Spec: m3-guidelines/components/radio-button.md
+ *
+ * Ark parts: .group is RadioGroup.Root (role="radiogroup"), .groupLabel its
+ * Label. Each .root is a RadioGroup.Item (<label>) holding .control (the
+ * 40px state layer circle, ItemControl) with the ring and dot, the label
+ * text (ItemText) and a visually hidden native radio input that takes focus.
+ * Item, ItemControl and ItemText carry Ark's data-state ("checked" |
+ * "unchecked"), data-hover, data-focus-visible, data-disabled and
+ * data-invalid; ItemControl also has data-active while the item is pressed
+ * (pointer, or Space on the input).
+ *
+ * .icon (RadioButtonIcon) is a decorative 20px icon that carries the same
+ * data-state / data-disabled / data-invalid attributes itself.
+ */
+
+/* ---- Group ---- */
+
+.group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.groupLabel {
+  /* Derived (spec §4.3): title-small group title. */
+  font-family: var(--md-sys-typescale-title-small-font);
+  font-weight: var(--md-sys-typescale-title-small-weight);
+  font-size: var(--md-sys-typescale-title-small-size);
+  line-height: var(--md-sys-typescale-title-small-line-height);
+  letter-spacing: var(--md-sys-typescale-title-small-tracking);
+  color: var(--md-sys-color-on-surface);
+  /* Derived: lines the title up with the 48px target's 4px inset. */
+  padding-inline: 4px;
+}
+
+.groupLabel[data-disabled] {
+  color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+}
+
+/* Spec §4.2 (derived): vertical stack of 48px rows, no gap. */
+.items {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* Horizontal is allowed with caution (spec §7). Derived: 16px between items. */
+.group[data-orientation='horizontal'] .items {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 16px;
+}
+
+/* ---- Label row ---- */
+
+.root {
+  /* Anchors the visually hidden input and label. */
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  /* Spec §4.2: row min-height 48px. */
+  min-block-size: 48px;
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  vertical-align: middle;
+}
+
+.root[data-disabled] {
+  cursor: default;
+}
+
+.label {
+  /* Derived (spec §4.3): body-large; no gap beyond the 48px target (§4.2). */
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-weight: var(--md-sys-typescale-body-large-weight);
+  font-size: var(--md-sys-typescale-body-large-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  letter-spacing: var(--md-sys-typescale-body-large-tracking);
+  padding-inline-end: 4px; /* derived: keeps the text off the next control */
+}
+
+/* Derived (spec §11): disabled label is on-surface @ 0.38. */
+.label[data-disabled] {
+  color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+}
+
+.hiddenLabel {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---- Colors per state (carriers: .control and .icon) ---- */
+
+.control,
+.icon {
+  --_icon-color: var(--md-sys-color-on-surface-variant);
+  /* State layer: on-surface when unselected; pressed shows the color of the
+     state being moved to (spec §4.1). */
+  --_state-layer-color: var(--md-sys-color-on-surface);
+  --_pressed-color: var(--md-sys-color-primary);
+}
+
+/* Hover, focus and pressed darken the unselected ring (spec §5). Before the
+   checked and error rules, which override it at the same specificity. */
+.control:is(:hover, [data-hover], [data-focus-visible], [data-active]) {
+  --_icon-color: var(--md-sys-color-on-surface);
+}
+
+:is(.control, .icon)[data-state='checked'] {
+  --_icon-color: var(--md-sys-color-primary);
+  --_state-layer-color: var(--md-sys-color-primary);
+  --_pressed-color: var(--md-sys-color-on-surface);
+}
+
+/* Error (derived, spec §11): explicit (`error` -> Ark invalid) or a required
+   group left empty after a submit attempt (:user-invalid on the input). */
+:is(.control, .icon)[data-invalid],
+.root:has(> input:user-invalid) .control {
+  --_icon-color: var(--md-sys-color-error);
+  --_state-layer-color: var(--md-sys-color-error);
+  --_pressed-color: var(--md-sys-color-error);
+}
+
+/* Disabled wins over error (spec §5): on-surface @ 0.38 via color-mix. */
+:is(.control, .icon)[data-disabled],
+.root:has(> input:user-invalid) .control[data-disabled] {
+  --_icon-color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+}
+
+/* ---- Control: 40px state layer circle, 48px target ---- */
+
+.control {
+  composes: interactive target from '../shared/interaction.module.css';
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  box-sizing: border-box;
+  inline-size: 40px;
+  block-size: 40px;
+  /* 4px each side: the control occupies the 48x48 target in the row. */
+  margin: 4px;
+  /* Derived (spec §11): no shape token, full circle. */
+  border-radius: var(--md-sys-shape-corner-full);
+}
+
+/* Focus lives on the hidden input, so the shared :hover/:focus-visible
+   rules are mirrored on Ark's attributes. Hovering the label also shows the
+   state layer (derived: the label is part of the hit area). */
+@media (hover: hover) {
+  .control[data-hover]:not([data-disabled])::before {
+    opacity: var(--md-sys-state-hover-state-layer-opacity);
+  }
+}
+
+.control[data-focus-visible]::before {
+  opacity: var(--md-sys-state-focus-state-layer-opacity);
+}
+
+/* Focus ring around the state layer circle (spec §3, web mapping). */
+.control[data-focus-visible] {
+  outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
+  outline-offset: var(--md-sys-state-focus-indicator-outer-offset);
+}
+
+/* Pressed: the ripple and the static layer use the target state's color. */
+.control:is(:active, [data-active]):not([data-disabled]) {
+  --_state-layer-color: var(--_pressed-color);
+}
+
+/* Space on the focused input: Ark sets data-active, but the Ripple only
+   listens on the control, so show the static pressed layer instead. */
+.control[data-active][data-focus-visible]:not([data-disabled])::before {
+  opacity: var(--md-sys-state-pressed-state-layer-opacity);
+}
+
+/* ---- Icon: ring and dot ---- */
+
+.icon {
+  display: inline-block;
+  flex: none;
+  inline-size: 20px;
+  block-size: 20px;
+  vertical-align: middle;
+}
+
+.glyph {
+  display: block;
+  inline-size: 20px;
+  block-size: 20px;
+  /* Not mirrored in RTL (spec §6). */
+}
+
+.ring {
+  fill: none;
+  stroke: var(--_icon-color);
+  stroke-width: 2px; /* derived (spec §4.2) */
+  /* Derived (spec §6): ring color on the fast effects spring. */
+  transition: stroke var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.dot {
+  fill: var(--_icon-color);
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0);
+  /* Dot out: fast effects, no overshoot (derived, spec §6). */
+  transition:
+    transform var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    fill var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+/* Dot in: fast spatial spring, slight overshoot when expressive (derived, spec §6). */
+:is(.control, .icon)[data-state='checked'] .dot {
+  transform: scale(1);
+  transition:
+    transform var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial-easing),
+    fill var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+/* Reduced motion (spec §6): no scale, a short opacity/color change. */
+@media (prefers-reduced-motion: reduce) {
+  .ring,
+  .dot,
+  :is(.control, .icon)[data-state='checked'] .dot {
+    transform: scale(1);
+    transition:
+      opacity var(--md-sys-motion-duration-short1) linear,
+      fill var(--md-sys-motion-duration-short1) linear,
+      stroke var(--md-sys-motion-duration-short1) linear;
+  }
+
+  .dot {
+    opacity: 0;
+  }
+
+  :is(.control, .icon)[data-state='checked'] .dot {
+    opacity: 1;
+  }
+}
+
+/* ---- Forced colors ---- */
+
+@media (forced-colors: active) {
+  .control,
+  .icon,
+  :is(.control, .icon)[data-invalid],
+  .root:has(> input:user-invalid) .control {
+    --_icon-color: CanvasText;
+  }
+
+  :is(.control, .icon)[data-state='checked'] {
+    --_icon-color: Highlight;
+  }
+
+  :is(.control, .icon)[data-disabled],
+  .root:has(> input:user-invalid) .control[data-disabled] {
+    --_icon-color: GrayText;
+  }
+
+  .glyph {
+    forced-color-adjust: none;
+  }
+
+  .control[data-focus-visible] {
+    outline-color: Highlight;
+  }
+}

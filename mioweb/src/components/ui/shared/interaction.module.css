@@ -1,0 +1,80 @@
+/*
+ * Interaction states shared by every interactive component. Use with CSS
+ * Modules composition:
+ *
+ *   .root { composes: interactive from '../shared/interaction.module.css'; }
+ *
+ * - State layer: a ::before overlay between the container and the content,
+ *   colored with --_state-layer-color (default: currentColor, the content
+ *   color) at the hover/focus opacities. Pressed feedback is the <Ripple />.
+ * - Focus ring: 3px secondary outline at a 2px outer offset, on
+ *   :focus-visible only. Set --_focus-ring-offset to the inner offset for
+ *   full-bleed items.
+ * - Disabled (:disabled, [data-disabled], [aria-disabled='true']): no state
+ *   layer, no ring, no pointer events.
+ *
+ * The element must not use ::before itself and must keep its content in
+ * normal flow (or above z-index -1).
+ */
+.interactive {
+  position: relative;
+  isolation: isolate;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+.interactive::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--_state-layer-color, currentColor);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+@media (hover: hover) {
+  .interactive:hover::before {
+    opacity: var(--md-sys-state-hover-state-layer-opacity);
+  }
+}
+
+.interactive:focus-visible::before {
+  opacity: var(--md-sys-state-focus-state-layer-opacity);
+}
+
+.interactive:focus-visible {
+  outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
+  outline-offset: var(--_focus-ring-offset, var(--md-sys-state-focus-indicator-outer-offset));
+}
+
+.interactive:is(:disabled, [data-disabled], [aria-disabled='true']) {
+  cursor: default;
+  pointer-events: none;
+}
+
+.interactive:is(:disabled, [data-disabled], [aria-disabled='true'])::before {
+  opacity: 0;
+}
+
+@media (forced-colors: active) {
+  .interactive:focus-visible {
+    outline-color: Highlight;
+  }
+}
+
+/* Expands the hit area to 48x48 around controls whose visible container is
+   smaller. Uses ::after, so the element can't use it for anything else. */
+.target::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, 48px);
+  height: max(100%, 48px);
+  translate: -50% -50%;
+}

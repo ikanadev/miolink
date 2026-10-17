@@ -1,0 +1,127 @@
+/*
+ * Base of the floating buttons: Fab, ExtendedFab and the FabMenu toggle.
+ * Specs: m3-guidelines/components/buttons/floating-action-button.md,
+ * extended-fab.md, fab-menu.md. Compose it:
+ *
+ *   .root { composes: base from '../shared/fab-base.module.css'; }
+ *
+ * Components set the private variables from their own tokens:
+ *   --_height, --_shape, --_icon-size, --_icon-optical-size
+ *   --_container-color, --_icon-color, --_label-color (default: icon color)
+ *   --_elevation-rest, --_elevation-hover
+ *   --_transition-extra: extra transitions (e.g. the extended FAB's padding)
+ *
+ * The base draws the host, the state layer in the content color, elevation
+ * (rest, +1 level on hover, rest while pressed) and the enter/exit through
+ * data-visible="true" | "false": scale from and to the center. FABs have no
+ * disabled state: hide them instead.
+ */
+.base {
+  composes: interactive from '../../shared/interaction.module.css';
+
+  --_label-color: var(--_icon-color);
+  --_elevation: var(--_elevation-rest);
+  --_state-layer-color: var(--_icon-color);
+  --_transition-extra: --_none 0s;
+  --md-icon-size: var(--_icon-size);
+  --md-icon-optical-size: var(--_icon-optical-size);
+
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  block-size: var(--_height);
+  margin: 0;
+  border: none;
+  border-radius: var(--_shape);
+  background: var(--_container-color);
+  box-shadow: var(--_elevation);
+  color: var(--_label-color);
+  text-decoration: none;
+  white-space: nowrap;
+  vertical-align: middle;
+  scale: 1;
+  opacity: 1;
+  visibility: visible;
+  /* The specs give no motion values (derived): effects spring for color and
+     shadow; appearing scales out from the center with the default spatial
+     spring and fades in with the default effects spring. */
+  transition:
+    var(--_transition-extra),
+    background-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    box-shadow var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    scale var(--md-sys-motion-spring-default-spatial-duration)
+      var(--md-sys-motion-spring-default-spatial-easing),
+    opacity var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects-easing),
+    visibility 0s;
+}
+
+.icon {
+  flex: none;
+  color: var(--_icon-color);
+}
+
+/* ---- Elevation: rest, +1 level on hover, rest while pressed ---- */
+
+@media (hover: hover) {
+  .base:hover {
+    --_elevation: var(--_elevation-hover);
+  }
+}
+
+.base:active {
+  --_elevation: var(--_elevation-rest);
+}
+
+/* ---- Enter / exit: scale from and to the center ---- */
+
+@starting-style {
+  .base[data-visible='true'] {
+    scale: 0;
+    opacity: 0;
+  }
+}
+
+/* Exit: the standard exit curve (emphasized accelerate, short4), not the
+   spatial spring, whose overshoot would flip the scale below 0 (derived).
+   Visibility flips at the end so the hidden FAB can't be hit or focused. */
+.base[data-visible='false'] {
+  scale: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    scale var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-emphasized-accelerate),
+    opacity var(--md-sys-motion-duration-short4) linear,
+    visibility 0s var(--md-sys-motion-duration-short4);
+}
+
+/* Reduced motion: fade only. */
+@media (prefers-reduced-motion: reduce) {
+  .base[data-visible='false'] {
+    scale: 1;
+  }
+
+  @starting-style {
+    .base[data-visible='true'] {
+      scale: 1;
+    }
+  }
+}
+
+@media (forced-colors: active) {
+  .base {
+    border: 1px solid ButtonText;
+    box-shadow: none;
+  }
+
+  .base::before {
+    display: none;
+  }
+}

@@ -1,0 +1,780 @@
+/*
+ * Date picker. Spec: m3-guidelines/components/date-and-time-pickers/date-pickers.md
+ *
+ * Structure: .root > .fields (outlined TextFields; the last one holds the
+ * calendar button) + hidden form inputs.
+ *  - Docked: .positioner (Ark Popover) > .docked > .calendar + .actions.
+ *  - Modal: .scrim + .dialogPositioner > .dialog (composes the Dialog
+ *    container) > [.rangeBar] .header (supporting text, headline, mode
+ *    button) > .calendar | .inputBody > .actions.
+ *  - .calendar (Ark DatePicker, inline) > .view > .dockedHeader | .nav,
+ *    .body > .slide > .grid (Ark Table) > .cell > .day; or the menus
+ *    (.menuList > .menuItem, .yearGrid > .year); range: .weekdays + .months
+ *    > .month > .subhead + .grid.
+ *
+ * Attributes: .root data-variant, data-range; .dialog data-layout
+ * ("basic" | "full-screen"), data-view ("calendar" | "input" | "range");
+ * .calendar data-layout ("docked" | "modal" | "range"), data-outside
+ * ("show" | "hide"); .cell data-range ("start" | "middle" | "end"),
+ * data-preview, data-outside; .day (Ark) data-today, data-selected,
+ * data-disabled, data-unavailable, data-focus.
+ */
+
+/* ---- Field(s) ---- */
+
+.root {
+  display: block;
+  min-inline-size: 0;
+}
+
+.anchor {
+  display: block;
+}
+
+.fields {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--md-sys-measurement-space200);
+}
+
+.field {
+  flex: 1 1 0;
+  min-inline-size: 0;
+}
+
+/* ---- Docked surface (Ark Popover) ---- */
+
+.docked {
+  --_container-color: var(--md-sys-color-surface-container-high);
+  --_shape: var(--md-sys-shape-corner-large);
+  /* Kept from the token (level3): the drop-down floats over page content (spec §11). */
+  --_elevation: var(--md-sys-elevation-level3);
+
+  z-index: calc(1000 + var(--layer-index, 0));
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  inline-size: 360px;
+  max-inline-size: 100vw;
+  max-block-size: var(--available-height, 100vh);
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+  border-radius: var(--_shape);
+  background: var(--_container-color);
+  box-shadow: var(--_elevation);
+  color: var(--md-sys-color-on-surface);
+  outline: none;
+}
+
+.docked > * {
+  flex-shrink: 0;
+}
+
+.docked[hidden] {
+  display: none;
+}
+
+/*
+ * Derived: the drop-down reveals along y from the field edge (clip) with a
+ * short fade, on the legacy enter/exit tokens; the clip extends 24px past
+ * the box so the shadow isn't cut. Above the field (flipped) it reveals
+ * upward.
+ */
+.docked[data-state='open'] {
+  animation:
+    reveal-down var(--md-sys-motion-duration-medium4) var(--md-sys-motion-easing-emphasized-decelerate),
+    fade-in var(--md-sys-motion-duration-short3) var(--md-sys-motion-easing-linear);
+}
+
+.docked[data-state='open'][data-side='top'] {
+  animation-name: reveal-up, fade-in;
+}
+
+.docked[data-state='closed'] {
+  animation: fade-out var(--md-sys-motion-duration-short3) var(--md-sys-motion-easing-linear);
+}
+
+/* ---- Modal surface (Ark Dialog in the project's Dialog root) ---- */
+
+.scrim {
+  composes: scrim from '../dialog/dialog.module.css';
+}
+
+.dialogPositioner {
+  composes: positioner from '../dialog/dialog.module.css';
+}
+
+.dialog {
+  composes: container from '../dialog/dialog.module.css';
+}
+
+/* [data-view] raises these above the composed container rules. */
+.dialog[data-view] {
+  --_container-color: var(--md-sys-color-surface-container-high);
+  inline-size: 360px;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  color: var(--md-sys-color-on-surface);
+}
+
+.dialog[data-view='input'] {
+  inline-size: 328px;
+}
+
+/* Derived: on medium and larger windows the range picker stays a dialog. */
+.dialog[data-view='range'] {
+  block-size: 640px;
+}
+
+.dialog[data-view][data-layout='full-screen'] {
+  --_container-color: var(--md-sys-color-surface-container-high);
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+/* ---- Modal header ---- */
+
+.header {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  flex-shrink: 0;
+  box-sizing: border-box;
+  block-size: 120px;
+  padding-block: var(--md-sys-measurement-space200) var(--md-sys-measurement-space150);
+  padding-inline: var(--md-sys-measurement-space300) var(--md-sys-measurement-space150);
+  /* Divider between header and body (not tokenized; outline-variant). */
+  border-block-end: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.supportingText {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  font-size: var(--md-sys-typescale-label-large-size);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+}
+
+.headlineRow {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--md-sys-measurement-space100);
+  min-inline-size: 0;
+}
+
+.headline {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-headline-large-font);
+  font-weight: var(--md-sys-typescale-headline-large-weight);
+  font-size: var(--md-sys-typescale-headline-large-size);
+  line-height: var(--md-sys-typescale-headline-large-line-height);
+  letter-spacing: var(--md-sys-typescale-headline-large-tracking);
+}
+
+.modeButton {
+  flex-shrink: 0;
+}
+
+/* Range: 56px bar (close, Save) + 72px title block = the 128px header. Derived
+   64px start padding aligns the text with the bar's title position. */
+.rangeBar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  block-size: 56px;
+  padding-inline: var(--md-sys-measurement-space50) var(--md-sys-measurement-space150);
+}
+
+.dialog[data-view='range'] .header {
+  block-size: 72px;
+  padding-block: 0 var(--md-sys-measurement-space150);
+  padding-inline-start: var(--md-sys-measurement-space800);
+}
+
+.dialog[data-view='range'] .headline {
+  font-family: var(--md-sys-typescale-title-large-font);
+  font-weight: var(--md-sys-typescale-title-large-weight);
+  font-size: var(--md-sys-typescale-title-large-size);
+  line-height: var(--md-sys-typescale-title-large-line-height);
+  letter-spacing: var(--md-sys-typescale-title-large-tracking);
+}
+
+/* ---- Modal date input ---- */
+
+.inputBody {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--md-sys-measurement-space150);
+  /* Derived: 16px above the fields, 24px sides (dialog padding). */
+  padding: var(--md-sys-measurement-space200) var(--md-sys-measurement-space300) 0;
+}
+
+.inputBody > * {
+  flex: 1 1 0;
+  min-inline-size: 0;
+}
+
+/* ---- Actions ---- */
+
+.actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--md-sys-measurement-space100);
+  padding: var(--md-sys-measurement-space100) var(--md-sys-measurement-space150)
+    var(--md-sys-measurement-space150);
+}
+
+.docked .actions {
+  /* 56px row: 8 + 40 + 8. */
+  padding-block-end: var(--md-sys-measurement-space100);
+}
+
+.clear {
+  margin-inline-end: auto;
+}
+
+/* ---- Calendar ---- */
+
+.calendar {
+  --_row-height: 48px;
+  --_weekday-height: 48px;
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+}
+
+.calendar[data-layout='modal'] {
+  --_row-height: 40px;
+  --_weekday-height: 40px;
+}
+
+.calendar[data-layout='range'] {
+  flex: 1 1 auto;
+}
+
+.view {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-block-size: 0;
+}
+
+.dockedHeader {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  block-size: 64px;
+  padding-inline: var(--md-sys-measurement-space150);
+}
+
+.group {
+  display: flex;
+  align-items: center;
+}
+
+/* Arrows hide while a month or year menu replaces the calendar. */
+.dockedHeader [data-hidden] {
+  visibility: hidden;
+}
+
+.nav {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  block-size: 56px;
+  padding-inline: var(--md-sys-measurement-space200) var(--md-sys-measurement-space150);
+}
+
+.navArrows {
+  display: flex;
+  margin-inline-start: auto;
+}
+
+.body {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Modal: the grid area is fixed (6 rows) so the dialog doesn't jump. */
+.calendar[data-layout='modal'] .body {
+  block-size: calc(var(--_weekday-height) + 6 * var(--_row-height) + var(--md-sys-measurement-space100));
+}
+
+/* ---- Month slide (spec §6: lateral transition on default spatial) ---- */
+
+.slide {
+  --_dir: 1;
+}
+
+.slide:dir(rtl) {
+  --_dir: -1;
+}
+
+.slide[data-enter='next'] {
+  animation: slide-next var(--md-sys-motion-spring-default-spatial-duration)
+    var(--md-sys-motion-spring-default-spatial-easing);
+}
+
+.slide[data-enter='prev'] {
+  animation: slide-prev var(--md-sys-motion-spring-default-spatial-duration)
+    var(--md-sys-motion-spring-default-spatial-easing);
+}
+
+/* ---- Day grid ---- */
+
+.grid {
+  table-layout: fixed;
+  border-collapse: collapse;
+  /* 7 x 48px columns, centered: 12px each side in the 360px container. */
+  inline-size: 336px;
+  margin-inline: auto;
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-weight: var(--md-sys-typescale-body-large-weight);
+  font-size: var(--md-sys-typescale-body-large-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  letter-spacing: var(--md-sys-typescale-body-large-tracking);
+  /* Derived: aligned numerals. */
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+
+.weekday {
+  block-size: var(--_weekday-height);
+  padding: 0;
+  color: var(--md-sys-color-on-surface);
+  font-weight: inherit;
+  text-align: center;
+  cursor: default;
+}
+
+.cell {
+  position: relative;
+  inline-size: 48px;
+  block-size: var(--_row-height);
+  padding: 0;
+  text-align: center;
+}
+
+/* Range band (active indicator): 40px, from the start circle's center to the
+   end circle's center; square cuts at the row edges (spec §11). */
+.cell[data-range]::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline: 0;
+  block-size: 40px;
+  translate: 0 -50%;
+  background: var(--md-sys-color-secondary-container);
+  pointer-events: none;
+}
+
+.cell[data-range='start']::before {
+  inset-inline-start: 50%;
+}
+
+.cell[data-range='end']::before {
+  inset-inline-end: 50%;
+}
+
+/* Derived (optional in the spec): hover preview while picking the end date. */
+.cell[data-preview]::before {
+  opacity: 0.5;
+}
+
+/*
+ * Date. State rules are :where()-wrapped so source order decides:
+ * base < outside < in range < today < selected < disabled.
+ */
+.day {
+  composes: interactive target from '../shared/interaction.module.css';
+  --_label: var(--md-sys-color-on-surface);
+  --_container: transparent;
+  --_outline: transparent;
+  --_state-layer-color: var(--md-sys-color-on-surface-variant);
+
+  display: inline-grid;
+  place-items: center;
+  box-sizing: border-box;
+  inline-size: 40px;
+  block-size: 40px;
+  margin: 0;
+  vertical-align: middle;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--_container);
+  box-shadow: inset 0 0 0 1px var(--_outline);
+  color: var(--_label);
+  user-select: none;
+  transition:
+    background-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    color var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.dayLabel {
+  position: relative;
+}
+
+:where(.calendar[data-outside='show'] .cell[data-outside]) .day {
+  --_label: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+}
+
+:where(.calendar[data-outside='hide'] .cell[data-outside]) .day {
+  visibility: hidden;
+}
+
+:where(.cell[data-range='middle']) .day {
+  --_label: var(--md-sys-color-on-secondary-container);
+  /* Tokenized pair, kept as is (spec §11). */
+  --_state-layer-color: var(--md-sys-color-on-primary-container);
+}
+
+.day:where([data-today]) {
+  --_label: var(--md-sys-color-primary);
+  --_outline: var(--md-sys-color-primary);
+  --_state-layer-color: var(--md-sys-color-primary);
+}
+
+/* Selected (and range start/end): the fill wins over the today outline. */
+.day:where([data-selected]) {
+  --_label: var(--md-sys-color-on-primary);
+  --_container: var(--md-sys-color-primary);
+  --_outline: transparent;
+  --_state-layer-color: var(--md-sys-color-on-primary);
+}
+
+/* Derived (not tokenized): disabled recipe. Still focusable by arrows. */
+.day:where([data-disabled]) {
+  --_label: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+  cursor: default;
+}
+
+.day:where([data-disabled][data-today]) {
+  --_outline: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+}
+
+.day:where([data-disabled][data-selected]) {
+  --_container: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
+}
+
+/* ---- Range: sticky weekdays + scrolling months ---- */
+
+.weekdays {
+  display: grid;
+  flex-shrink: 0;
+  grid-template-columns: repeat(7, 48px);
+  justify-content: center;
+  align-items: center;
+  block-size: 40px;
+  border-block-end: 1px solid var(--md-sys-color-outline-variant);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-weight: var(--md-sys-typescale-body-large-weight);
+  font-size: var(--md-sys-typescale-body-large-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  letter-spacing: var(--md-sys-typescale-body-large-tracking);
+}
+
+.weekdays .weekday {
+  block-size: auto;
+}
+
+.months {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-block-end: var(--md-sys-measurement-space300);
+}
+
+.month {
+  display: block;
+}
+
+.subhead {
+  display: flex;
+  align-items: center;
+  block-size: 48px;
+  margin: 0;
+  padding-inline: var(--md-sys-measurement-space300);
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-title-small-font);
+  font-weight: var(--md-sys-typescale-title-small-weight);
+  font-size: var(--md-sys-typescale-title-small-size);
+  line-height: var(--md-sys-typescale-title-small-line-height);
+  letter-spacing: var(--md-sys-typescale-title-small-tracking);
+}
+
+/* ---- Menu buttons (docked month/year, modal month + year) ---- */
+
+.menuButton {
+  composes: interactive target from '../shared/interaction.module.css';
+  --_color: var(--md-sys-color-on-surface-variant);
+
+  display: inline-flex;
+  align-items: center;
+  gap: var(--md-sys-measurement-space100);
+  box-sizing: border-box;
+  block-size: 40px;
+  margin: 0;
+  padding-block: 0;
+  padding-inline: var(--md-sys-measurement-space150) var(--md-sys-measurement-space100);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--_color);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  font-size: var(--md-sys-typescale-label-large-size);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+  white-space: nowrap;
+}
+
+.menuButton:disabled {
+  --_color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+}
+
+.menuLabel {
+  position: relative;
+}
+
+.menuArrow {
+  --md-icon-size: 18px;
+  --md-icon-optical-size: 20;
+  transition: rotate var(--md-sys-motion-spring-fast-spatial-duration)
+    var(--md-sys-motion-spring-fast-spatial-easing);
+}
+
+.menuButton[aria-expanded='true'] .menuArrow {
+  rotate: 180deg;
+}
+
+/* ---- Docked month/year lists ---- */
+
+.menuList {
+  position: relative;
+  /* Derived: the calendar area (weekday row + 6 week rows of 48px). */
+  block-size: calc(7 * 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-block-start: 1px solid var(--md-sys-color-outline-variant);
+  outline: none;
+}
+
+.menuItem {
+  composes: interactive from '../shared/interaction.module.css';
+  --_state-layer-color: var(--md-sys-color-on-surface);
+  --_focus-ring-offset: var(--md-sys-state-focus-indicator-inner-offset);
+  --_label: var(--md-sys-color-on-surface);
+  --_check: var(--md-sys-color-on-surface);
+
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-measurement-space200);
+  box-sizing: border-box;
+  block-size: 48px;
+  /* Unselected labels align after the 24px check slot: 16 + 24 + 16. */
+  padding-inline: var(--md-sys-measurement-space700) var(--md-sys-measurement-space200);
+  color: var(--_label);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-weight: var(--md-sys-typescale-body-large-weight);
+  font-size: var(--md-sys-typescale-body-large-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  letter-spacing: var(--md-sys-typescale-body-large-tracking);
+}
+
+.menuItem[aria-selected='true'] {
+  padding-inline-start: var(--md-sys-measurement-space200);
+  background: var(--md-sys-color-surface-variant);
+}
+
+@media (hover: hover) {
+  .menuItem[aria-selected='true']:hover {
+    --_check: var(--md-sys-color-on-surface-variant);
+  }
+}
+
+.menuItem[aria-selected='true']:is(:focus-visible, :active) {
+  --_check: var(--md-sys-color-on-surface-variant);
+}
+
+.menuItem[aria-disabled='true'] {
+  --_label: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+}
+
+.check {
+  --md-icon-size: 24px;
+  color: var(--_check);
+}
+
+.optionLabel {
+  position: relative;
+}
+
+/* ---- Modal year grid ---- */
+
+.yearGrid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 72px);
+  justify-content: space-evenly;
+  align-content: start;
+  /* Derived: 16px between rows. */
+  row-gap: var(--md-sys-measurement-space200);
+  box-sizing: border-box;
+  block-size: 100%;
+  padding: var(--md-sys-measurement-space100) var(--md-sys-measurement-space150);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  outline: none;
+}
+
+.year {
+  composes: interactive target from '../shared/interaction.module.css';
+  --_label: var(--md-sys-color-on-surface-variant);
+  --_container: transparent;
+  --_state-layer-color: var(--md-sys-color-on-surface-variant);
+
+  display: grid;
+  place-items: center;
+  inline-size: 72px;
+  block-size: 36px;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--_container);
+  color: var(--_label);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-weight: var(--md-sys-typescale-body-large-weight);
+  font-size: var(--md-sys-typescale-body-large-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  letter-spacing: var(--md-sys-typescale-body-large-tracking);
+  font-variant-numeric: tabular-nums;
+}
+
+.year[aria-selected='true'] {
+  --_label: var(--md-sys-color-on-primary);
+  --_container: var(--md-sys-color-primary);
+  --_state-layer-color: var(--md-sys-color-on-primary);
+}
+
+.year[aria-disabled='true'] {
+  --_label: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+}
+
+/* ---- Utilities ---- */
+
+.visuallyHidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- Motion ---- */
+
+@media (prefers-reduced-motion: reduce) {
+  .docked[data-state='open'] {
+    animation: fade-in var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-linear);
+  }
+
+  .slide[data-enter] {
+    animation: none;
+  }
+
+  .menuArrow {
+    transition: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes reveal-down {
+  from {
+    clip-path: inset(-24px -24px 100% -24px round calc(var(--_shape) + 24px));
+  }
+  to {
+    clip-path: inset(-24px round calc(var(--_shape) + 24px));
+  }
+}
+
+@keyframes reveal-up {
+  from {
+    clip-path: inset(100% -24px -24px -24px round calc(var(--_shape) + 24px));
+  }
+  to {
+    clip-path: inset(-24px round calc(var(--_shape) + 24px));
+  }
+}
+
+@keyframes slide-next {
+  from {
+    translate: calc(var(--_dir) * 100%) 0;
+    opacity: 0;
+  }
+}
+
+@keyframes slide-prev {
+  from {
+    translate: calc(var(--_dir) * -100%) 0;
+    opacity: 0;
+  }
+}
+
+/* ---- Forced colors ---- */
+
+@media (forced-colors: active) {
+  .docked {
+    border: 1px solid CanvasText;
+  }
+
+  .day:where([data-selected]),
+  .year[aria-selected='true'],
+  .menuItem[aria-selected='true'] {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .day:where([data-today]:not([data-selected])) {
+    box-shadow: none;
+    outline: 1px solid CanvasText;
+  }
+
+  .cell[data-range]::before {
+    forced-color-adjust: none;
+    background: transparent;
+    border-block: 1px solid Highlight;
+  }
+
+  .day:where([data-disabled]),
+  :where(.calendar[data-outside='show'] .cell[data-outside]) .day,
+  .menuButton:disabled,
+  .year[aria-disabled='true'],
+  .menuItem[aria-disabled='true'] {
+    color: GrayText;
+  }
+}

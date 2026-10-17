@@ -1,0 +1,193 @@
+/*
+ * Split button. Spec: m3-guidelines/components/buttons/split-button.md
+ *
+ * Both halves compose the shared label-button base (default colors, size,
+ * typography, elevation, disabled) and carry data-color / data-size. This
+ * file sets the 2px gap, the padding, the trailing half's fixed width and
+ * the per-corner shapes: outer corners full, inner corners per state
+ * (rest / hovered-focused / pressed, and full for the open trailing half).
+ * The trailing half is the Ark Menu trigger: aria-expanded marks the open
+ * menu.
+ */
+.root {
+  /* ---- size: small (default) ---- */
+  --_split-height: 40px;
+  --_split-gap: var(--md-sys-measurement-space25);
+  --_inner: var(--md-sys-shape-corner-value-extra-small);
+  --_inner-hover: var(--md-sys-shape-corner-value-medium);
+  --_inner-pressed: var(--md-sys-shape-corner-value-medium);
+  --_lead-start: var(--md-sys-measurement-space200);
+  --_lead-end: var(--md-sys-measurement-space150);
+  --_trail-icon: 22px;
+  --_trail-pad: 13px;
+  /* Optical centering of the closed chevron toward the gap (source
+     measurement; direction derived, spec §4.2). */
+  --_icon-offset: -1px;
+
+  display: inline-flex;
+  gap: var(--_split-gap);
+  vertical-align: middle;
+}
+
+.root[data-size='xsmall'] {
+  --_split-height: 32px;
+  --_split-gap: var(--md-sys-measurement-space25);
+  --_inner: var(--md-sys-shape-corner-value-extra-small);
+  --_inner-hover: var(--md-sys-shape-corner-value-small);
+  --_inner-pressed: var(--md-sys-shape-corner-value-small);
+  --_lead-start: var(--md-sys-measurement-space150);
+  --_lead-end: var(--md-sys-measurement-space125);
+  --_trail-icon: 22px;
+  --_trail-pad: 13px;
+  --_icon-offset: -1px;
+}
+
+.root[data-size='medium'] {
+  --_split-height: 56px;
+  --_split-gap: var(--md-sys-measurement-space25);
+  --_inner: var(--md-sys-shape-corner-value-extra-small);
+  --_inner-hover: var(--md-sys-shape-corner-value-medium);
+  --_inner-pressed: var(--md-sys-shape-corner-value-medium);
+  --_lead-start: var(--md-sys-measurement-space300);
+  --_lead-end: var(--md-sys-measurement-space300);
+  --_trail-icon: 26px;
+  --_trail-pad: 15px;
+  --_icon-offset: -2px;
+}
+
+.root[data-size='large'] {
+  --_split-height: 96px;
+  --_split-gap: var(--md-sys-measurement-space25);
+  --_inner: var(--md-sys-shape-corner-value-small);
+  --_inner-hover: var(--md-sys-shape-corner-value-large-increased);
+  --_inner-pressed: var(--md-sys-shape-corner-value-large-increased);
+  --_lead-start: var(--md-sys-measurement-space600);
+  --_lead-end: var(--md-sys-measurement-space600);
+  --_trail-icon: 38px;
+  --_trail-pad: 29px;
+  --_icon-offset: -3px;
+}
+
+.root[data-size='xlarge'] {
+  --_split-height: 136px;
+  --_split-gap: var(--md-sys-measurement-space25);
+  --_inner: var(--md-sys-shape-corner-value-medium);
+  --_inner-hover: var(--md-sys-shape-corner-value-large-increased);
+  --_inner-pressed: var(--md-sys-shape-corner-value-large-increased);
+  --_lead-start: var(--md-sys-measurement-space800);
+  --_lead-end: var(--md-sys-measurement-space800);
+  --_trail-icon: 50px;
+  --_trail-pad: 43px;
+  --_icon-offset: -6px;
+}
+
+/* ---- Halves ---- */
+
+.half {
+  composes: base from '../shared/button-base.module.css';
+}
+
+/* [data-size] on the root (always set) lifts these above the base's size
+   rules; the longhands replace its border-radius. */
+.root[data-size] > .half {
+  --_height: var(--_split-height);
+  --_r-inner: var(--_inner);
+}
+
+.root[data-size] > .leading {
+  --_leading: var(--_lead-start);
+  --_trailing: var(--_lead-end);
+
+  border-start-start-radius: var(--_full);
+  border-end-start-radius: var(--_full);
+  border-start-end-radius: var(--_r-inner);
+  border-end-end-radius: var(--_r-inner);
+}
+
+/* Icon-only leading half: the same space on both sides of the icon (derived). */
+.root[data-size] > .leading[data-icon-only] {
+  --_trailing: var(--_lead-start);
+}
+
+.root[data-size] > .trailing {
+  --_leading: var(--_trail-pad);
+  --_trailing: var(--_trail-pad);
+  --md-icon-size: var(--_trail-icon);
+  --md-icon-optical-size: 24;
+
+  /* Fixed width: leading + icon + trailing (derived, spec §4.2). */
+  inline-size: calc(var(--_trail-pad) * 2 + var(--_trail-icon));
+  border-start-end-radius: var(--_full);
+  border-end-end-radius: var(--_full);
+  border-start-start-radius: var(--_r-inner);
+  border-end-start-radius: var(--_r-inner);
+}
+
+/* ---- Inner corner states ---- */
+
+@media (hover: hover) {
+  .root[data-size] > .half:hover {
+    --_r-inner: var(--_inner-hover);
+  }
+}
+
+/* No focused token: focus uses the hovered value (spec §11). */
+.root[data-size] > .half:focus-visible {
+  --_r-inner: var(--_inner-hover);
+}
+
+.root[data-size] > .half:is(:active, [data-key-pressed]) {
+  --_r-inner: var(--_inner-pressed);
+}
+
+/* Open menu: the trailing half becomes a pill. Placed last so it wins. */
+.root[data-size] > .trailing[aria-expanded='true'] {
+  --_r-inner: var(--_full);
+}
+
+/* Disabled halves keep the rest shape. */
+.root[data-size] > .half:is(:disabled, [data-disabled]) {
+  --_r-inner: var(--_inner);
+}
+
+/* Open menu: a persistent 10% state layer (spec §4.1), colors unchanged. */
+.root[data-size] > .trailing[aria-expanded='true']::before {
+  opacity: var(--md-sys-state-pressed-state-layer-opacity);
+}
+
+/* ---- Menu icon ---- */
+
+/* Rotation: the standard motion scheme's fast spatial curve as a literal, so
+   it stays standard under the expressive scheme (spec §6). */
+.menuIcon {
+  position: relative;
+  inset-inline-start: var(--_icon-offset);
+  rotate: 0deg;
+  transition:
+    rotate 350ms cubic-bezier(0.27, 1.06, 0.18, 1),
+    inset-inline-start 350ms cubic-bezier(0.27, 1.06, 0.18, 1);
+}
+
+/* Rotates inwards: clockwise in LTR, counter-clockwise in RTL (derived). */
+.trailing[aria-expanded='true'] .menuIcon {
+  inset-inline-start: 0;
+  rotate: 180deg;
+}
+
+.trailing[aria-expanded='true']:dir(rtl) .menuIcon {
+  rotate: -180deg;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menuIcon {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .trailing[aria-expanded='true'] {
+    border-color: Highlight;
+    background: Highlight;
+    color: HighlightText;
+  }
+}

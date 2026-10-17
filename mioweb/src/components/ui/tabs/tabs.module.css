@@ -1,0 +1,255 @@
+/*
+ * Tabs (md.comp.primary-navigation-tab, md.comp.secondary-navigation-tab).
+ * Bar: full-width surface, no radius, 1px outline-variant divider inside its
+ * bottom edge. Tabs: 48px (64px stacked icon + label), title-small labels,
+ * full-bleed state layer with an inner focus ring. Indicator: primary 3px
+ * with 3px top corners under the icon + label group (inset 2px, at least
+ * 24px); secondary 2px, square, full tab width.
+ */
+
+.root {
+  display: grid;
+  min-inline-size: 0;
+}
+
+/* ---- Bar ---- */
+
+.bar {
+  container-type: inline-size;
+  min-inline-size: 0;
+  border-radius: var(--md-sys-shape-corner-none);
+  background: var(--md-sys-color-surface);
+  /* Divider inside the container (included in its height), under the tabs. */
+  box-shadow: inset 0 -1px 0 var(--md-sys-color-outline-variant);
+}
+
+.list {
+  display: grid;
+  grid-auto-flow: column;
+  /* Compact: tabs fill the bar in equal columns. */
+  grid-auto-columns: minmax(0, 1fr);
+}
+
+/* Fixed, 600px and up: equal columns as wide as the widest tab, at the start
+   or centered. The breakpoint is derived (spec §4.2); a container query, so
+   tabs embedded in a narrow region keep the compact layout (web mapping). */
+@container (min-width: 600px) {
+  .bar[data-layout='fixed'] .list {
+    inline-size: max-content;
+    grid-auto-columns: 1fr;
+  }
+
+  .bar[data-layout='fixed'][data-align='center'] .list {
+    margin-inline: auto;
+  }
+}
+
+.bar[data-layout='scrollable'] .scroller {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  /* Tabs scrolled into view stop 52px from the leading edge too. */
+  scroll-padding-inline: 52px 0;
+}
+
+.bar[data-layout='scrollable'] .scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.bar[data-layout='scrollable'] .list {
+  inline-size: max-content;
+  grid-auto-columns: max-content;
+  /* First tab 52px from the leading edge (spec §2). */
+  padding-inline-start: 52px;
+}
+
+/* ---- Tab ---- */
+
+.tab {
+  composes: interactive from '../shared/interaction.module.css';
+
+  --_color: var(--md-sys-color-on-surface-variant);
+  --_state-layer-color: var(--md-sys-color-on-surface);
+  --_height: 48px;
+  --_focus-ring-offset: var(--md-sys-state-focus-indicator-inner-offset);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-block-size: var(--_height);
+  /* 48px minimum and 16px side padding are derived (Material web; spec §4.2). */
+  min-inline-size: 48px;
+  margin: 0;
+  padding-block: 0;
+  padding-inline: 16px;
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-none);
+  background: none;
+  color: var(--_color);
+  font-family: var(--md-sys-typescale-title-small-font);
+  font-weight: var(--md-sys-typescale-title-small-weight);
+  font-size: var(--md-sys-typescale-title-small-size);
+  line-height: var(--md-sys-typescale-title-small-line-height);
+  letter-spacing: var(--md-sys-typescale-title-small-tracking);
+  text-align: center;
+  transition: color var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.bar[data-icon-placement='stacked'] .tab[data-has-icon][data-has-label] {
+  --_height: 64px;
+}
+
+/* Icon + label group; the primary indicator spans it. Stretched to the tab's
+   height so the indicator's bottom is the tab's bottom. */
+.content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  gap: 8px;
+  min-inline-size: 0;
+}
+
+.bar[data-variant='primary'] .content {
+  position: relative;
+}
+
+/* Stacked: icon above the label, no gap (derived: 24 + 20 centered in 64). */
+.bar[data-icon-placement='stacked'] .tab[data-has-icon][data-has-label] .content {
+  flex-direction: column;
+  gap: 0;
+}
+
+.icon {
+  --md-icon-size: 24px;
+  --md-icon-optical-size: 24;
+  flex: none;
+}
+
+/* One or two lines with an ellipsis; stacked tabs have room for one (derived). */
+.label {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  min-inline-size: 0;
+}
+
+.bar[data-icon-placement='stacked'] .tab[data-has-icon] .label {
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+}
+
+/* Scrollable tabs are as wide as their label. */
+.bar[data-layout='scrollable'] .label {
+  white-space: nowrap;
+}
+
+.hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---- Active indicator ---- */
+
+.indicator {
+  --_indicator-height: 3px;
+  --_indicator-shape: 3px 3px 0 0;
+
+  position: absolute;
+  inset-block-end: 0;
+  /* Primary: 2px inside the content, but never under 24px (stays centered). */
+  inset-inline: min(2px, calc(50% - 12px));
+  block-size: var(--_indicator-height);
+  border-radius: var(--_indicator-shape);
+  background: var(--md-sys-color-primary);
+  opacity: 0;
+  pointer-events: none;
+  /* Physical on purpose: the FLIP transform in Tabs.tsx is computed from
+     physical left edges, in both directions. */
+  transform-origin: left center;
+}
+
+/* Secondary: positioned against the tab itself (.content isn't positioned), full width. */
+.bar[data-variant='secondary'] .indicator {
+  --_indicator-height: 2px;
+  --_indicator-shape: 0;
+
+  inset-inline: 0;
+}
+
+.tab[data-selected] .indicator {
+  opacity: 1;
+}
+
+/* ---- States ---- */
+
+.tab:not([data-selected], [data-disabled]):is(:focus-visible, :active, [data-key-pressed]) {
+  --_color: var(--md-sys-color-on-surface);
+}
+
+@media (hover: hover) {
+  .tab:not([data-selected], [data-disabled]):hover {
+    --_color: var(--md-sys-color-on-surface);
+  }
+}
+
+/* Primary: an inactive tab's ripple is primary (source token). */
+.bar[data-variant='primary'] .tab:not([data-selected]):is(:active, [data-key-pressed]) {
+  --_state-layer-color: var(--md-sys-color-primary);
+}
+
+.bar[data-variant='primary'] .tab[data-selected] {
+  --_color: var(--md-sys-color-primary);
+  --_state-layer-color: var(--md-sys-color-primary);
+}
+
+.bar[data-variant='secondary'] .tab[data-selected] {
+  --_color: var(--md-sys-color-on-surface);
+  --_state-layer-color: var(--md-sys-color-on-surface);
+}
+
+/* Disabled isn't in the spec (§11); on-surface at 0.38 from the shared
+   disabled recipe (derived). */
+.tab:is(:disabled, [data-disabled]) {
+  --_color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+}
+
+/* ---- Panel ---- */
+
+.panel {
+  outline: none;
+}
+
+.panel:focus-visible {
+  outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
+  outline-offset: var(--md-sys-state-focus-indicator-inner-offset);
+}
+
+/* ---- Forced colors ---- */
+
+@media (forced-colors: active) {
+  .bar {
+    box-shadow: none;
+    border-block-end: 1px solid CanvasText;
+  }
+
+  .indicator {
+    forced-color-adjust: none;
+    background: Highlight;
+  }
+
+  .tab[data-selected] {
+    color: Highlight;
+  }
+
+  .tab:is(:disabled, [data-disabled]) {
+    color: GrayText;
+  }
+}

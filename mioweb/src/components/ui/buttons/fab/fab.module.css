@@ -1,0 +1,103 @@
+/*
+ * FAB. Spec: m3-guidelines/components/buttons/floating-action-button.md
+ *
+ * Host, elevation and enter/exit come from the shared FAB base. Attributes:
+ * data-size (fab | medium | large), data-color, data-lowered (surface only),
+ * data-visible. No shape morph and no disabled state.
+ */
+.root {
+  composes: base from '../shared/fab-base.module.css';
+
+  /* ---- size: fab (default). Every size is >= 48px, so no touch target. ---- */
+  --_width: 56px;
+  --_height: 56px;
+  --_icon-size: 24px;
+  --_icon-optical-size: 24;
+  --_shape: var(--md-sys-shape-corner-large);
+
+  /* ---- color: primary-container (default) ---- */
+  --_container-color: var(--md-sys-color-primary-container);
+  --_icon-color: var(--md-sys-color-on-primary-container);
+  --_elevation-rest: var(--md-sys-elevation-level3);
+  --_elevation-hover: var(--md-sys-elevation-level4);
+
+  inline-size: var(--_width);
+  padding: 0;
+}
+
+/* ---- Size ---- */
+
+.root[data-size='medium'] {
+  --_width: 80px;
+  --_height: 80px;
+  --_icon-size: 28px;
+  --_icon-optical-size: 28;
+  --_shape: var(--md-sys-shape-corner-large-increased);
+}
+
+.root[data-size='large'] {
+  --_width: 96px;
+  --_height: 96px;
+  --_icon-size: 36px;
+  --_icon-optical-size: 36;
+  --_shape: var(--md-sys-shape-corner-extra-large);
+}
+
+/* ---- Color: container roles ---- */
+
+.root[data-color='secondary-container'] {
+  --_container-color: var(--md-sys-color-secondary-container);
+  --_icon-color: var(--md-sys-color-on-secondary-container);
+  --_elevation-rest: var(--md-sys-elevation-level3);
+  --_elevation-hover: var(--md-sys-elevation-level4);
+}
+
+.root[data-color='tertiary-container'] {
+  --_container-color: var(--md-sys-color-tertiary-container);
+  --_icon-color: var(--md-sys-color-on-tertiary-container);
+  --_elevation-rest: var(--md-sys-elevation-level3);
+  --_elevation-hover: var(--md-sys-elevation-level4);
+}
+
+/* ---- Color: solid roles ---- */
+
+.root[data-color='primary'] {
+  --_container-color: var(--md-sys-color-primary);
+  --_icon-color: var(--md-sys-color-on-primary);
+  --_elevation-rest: var(--md-sys-elevation-level3);
+  --_elevation-hover: var(--md-sys-elevation-level4);
+}
+
+.root[data-color='secondary'] {
+  --_container-color: var(--md-sys-color-secondary);
+  --_icon-color: var(--md-sys-color-on-secondary);
+  --_elevation-rest: var(--md-sys-elevation-level3);
+  --_elevation-hover: var(--md-sys-elevation-level4);
+}
+
+.root[data-color='tertiary'] {
+  --_container-color: var(--md-sys-color-tertiary);
+  --_icon-color: var(--md-sys-color-on-tertiary);
+  --_elevation-rest: var(--md-sys-elevation-level3);
+  --_elevation-hover: var(--md-sys-elevation-level4);
+}
+
+/* ---- Color: surface (baseline, not recommended); always 56px ---- */
+
+.root[data-color='surface'] {
+  --_width: 56px;
+  --_height: 56px;
+  --_icon-size: 24px;
+  --_icon-optical-size: 24;
+  --_shape: var(--md-sys-shape-corner-large);
+  --_container-color: var(--md-sys-color-surface-container-high);
+  --_icon-color: var(--md-sys-color-primary);
+  --_elevation-rest: var(--md-sys-elevation-level3);
+  --_elevation-hover: var(--md-sys-elevation-level4);
+}
+
+.root[data-color='surface'][data-lowered] {
+  --_container-color: var(--md-sys-color-surface-container-low);
+  --_elevation-rest: var(--md-sys-elevation-level1);
+  --_elevation-hover: var(--md-sys-elevation-level2);
+}

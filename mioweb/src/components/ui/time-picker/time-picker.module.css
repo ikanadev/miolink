@@ -1,0 +1,600 @@
+/*
+ * Time picker. Spec: m3-guidelines/components/date-and-time-pickers/time-pickers.md
+ *
+ * Structure: .root > .field (outlined TextField with the clock button) +
+ * hidden form input. In a portal: .scrim + .dialogPositioner > .dialog
+ * (composes the Dialog container) > .headline, then
+ *  - dial view: .display (.time > .box, .separator, .box; .period) + .dial
+ *    (.track, .handle, .center, .values > .value, .onHandle > .value);
+ *  - input view: .inputArea > .inputs (.fields > .inputField > .input +
+ *    .supportingText; .period) + .inputError;
+ * and .actions (.toggle, Cancel, OK).
+ *
+ * Attributes: .dialog data-view ("dial" | "input"), data-orientation
+ * ("vertical" | "horizontal"), data-hour-cycle ("h12" | "h23"); .box
+ * aria-checked; .period data-orientation; .periodOption data-disabled;
+ * .dial data-dragging; .handle data-between; .value aria-selected,
+ * aria-disabled, data-inner; .inputField data-invalid.
+ */
+
+/* The handle angle and ring radius are animated, and the label layer's
+   clip follows them (spec §10d). */
+@property --_dial-angle {
+  syntax: '<angle>';
+  inherits: true;
+  initial-value: 0deg;
+}
+
+@property --_dial-radius {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 101px;
+}
+
+.root {
+  display: block;
+  min-inline-size: 0;
+}
+
+.field {
+  inline-size: 100%;
+}
+
+/* ---- Modal surface (Ark Dialog in the project's Dialog root) ---- */
+
+.scrim {
+  composes: scrim from '../dialog/dialog.module.css';
+}
+
+.dialogPositioner {
+  composes: positioner from '../dialog/dialog.module.css';
+}
+
+.dialog {
+  composes: container from '../dialog/dialog.module.css';
+}
+
+/* [data-view] raises these above the composed container rules. */
+.dialog[data-view] {
+  --_container-color: var(--md-sys-color-surface-container-high);
+  --_box-width: 96px;
+  --_box-height: 80px;
+
+  display: grid;
+  grid-template-areas: 'head' 'display' 'dial' 'actions';
+  justify-items: start;
+  inline-size: max-content;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  padding: var(--md-sys-measurement-space300);
+  color: var(--md-sys-color-on-surface);
+  /* The picker never scrolls (spec §6); the auto orientation keeps it in view. */
+  overflow: visible;
+}
+
+/* 24h vertical layout: 114px boxes (token). */
+.dialog[data-view][data-hour-cycle='h23'][data-orientation='vertical'] {
+  --_box-width: 114px;
+}
+
+/* Horizontal (derived from Compose): time row + period on the start side,
+   the dial on the end side, 52px apart. */
+.dialog[data-view='dial'][data-orientation='horizontal'] {
+  grid-template-areas: 'head head' 'display dial' 'actions actions';
+  column-gap: 52px;
+}
+
+.dialog[data-view='input'] {
+  grid-template-areas: 'head' 'inputs' 'actions';
+}
+
+.headline {
+  grid-area: head;
+  /* Derived: 20px to the time row (Compose). */
+  margin: 0 0 var(--md-sys-measurement-space250);
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-label-medium-font);
+  font-weight: var(--md-sys-typescale-label-medium-weight);
+  font-size: var(--md-sys-typescale-label-medium-size);
+  line-height: var(--md-sys-typescale-label-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-label-medium-tracking);
+}
+
+/* ---- Time row (dial view) ---- */
+
+.display {
+  grid-area: display;
+  display: flex;
+  gap: var(--md-sys-measurement-space150);
+  justify-self: center;
+  animation: fade-in var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.dialog[data-orientation='horizontal'] .display {
+  flex-direction: column;
+  align-self: start;
+}
+
+.time {
+  display: flex;
+  align-items: center;
+}
+
+.box {
+  composes: interactive from '../shared/interaction.module.css';
+  --_container-color: var(--md-sys-color-surface-container-highest);
+  --_label-color: var(--md-sys-color-on-surface);
+
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  inline-size: var(--_box-width);
+  block-size: var(--_box-height);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-small);
+  background: var(--_container-color);
+  color: var(--_label-color);
+  font-family: var(--md-sys-typescale-display-large-font);
+  font-weight: var(--md-sys-typescale-display-large-weight);
+  font-size: var(--md-sys-typescale-display-large-size);
+  line-height: var(--md-sys-typescale-display-large-line-height);
+  letter-spacing: var(--md-sys-typescale-display-large-tracking);
+  /* Derived: digits don't shift as they change. */
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    color var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.box[aria-checked='true'] {
+  --_container-color: var(--md-sys-color-primary-container);
+  --_label-color: var(--md-sys-color-on-primary-container);
+}
+
+.boxLabel {
+  pointer-events: none;
+}
+
+.separator {
+  display: grid;
+  place-items: center;
+  inline-size: 24px;
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-display-large-font);
+  font-weight: var(--md-sys-typescale-display-large-weight);
+  font-size: var(--md-sys-typescale-display-large-size);
+  line-height: var(--md-sys-typescale-display-large-line-height);
+  letter-spacing: var(--md-sys-typescale-display-large-tracking);
+  user-select: none;
+}
+
+/* ---- Period selector (AM/PM) ---- */
+
+.period {
+  --_outline: 1px solid var(--md-sys-color-outline);
+
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  inline-size: 52px;
+  block-size: var(--_box-height);
+  border: var(--_outline);
+  border-radius: var(--md-sys-shape-corner-small);
+  overflow: hidden;
+}
+
+.period[data-orientation='horizontal'] {
+  flex-direction: row;
+  /* 216 = 96 + 24 + 96: the time row's width. */
+  inline-size: calc(2 * var(--_box-width) + 24px);
+  block-size: 38px;
+}
+
+.dialog[data-view='input'] .period {
+  block-size: 72px;
+}
+
+.periodOption {
+  composes: interactive from '../shared/interaction.module.css';
+  --_label-color: var(--md-sys-color-on-surface-variant);
+  --_container-color: transparent;
+  --_focus-ring-offset: var(--md-sys-state-focus-indicator-inner-offset);
+
+  display: grid;
+  flex: 1 1 0;
+  place-items: center;
+  min-block-size: 0;
+  background: var(--_container-color);
+  color: var(--_label-color);
+  font-family: var(--md-sys-typescale-title-medium-font);
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+  font-size: var(--md-sys-typescale-title-medium-size);
+  line-height: var(--md-sys-typescale-title-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-title-medium-tracking);
+  user-select: none;
+  transition:
+    background-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    color var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+/* Derived: 1px outline-colored divider between the segments. */
+.periodOption + .periodOption {
+  border-block-start: var(--_outline);
+}
+
+.period[data-orientation='horizontal'] .periodOption + .periodOption {
+  border-block-start: 0;
+  border-inline-start: var(--_outline);
+}
+
+.periodOption:has(:checked) {
+  --_label-color: var(--md-sys-color-on-tertiary-container);
+  --_container-color: var(--md-sys-color-tertiary-container);
+}
+
+/* The native radio is the focus target; the label shows its ring. */
+.periodOption:has(:focus-visible) {
+  outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
+  outline-offset: var(--_focus-ring-offset);
+}
+
+.periodOption:has(:focus-visible)::before {
+  opacity: var(--md-sys-state-focus-state-layer-opacity);
+}
+
+/* Derived: a period with no time in min/max. */
+.periodOption[data-disabled] {
+  --_label-color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+}
+
+.periodInput {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.periodLabel {
+  pointer-events: none;
+}
+
+/* ---- Clock dial ---- */
+
+.dial {
+  --_label-color: var(--md-sys-color-on-surface);
+  --_handle-color: var(--md-sys-color-primary);
+  --_on-handle-color: var(--md-sys-color-on-primary);
+  --_spatial: var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing);
+
+  grid-area: dial;
+  position: relative;
+  justify-self: center;
+  flex-shrink: 0;
+  inline-size: 256px;
+  block-size: 256px;
+  /* Derived: 36px below the time row, 24px above the actions (Compose). */
+  margin-block: var(--md-sys-measurement-space450) var(--md-sys-measurement-space300);
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-surface-container-highest);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+  transition:
+    --_dial-angle var(--_spatial),
+    --_dial-radius var(--_spatial);
+}
+
+.dialog[data-orientation='horizontal'] .dial {
+  margin-block-start: 0;
+}
+
+/* Follows the pointer 1:1 while dragging minutes. */
+.dial[data-dragging] {
+  transition: none;
+}
+
+/* The dial is always left-to-right (spec §11), so physical-free offsets
+   from its center are fine here. */
+.track,
+.handle,
+.center {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  pointer-events: none;
+  background: var(--_handle-color);
+}
+
+/* 2px line from the center to the handle, rotated by the handle angle. */
+.track {
+  inline-size: 2px;
+  block-size: var(--_dial-radius);
+  margin-inline-start: -1px;
+  translate: 0 -100%;
+  transform-origin: bottom center;
+  rotate: var(--_dial-angle);
+}
+
+.handle {
+  inline-size: 48px;
+  block-size: 48px;
+  margin: -24px;
+  border-radius: var(--md-sys-shape-corner-full);
+  translate: calc(sin(var(--_dial-angle)) * var(--_dial-radius))
+    calc(cos(var(--_dial-angle)) * var(--_dial-radius) * -1);
+}
+
+/* Derived (Compose): a 4px dot on the handle for minutes between labels. */
+.handle[data-between]::after {
+  content: '';
+  position: absolute;
+  inset: 22px;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--_on-handle-color);
+}
+
+.center {
+  inline-size: 8px;
+  block-size: 8px;
+  margin: -4px;
+  border-radius: var(--md-sys-shape-corner-full);
+}
+
+.values,
+.onHandle {
+  position: absolute;
+  inset: 0;
+  animation: fade-in var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+/* Derived: labels under the handle render on-primary, clipped to the handle,
+   so a partly covered label is two-tone. */
+.onHandle {
+  --_label-color: var(--_on-handle-color);
+  pointer-events: none;
+  clip-path: circle(
+    24px at calc(50% + sin(var(--_dial-angle)) * var(--_dial-radius))
+      calc(50% - cos(var(--_dial-angle)) * var(--_dial-radius))
+  );
+}
+
+/* Each label is a 48px target centered on its point; JS sets the translate. */
+.dialLabel {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  display: grid;
+  place-items: center;
+  inline-size: 48px;
+  block-size: 48px;
+  margin: -24px;
+  border-radius: var(--md-sys-shape-corner-full);
+  color: var(--_label-color);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-weight: var(--md-sys-typescale-body-large-weight);
+  font-size: var(--md-sys-typescale-body-large-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  letter-spacing: var(--md-sys-typescale-body-large-tracking);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The interactive layer (options); .onHandle uses .dialLabel alone. */
+.value {
+  composes: dialLabel;
+  composes: interactive from '../shared/interaction.module.css';
+}
+
+.value[aria-selected='true'] {
+  --_label-color: var(--_on-handle-color);
+}
+
+/* Derived: values outside min/max (no disabled tokens). Still focusable. */
+.value[aria-disabled='true'] {
+  --_label-color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+}
+
+.valueLabel {
+  pointer-events: none;
+}
+
+/* ---- Input view ---- */
+
+.inputArea {
+  grid-area: inputs;
+  display: grid;
+  margin-block-end: var(--md-sys-measurement-space300);
+  animation: fade-in var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.inputs {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--md-sys-measurement-space150);
+}
+
+.fields {
+  display: flex;
+  align-items: flex-start;
+}
+
+.fields .separator {
+  block-size: 72px;
+}
+
+.inputField {
+  display: grid;
+  /* Derived: 7px between the field and its supporting text (Compose). */
+  gap: 7px;
+}
+
+.input {
+  --_container-color: var(--md-sys-color-surface-container-highest);
+  --_label-color: var(--md-sys-color-on-surface);
+  --_outline-color: transparent;
+
+  box-sizing: border-box;
+  inline-size: 96px;
+  block-size: 72px;
+  margin: 0;
+  padding: 0;
+  border: 2px solid var(--_outline-color);
+  border-radius: var(--md-sys-shape-corner-small);
+  background: var(--_container-color);
+  color: var(--_label-color);
+  caret-color: var(--md-sys-color-primary);
+  text-align: center;
+  font-family: var(--md-sys-typescale-display-medium-font);
+  font-weight: var(--md-sys-typescale-display-medium-weight);
+  font-size: var(--md-sys-typescale-display-medium-size);
+  line-height: var(--md-sys-typescale-display-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-display-medium-tracking);
+  font-variant-numeric: tabular-nums;
+  outline: none;
+  transition:
+    background-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    border-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+/* Inputs can't host a ::before state layer: mix the hover layer into the fill. */
+@media (hover: hover) {
+  .input:hover:not(:focus) {
+    --_container-color: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface) calc(var(--md-sys-state-hover-state-layer-opacity) * 100%),
+      var(--md-sys-color-surface-container-highest)
+    );
+  }
+}
+
+/* Any focus, not only keyboard (spec §5): the tokenized 2px outline replaces the ring. */
+.input:focus {
+  --_container-color: var(--md-sys-color-primary-container);
+  --_label-color: var(--md-sys-color-on-primary-container);
+  --_outline-color: var(--md-sys-color-primary);
+}
+
+/* Derived (not tokenized): error outline and supporting text. */
+.inputField[data-invalid] .input {
+  --_outline-color: var(--md-sys-color-error);
+}
+
+.supportingText {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-weight: var(--md-sys-typescale-body-small-weight);
+  font-size: var(--md-sys-typescale-body-small-size);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  letter-spacing: var(--md-sys-typescale-body-small-tracking);
+}
+
+.inputField[data-invalid] .supportingText {
+  color: var(--md-sys-color-error);
+}
+
+.inputError {
+  min-block-size: 0;
+  margin: 0;
+  color: var(--md-sys-color-error);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-weight: var(--md-sys-typescale-body-small-weight);
+  font-size: var(--md-sys-typescale-body-small-size);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  letter-spacing: var(--md-sys-typescale-body-small-tracking);
+}
+
+.inputError:not(:empty) {
+  margin-block-start: var(--md-sys-measurement-space100);
+}
+
+/* ---- Actions ---- */
+
+.actions {
+  grid-area: actions;
+  display: flex;
+  align-items: center;
+  justify-self: stretch;
+  gap: var(--md-sys-measurement-space100);
+  block-size: 40px;
+  justify-content: flex-end;
+}
+
+.toggle {
+  margin-inline-end: auto;
+}
+
+.toggle[data-color='standard']:not(:disabled) {
+  --_icon-color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Text buttons in the primary color. */
+.actions [data-color='text']:not(:disabled, [data-disabled], [aria-disabled='true']) {
+  --_label-color: var(--md-sys-color-primary);
+}
+
+/* ---- Motion ---- */
+
+@media (prefers-reduced-motion: reduce) {
+  /* No handle rotation (spec §6): it jumps. */
+  .dial {
+    transition: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ---- Forced colors ---- */
+
+@media (forced-colors: active) {
+  .box,
+  .input {
+    border: 1px solid CanvasText;
+  }
+
+  .box[aria-checked='true'],
+  .periodOption:has(:checked) {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .dial {
+    forced-color-adjust: none;
+    background: Canvas;
+    border: 1px solid CanvasText;
+  }
+
+  .dialLabel {
+    color: CanvasText;
+  }
+
+  .track,
+  .handle,
+  .center {
+    background: Highlight;
+  }
+
+  .onHandle .dialLabel,
+  .value[aria-selected='true'] {
+    color: HighlightText;
+  }
+
+  .input:focus {
+    border-color: Highlight;
+  }
+}

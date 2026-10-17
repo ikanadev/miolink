@@ -1,0 +1,583 @@
+/*
+ * Chips. Spec: m3-guidelines/components/chips.md
+ *
+ * Structure: .root (non-focusable span: container, outline on ::after,
+ * elevation) > .primary (the button or link: Ripple, leading slot, label)
+ * + optional .trailing (a separate remove/menu button).
+ *
+ * The primary composes `interactive` but is position: static, so its
+ * ::before state layer, its Ripple and its 48px `target` resolve against
+ * the root and cover the whole chip, trailing area included. The focus ring
+ * is drawn on the root when the primary is focused; the trailing button has
+ * its own circular ring (spec §5).
+ *
+ * Attributes on .root: data-variant (assist | filter | input | suggestion),
+ * data-elevated, data-selected, data-disabled, data-dragged,
+ * data-leading (icon | check | avatar), data-trailing (remove | menu).
+ * Ark TagsInput items add data-highlighted (shown as selected).
+ */
+.root {
+  /* Size and layout (spec §4.2) */
+  --_height: 32px;
+  --_icon-size: 18px;
+  --_avatar-size: 24px;
+  --_gap: 8px;
+  --_pad-start: 16px;
+  --_pad-end: 16px;
+  --_leading-size: 0px;
+  --_leading-gap: 0px;
+
+  /* Color: suggestion defaults (spec §4.1) */
+  --_container: transparent;
+  --_outline-width: 1px;
+  --_outline-color: var(--md-sys-color-outline-variant);
+  --_outline-focus: var(--md-sys-color-on-surface-variant);
+  --_label-color: var(--md-sys-color-on-surface-variant);
+  --_leading-color: var(--md-sys-color-primary);
+  --_trailing-color: var(--md-sys-color-on-surface-variant);
+  --_state-layer-color: var(--md-sys-color-on-surface-variant);
+  --_pressed-color: var(--_state-layer-color);
+  --_elevation: var(--md-sys-elevation-level0);
+  --_elevation-hover: var(--_elevation);
+  --md-icon-size: var(--_icon-size);
+  --md-icon-optical-size: 20;
+
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  box-sizing: border-box;
+  block-size: var(--_height);
+  max-inline-size: 100%;
+  vertical-align: middle;
+  border-radius: var(--md-sys-shape-corner-small);
+  background: var(--_container);
+  box-shadow: var(--_elevation);
+  color: var(--_label-color);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  font-size: var(--md-sys-typescale-label-large-size);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+  user-select: none;
+  transition:
+    background-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    box-shadow var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.root[hidden] {
+  display: none;
+}
+
+/* Outline drawn over the container, so selecting (0px) doesn't shift the content. */
+.root::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: var(--_outline-width) solid var(--_outline-color);
+  pointer-events: none;
+  transition: border-color var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.primary {
+  composes: interactive target from '../shared/interaction.module.css';
+
+  display: inline-flex;
+  flex: 1 1 auto;
+  align-items: center;
+  align-self: stretch;
+  box-sizing: border-box;
+  min-inline-size: 0;
+  margin: 0;
+  padding-block: 0;
+  padding-inline: var(--_pad-start) var(--_pad-end);
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-decoration: none;
+  text-align: start;
+  white-space: nowrap;
+  transition: padding var(--md-sys-motion-spring-fast-spatial-duration)
+    var(--md-sys-motion-spring-fast-spatial-easing);
+}
+
+/* Static, so the state layer, ripple and target cover the root. */
+.root > .primary {
+  position: static;
+  isolation: isolate;
+}
+
+.root > .primary:focus-visible {
+  outline: none;
+}
+
+/* Pressed uses its own state-layer color (the filter tokens swap it, §4.1). */
+.primary:is(:active, [data-key-pressed]) {
+  --_state-layer-color: var(--_pressed-color);
+}
+
+.leading {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  inline-size: var(--_leading-size);
+  block-size: var(--_icon-size);
+  margin-inline-end: var(--_leading-gap);
+  overflow: hidden;
+  color: var(--_leading-color);
+  transition:
+    inline-size var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial-easing),
+    margin var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial-easing),
+    color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.leading > * {
+  grid-area: 1 / 1;
+  transition:
+    opacity var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    scale var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+/* The selection checkmark, hidden until the filter chip is selected. */
+.check {
+  opacity: 0;
+  scale: 0.6;
+}
+
+.avatar {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  inline-size: var(--_avatar-size);
+  block-size: var(--_avatar-size);
+  margin-inline-end: var(--_gap);
+  overflow: hidden;
+  border-radius: var(--md-sys-shape-corner-full);
+  object-fit: cover;
+  transition: opacity var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.label {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trailing {
+  composes: target from '../shared/interaction.module.css';
+
+  position: relative;
+  z-index: 1;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  inline-size: var(--_icon-size);
+  block-size: var(--_icon-size);
+  margin: 0;
+  margin-inline: var(--_gap);
+  padding: 0;
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: none;
+  color: var(--_trailing-color);
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.trailing:focus-visible {
+  outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
+  outline-offset: var(--md-sys-state-focus-indicator-outer-offset);
+}
+
+/* ---- Padding by content (spec §4.2) ---- */
+
+.root:is([data-leading='icon'], [data-leading='check'][data-selected]) {
+  --_pad-start: var(--_gap);
+  --_leading-size: var(--_icon-size);
+  --_leading-gap: var(--_gap);
+}
+
+.root[data-leading='avatar'] {
+  --_pad-start: 4px;
+}
+
+.root[data-trailing] {
+  --_pad-end: 0px;
+  /* Two 48px targets that don't overlap (spec §4.2). */
+  min-inline-size: 88px;
+}
+
+.root[data-trailing] .label {
+  min-inline-size: 42px;
+}
+
+/* ---- Variants (spec §4.1) ---- */
+
+.root[data-variant='assist'] {
+  --_label-color: var(--md-sys-color-on-surface);
+  --_state-layer-color: var(--md-sys-color-on-surface);
+  --_outline-focus: var(--md-sys-color-on-surface);
+}
+
+.root[data-variant='filter'] {
+  --_pressed-color: var(--md-sys-color-on-secondary-container);
+}
+
+.root[data-variant='input'] {
+  --_leading-color: var(--md-sys-color-on-surface-variant);
+}
+
+.root[data-elevated] {
+  --_outline-width: 0px;
+  --_container: var(--md-sys-color-surface-container-low);
+  --_elevation: var(--md-sys-elevation-level1);
+  --_elevation-hover: var(--md-sys-elevation-level2);
+}
+
+/* ---- Selected (filter, input) ---- */
+
+.root:is([data-variant='filter'], [data-variant='input']):is([data-selected], [data-highlighted]) {
+  --_outline-width: 0px;
+  --_container: var(--md-sys-color-secondary-container);
+  --_label-color: var(--md-sys-color-on-secondary-container);
+  --_leading-color: var(--md-sys-color-on-secondary-container);
+  --_trailing-color: var(--md-sys-color-on-secondary-container);
+  --_state-layer-color: var(--md-sys-color-on-secondary-container);
+  --_pressed-color: var(--_state-layer-color);
+}
+
+.root[data-variant='filter'][data-selected] {
+  /* Token swap (spec §4.1, §11). */
+  --_pressed-color: var(--md-sys-color-on-surface-variant);
+}
+
+.root[data-variant='filter'][data-selected]:not([data-elevated]) {
+  --_elevation-hover: var(--md-sys-elevation-level1);
+}
+
+.root[data-variant='filter'][data-selected] .check {
+  opacity: 1;
+  scale: 1;
+}
+
+/* The checkmark replaces a custom icon in place (spec §11). */
+.root[data-variant='filter'][data-selected] .icon {
+  opacity: 0;
+}
+
+.root[data-variant='input']:is([data-selected], [data-highlighted]) {
+  --_leading-color: var(--md-sys-color-primary);
+}
+
+/* ---- Transient states ---- */
+
+@media (hover: hover) {
+  .root:not([data-disabled]):hover {
+    box-shadow: var(--_elevation-hover);
+  }
+
+  .root:not([data-disabled]):hover > .primary::before {
+    opacity: var(--md-sys-state-hover-state-layer-opacity);
+  }
+}
+
+.root:has(> .primary:focus-visible) {
+  --_outline-color: var(--_outline-focus);
+
+  outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
+  outline-offset: var(--md-sys-state-focus-indicator-outer-offset);
+}
+
+/* Pressing the trailing action drives the chip's state layer (spec §5). */
+.root:not([data-disabled]):has(> .trailing:active) > .primary::before {
+  background: var(--_pressed-color);
+  opacity: var(--md-sys-state-pressed-state-layer-opacity);
+}
+
+/* Input leading icon: primary on hover, focus and press (unselected tokens). */
+.root[data-variant='input']:not([data-disabled]):is(:hover, :has(> :focus-visible), :has(> :active)) {
+  --_leading-color: var(--md-sys-color-primary);
+}
+
+.root[data-dragged] {
+  --_elevation: var(--md-sys-elevation-level4);
+  --_elevation-hover: var(--md-sys-elevation-level4);
+
+  cursor: grabbing;
+}
+
+.root[data-dragged] > .primary::before {
+  opacity: var(--md-sys-state-dragged-state-layer-opacity);
+}
+
+.root[data-variant='input'][data-dragged] {
+  --_leading-color: var(--_label-color);
+  --_trailing-color: var(--md-sys-color-primary);
+}
+
+/* ---- Disabled (spec §4.1, §5) ---- */
+
+.root[data-disabled] {
+  --_label-color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+  --_leading-color: var(--_label-color);
+  --_trailing-color: var(--_label-color);
+  --_outline-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
+  --_elevation: var(--md-sys-elevation-level0);
+  --_elevation-hover: var(--md-sys-elevation-level0);
+}
+
+.root[data-disabled]:is([data-elevated], [data-selected]) {
+  --_container: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
+}
+
+.root[data-disabled] > .primary::before {
+  opacity: 0;
+}
+
+.root[data-disabled] .trailing {
+  cursor: default;
+  pointer-events: none;
+}
+
+.root[data-disabled] .avatar {
+  opacity: 0.38;
+}
+
+/* ---- Chip set ---- */
+
+.set {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-inline-size: 0;
+}
+
+/* One row that scrolls. The padding keeps focus rings and shadows unclipped
+   (derived: ring thickness + outer offset). */
+.set[data-layout='scroll'] {
+  --_ring: calc(
+    var(--md-sys-state-focus-indicator-thickness) + var(--md-sys-state-focus-indicator-outer-offset)
+  );
+
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  padding: var(--_ring);
+  scrollbar-width: thin;
+}
+
+.set[data-layout='scroll'] > .root {
+  max-inline-size: none;
+}
+
+/* Theme options (spec §4.1 theming notes, §8): `outline` for a 3:1 stroke,
+   `on-surface-variant` for lower-emphasis leading icons. */
+.set[data-outline='strong'] .root {
+  --_outline-color: var(--md-sys-color-outline);
+}
+
+.set[data-icon-color='neutral'] .root:not([data-selected], [data-highlighted]) {
+  --_leading-color: var(--md-sys-color-on-surface-variant);
+}
+
+.set[data-outline='strong'] .root[data-disabled] {
+  --_outline-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
+}
+
+/* ---- Input chip field (Ark TagsInput) ---- */
+
+/* Derived (web mapping): the spec has no field tokens; this follows the
+   outlined text field's container (outline, extra-small corners, body-large). */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-inline-size: 0;
+}
+
+.fieldLabel {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-weight: var(--md-sys-typescale-body-small-weight);
+  font-size: var(--md-sys-typescale-body-small-size);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  letter-spacing: var(--md-sys-typescale-body-small-tracking);
+}
+
+.control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  min-block-size: 56px;
+  padding-block: 11px;
+  padding-inline: 12px;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  cursor: text;
+  transition:
+    border-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    box-shadow var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+@media (hover: hover) {
+  .control:not([data-disabled]):hover {
+    border-color: var(--md-sys-color-on-surface);
+  }
+}
+
+/* 2px focused outline without moving the content. */
+.control[data-focus] {
+  border-color: var(--md-sys-color-primary);
+  box-shadow: inset 0 0 0 1px var(--md-sys-color-primary);
+}
+
+.control[data-disabled] {
+  border-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
+  cursor: default;
+}
+
+.fieldItem {
+  display: inline-flex;
+  max-inline-size: 100%;
+  outline: none;
+}
+
+.fieldChip {
+  composes: interactive from '../shared/interaction.module.css';
+
+  cursor: default;
+}
+
+@media (hover: hover) {
+  .fieldChip:not([data-disabled]):hover {
+    box-shadow: var(--_elevation-hover);
+  }
+}
+
+.fieldChip > .label {
+  padding-inline-start: var(--_pad-start);
+  transition: padding var(--md-sys-motion-spring-fast-spatial-duration)
+    var(--md-sys-motion-spring-fast-spatial-easing);
+}
+
+.fieldChip[data-leading] > .label {
+  padding-inline-start: 0;
+}
+
+.fieldChip > :is(.leading, .avatar) {
+  margin-inline-start: var(--_pad-start);
+}
+
+.input,
+.itemInput {
+  flex: 1 1 80px;
+  box-sizing: border-box;
+  min-inline-size: 80px;
+  block-size: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  outline: none;
+  color: var(--md-sys-color-on-surface);
+  caret-color: var(--md-sys-color-primary);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-weight: var(--md-sys-typescale-body-large-weight);
+  font-size: var(--md-sys-typescale-body-large-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  letter-spacing: var(--md-sys-typescale-body-large-tracking);
+}
+
+.input::placeholder {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.input:disabled {
+  color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+}
+
+/* Edit mode: the chip reverts to plain text (spec §6). */
+.itemInput {
+  flex: 0 1 auto;
+  field-sizing: content;
+}
+
+.itemInput[hidden] {
+  display: none;
+}
+
+/* ---- Reduced motion: size and padding change instantly (spec §6) ---- */
+
+@media (prefers-reduced-motion: reduce) {
+  .primary,
+  .leading,
+  .fieldChip > .label {
+    transition-property: color;
+  }
+
+  .check {
+    scale: 1;
+  }
+}
+
+/* ---- Forced colors (spec §10e) ---- */
+
+@media (forced-colors: active) {
+  .root {
+    box-shadow: none;
+  }
+
+  .root::after {
+    border: 1px solid ButtonText;
+  }
+
+  .root:is([data-selected], [data-highlighted]) {
+    forced-color-adjust: none;
+    background: SelectedItem;
+    color: SelectedItemText;
+
+    --_leading-color: SelectedItemText;
+    --_trailing-color: SelectedItemText;
+  }
+
+  .root[data-disabled] {
+    color: GrayText;
+
+    --_leading-color: GrayText;
+    --_trailing-color: GrayText;
+  }
+
+  .root[data-disabled]::after {
+    border-color: GrayText;
+  }
+
+  .root:has(> .primary:focus-visible),
+  .trailing:focus-visible {
+    outline-color: Highlight;
+  }
+}

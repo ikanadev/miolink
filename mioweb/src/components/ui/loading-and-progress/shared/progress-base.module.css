@@ -1,0 +1,52 @@
+/*
+ * Shared by LinearProgress and CircularProgress: colors and caps of the
+ * active indicator, track and stop indicator (md.comp.progress-indicator).
+ * Compose .base into the root and mark the SVG parts with data-part="track",
+ * "active" or "stop".
+ */
+.base {
+  --_active-color: var(--md-sys-color-primary);
+  --_track-color: var(--md-sys-color-secondary-container);
+  --_stop-color: var(--md-sys-color-primary);
+
+  position: relative;
+  contain: layout paint;
+}
+
+.base[hidden] {
+  display: none;
+}
+
+/* All parts are corner.full: round line caps (and a dot at low progress). */
+.base path,
+.base circle {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.base [data-part='track'] {
+  stroke: var(--_track-color);
+}
+
+.base [data-part='active'] {
+  stroke: var(--_active-color);
+}
+
+.base [data-part='stop'] {
+  fill: var(--_stop-color);
+  stroke: none;
+}
+
+.base[data-no-track] [data-part='track'] {
+  display: none;
+}
+
+@media (forced-colors: active) {
+  .base {
+    --_active-color: Highlight;
+    --_stop-color: Highlight;
+    --_track-color: GrayText;
+    forced-color-adjust: none;
+  }
+}

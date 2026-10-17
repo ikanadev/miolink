@@ -1,0 +1,65 @@
+/*
+ * Loading indicator (md.comp.loading-indicator). The host is the 48px box
+ * and, when contained, the circular container; the SVG draws the morphing
+ * shape, already scaled to 38/48 of the box by the morph code.
+ */
+.root {
+  --_container-width: 48px;
+  --_container-height: 48px;
+  --_container-shape: var(--md-sys-shape-corner-full);
+  --_color: var(--md-sys-color-primary);
+  --_container-color: transparent;
+
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  box-sizing: border-box;
+  inline-size: var(--_size, var(--_container-width));
+  block-size: var(--_size, var(--_container-height));
+  border-radius: var(--_container-shape);
+  background: var(--_container-color);
+  contain: strict;
+}
+
+.root[data-contained] {
+  --_container-color: var(--md-sys-color-primary-container);
+  --_color: var(--md-sys-color-on-primary-container);
+}
+
+.root[hidden] {
+  display: none;
+}
+
+.indicator {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+}
+
+.shape {
+  fill: var(--_color);
+}
+
+/* Reduced motion (web mapping, §8): the first shape held still, spinning
+   at half speed so activity stays visible. */
+.root[data-reduced] .indicator {
+  animation: spin 9332ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@media (forced-colors: active) {
+  .root {
+    --_color: CanvasText;
+  }
+
+  .root[data-contained] {
+    --_container-color: Canvas;
+    outline: 1px solid CanvasText;
+  }
+}

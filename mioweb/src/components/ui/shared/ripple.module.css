@@ -1,0 +1,43 @@
+.ripple {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.ripple::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--_x, 50%) - var(--_size, 0px) / 2);
+  top: calc(var(--_y, 50%) - var(--_size, 0px) / 2);
+  width: var(--_size, 0px);
+  height: var(--_size, 0px);
+  border-radius: 50%;
+  background: var(--_state-layer-color, currentColor);
+  opacity: 0;
+  scale: 0.2;
+}
+
+.ripple[data-state='pressed']::after {
+  opacity: var(--md-sys-state-pressed-state-layer-opacity);
+  scale: 1;
+  transition:
+    scale var(--md-sys-motion-duration-long1) var(--md-sys-motion-easing-standard-decelerate),
+    opacity var(--md-sys-motion-duration-short1) linear;
+}
+
+.ripple[data-state='released']::after {
+  opacity: 0;
+  scale: 1;
+  transition: opacity var(--md-sys-motion-duration-short3) linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ripple::after,
+  .ripple[data-state='pressed']::after {
+    scale: 1;
+    transition: opacity var(--md-sys-motion-duration-short1) linear;
+  }
+}

@@ -1,0 +1,132 @@
+/*
+ * Badge (md.comp.badge). Small: 6px dot. Large: 16px pill, 16-34px wide,
+ * label-small text. On an icon, the anchor is the icon's box and the badge
+ * sits at fixed offsets from its upper trailing corner (§4.2).
+ */
+.anchor {
+  position: relative;
+  display: inline-flex;
+  overflow: visible;
+}
+
+.badge {
+  --_color: var(--md-sys-color-error);
+  --_shape: var(--md-sys-shape-corner-full);
+  --_size: 6px;
+
+  box-sizing: border-box;
+  flex: none;
+  border-radius: var(--_shape);
+  background: var(--_color);
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+  /* Grows from the corner closest to the icon. */
+  transform-origin: left bottom;
+  transition:
+    scale var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing),
+    opacity var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.badge:dir(rtl) {
+  transform-origin: right bottom;
+}
+
+.badge[data-size='small'] {
+  inline-size: var(--_size);
+  block-size: var(--_size);
+}
+
+.badge[data-size='large'] {
+  --_color: var(--md-sys-color-error);
+  --_shape: var(--md-sys-shape-corner-full);
+  --_size: 16px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  block-size: var(--_size);
+  min-inline-size: var(--_size);
+  /* 4 characters ("999+"), derived from the 34px max-count container. */
+  max-inline-size: 34px;
+  padding-inline: 4px;
+  overflow: hidden;
+  color: var(--md-sys-color-on-error);
+  font-family: var(--md-sys-typescale-label-small-font);
+  font-weight: var(--md-sys-typescale-label-small-weight);
+  font-size: var(--md-sys-typescale-label-small-size);
+  line-height: var(--md-sys-typescale-label-small-line-height);
+  letter-spacing: var(--md-sys-typescale-label-small-tracking);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Placement ---- */
+
+.badge[data-placement='icon'] {
+  position: absolute;
+}
+
+/* Small: icon corner -> badge's bottom-leading corner is 6 × 6px, fully inside the icon. */
+.badge[data-placement='icon'][data-size='small'] {
+  inset-block-start: 0;
+  inset-inline-start: calc(100% - 6px);
+}
+
+/* Large: 14px down, 12px in: 2px above the icon, growing past its trailing edge. */
+.badge[data-placement='icon'][data-size='large'] {
+  inset-block-start: -2px;
+  inset-inline-start: calc(100% - 12px);
+}
+
+.badge[data-placement='inline'] {
+  margin-inline-start: 4px;
+  align-self: center;
+  vertical-align: middle;
+}
+
+/* ---- Appear / disappear ---- */
+
+@starting-style {
+  .badge[data-visible='true'] {
+    scale: 0;
+    opacity: 0;
+  }
+}
+
+/* Exit with emphasized accelerate, not the spatial spring, whose overshoot
+   would flip the scale below 0 (derived, as for the FAB). */
+.badge[data-visible='false'] {
+  scale: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    scale var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-emphasized-accelerate),
+    opacity var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing),
+    visibility 0s var(--md-sys-motion-duration-short4);
+}
+
+/* Inline badges leave the flow once hidden. */
+.badge[data-placement='inline'][data-visible='false'] {
+  position: absolute;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge[data-visible='false'] {
+    scale: 1;
+  }
+
+  @starting-style {
+    .badge[data-visible='true'] {
+      scale: 1;
+    }
+  }
+}
+
+@media (forced-colors: active) {
+  .badge {
+    forced-color-adjust: none;
+    background: CanvasText;
+    color: Canvas;
+  }
+}

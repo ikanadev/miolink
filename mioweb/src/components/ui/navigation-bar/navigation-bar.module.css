@@ -1,0 +1,80 @@
+/*
+ * Navigation bar (md.comp.nav-bar, flexible). Full-width surface-container
+ * container, square corners, 64px minimum height (grows with text
+ * scaling), no shadow: the level2 elevation token is rendered tonally
+ * (spec §4.4). Items come from shared/navigation-item.module.css.
+ *
+ * Attributes on .bar: data-layout (vertical | horizontal, resolved from
+ * `auto`), data-fixed, data-hidden (hide on scroll).
+ */
+
+.bar {
+  box-sizing: border-box;
+  inline-size: 100%;
+  border-radius: var(--md-sys-shape-corner-none);
+  background: var(--md-sys-color-surface-container);
+  padding-block-end: env(safe-area-inset-bottom, 0px);
+  /* Enter/exit on scroll: standard easing, not a bouncy spring (spec §10d);
+     legacy duration token for an enter/exit transition. */
+  transition: translate var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
+}
+
+/* Bottom of the window, under scrims, sheets and dialogs (z-index 2, spec §11). */
+.bar[data-fixed] {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: 2;
+}
+
+/* Never hidden while focus is inside (spec §8). */
+.bar[data-hidden]:not(:focus-within) {
+  translate: 0 100%;
+}
+
+.list {
+  display: grid;
+  grid-auto-flow: column;
+  /* Vertical items share the width equally; item.between-space is 0. */
+  grid-auto-columns: minmax(0, 1fr);
+  min-block-size: 64px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Horizontal items: equal columns as wide as the widest pill, the group
+   centered, extra space in the outer margins (derived, spec §4.2). */
+.bar[data-layout='horizontal'] .list {
+  inline-size: max-content;
+  max-inline-size: 100%;
+  grid-auto-columns: 1fr;
+  margin-inline: auto;
+}
+
+.listItem {
+  display: grid;
+  min-inline-size: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Fade instead of sliding; the slide happens once the fade is done. */
+  .bar {
+    transition:
+      opacity var(--md-sys-motion-spring-fast-effects-duration) linear,
+      translate 0s;
+  }
+
+  .bar[data-hidden]:not(:focus-within) {
+    opacity: 0;
+    transition:
+      opacity var(--md-sys-motion-spring-fast-effects-duration) linear,
+      translate 0s var(--md-sys-motion-spring-fast-effects-duration);
+  }
+}
+
+@media (forced-colors: active) {
+  .bar {
+    border-block-start: 1px solid CanvasText;
+  }
+}

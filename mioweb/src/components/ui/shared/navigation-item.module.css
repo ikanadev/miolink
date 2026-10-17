@@ -1,0 +1,293 @@
+/*
+ * Navigation item shared by the navigation bar and the navigation rail
+ * (m3-guidelines/components/navigation/README.md, "Shared rules"): an
+ * <a> or <button> whose whole box is the hit target, with the pill
+ * indicator, state layer, ripple and focus ring confined to the indicator
+ * area.
+ *
+ * The item is a grid. The indicator area (named `indicator`) holds the
+ * pill, the icon, the state layer (`interactive`'s ::before) and the
+ * <Ripple /> (first child): absolutely positioned children of a grid
+ * container with a grid area use that area as their containing block, so
+ * the state layer and ripple are clipped to the pill while pointer and
+ * keyboard events still come from the whole item.
+ *
+ * - data-layout='vertical': icon in a 56x32 pill, label below (bar compact,
+ *   collapsed rail).
+ * - data-layout='horizontal': icon and label side by side inside a pill
+ *   that hugs them (bar medium, expanded rail). The pill is centered in
+ *   the item by default; the outer tracks move it (rail: start-aligned
+ *   hug, or fill). An optional badge after the label sits inside the pill.
+ *
+ * Defaults are the navigation bar's values. Another host (the rail, the
+ * drawer) restyles the item by targeting it and changing the --_*
+ * variables: indicator size and inner padding, icon-label space, block
+ * padding, minimum height, label typescale and colors, the horizontal
+ * tracks (--_leading-track, --_label-track, --_fill-track,
+ * --_trailing-track), the label-badge space (--_trailing-badge-space),
+ * the reduced hover indicator (--_hover-indicator-opacity) and whether the
+ * pill grows from the icon center or fades in place (--_indicator-grow).
+ *
+ * Attributes: data-layout (vertical | horizontal), data-no-icon (no icon:
+ * horizontal items drop the icon track and gap), data-truncate (horizontal
+ * label ends with an ellipsis), aria-current="page".
+ */
+
+.item {
+  composes: interactive from './interaction.module.css';
+
+  --_min-height: 64px;
+  --_block-padding: var(--md-sys-measurement-space75);
+  --_indicator-width: 56px;
+  --_indicator-height: 32px;
+  --_indicator-padding-inline: var(--md-sys-measurement-space200);
+  --_icon-size: 24px;
+  --_icon-label-space: var(--md-sys-measurement-space50);
+  --_indicator-color: var(--md-sys-color-secondary-container);
+  --_icon-color: var(--md-sys-color-on-surface-variant);
+  --_label-color: var(--md-sys-color-on-surface-variant);
+  --_active-label-color: var(--md-sys-color-secondary);
+  --_label-font: var(--md-sys-typescale-label-medium-font);
+  --_label-size: var(--md-sys-typescale-label-medium-size);
+  --_label-line-height: var(--md-sys-typescale-label-medium-line-height);
+  --_label-tracking: var(--md-sys-typescale-label-medium-tracking);
+  --_label-weight: var(--md-sys-typescale-label-medium-weight);
+  /* Bold when selected (bar Accessibility tab), the emphasized label-medium weight. */
+  --_active-label-weight: var(--md-sys-typescale-emphasized-label-medium-weight);
+  /* Horizontal layout: tracks around the pill. 1fr / 1fr centers it; the
+     fill track sits inside the pill, after the label and badge. */
+  --_leading-track: minmax(0, 1fr);
+  --_fill-track: 0px;
+  --_trailing-track: minmax(0, 1fr);
+  /* The label's track; minmax(0, 1fr) makes it take the free space and
+     pushes the badge to the end (drawer). */
+  --_label-track: auto;
+  /* Space before a badge after the label (on top of the inline Badge's own 4px). */
+  --_trailing-badge-space: var(--md-sys-measurement-space50);
+  /* 1: the pill grows from the icon center (bar, rail). 0: it fades in place (drawer). */
+  --_indicator-grow: 1;
+  /* Reduced indicator on hover over an inactive item (bar); 0 turns it off. */
+  --_hover-indicator-opacity: 1;
+  /* State layer and ripple: on-secondary-container for active and inactive items. */
+  --_state-layer-color: var(--md-sys-color-on-secondary-container);
+
+  display: grid;
+  box-sizing: border-box;
+  min-inline-size: 0;
+  min-block-size: var(--_min-height);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  /* Not visible (no background); the state layer and ripple inherit it. */
+  border-radius: var(--md-sys-shape-corner-full);
+  background: none;
+  color: var(--_label-color);
+  text-decoration: none;
+  font: inherit;
+  transition: color var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+/* The focus ring goes on the indicator, not on the whole item (spec §10c). */
+.item:focus-visible {
+  outline: none;
+}
+
+/* State layer (::before) and <Ripple /> (always the first child). */
+.item::before,
+.item > :first-child {
+  grid-area: indicator;
+}
+
+.item[aria-current='page'] {
+  --_icon-color: var(--md-sys-color-on-secondary-container);
+  --_label-color: var(--_active-label-color);
+  --_label-weight: var(--_active-label-weight);
+}
+
+/* ---- Layouts ---- */
+
+.item[data-layout='vertical'] {
+  grid-template-columns: minmax(0, 1fr) var(--_indicator-width) minmax(0, 1fr);
+  grid-template-rows: var(--_indicator-height) auto;
+  grid-template-areas:
+    '. indicator .'
+    'label label label';
+  row-gap: var(--_icon-label-space);
+  align-content: start;
+  /* item.vertical.container.between-space read as block padding: 6 + 32 + 4 + 16 + 6 = 64 (spec §11). */
+  padding-block: var(--_block-padding);
+}
+
+.item[data-layout='horizontal'] {
+  /* Pill = padding + icon + gap + label + badge (empty: 0) + fill + padding,
+     placed by the outer tracks (centered by default). */
+  grid-template-columns:
+    var(--_leading-track) var(--_indicator-padding-inline) var(--_icon-size) var(--_icon-label-space)
+    var(--_label-track) auto var(--_fill-track) var(--_indicator-padding-inline) var(--_trailing-track);
+  grid-template-rows: var(--_indicator-height);
+  grid-template-areas: '. indicator indicator indicator indicator indicator indicator indicator .';
+  align-content: center;
+}
+
+/* Text-only destinations (drawer): no icon track, no gap. */
+.item[data-layout='horizontal'][data-no-icon] {
+  --_icon-size: 0px;
+  --_icon-label-space: 0px;
+}
+
+/* ---- Indicator ---- */
+
+/* Below the state layer (z -1) and ripple; holds the focus ring. */
+.indicator {
+  grid-area: indicator;
+  position: relative;
+  z-index: -2;
+  border-radius: var(--md-sys-shape-corner-full);
+  pointer-events: none;
+}
+
+/* The visible pill. Expands from the icon center on one axis only (§6). */
+.indicator::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--_indicator-color);
+  opacity: 0;
+  transform: scaleX(calc(1 - var(--_indicator-grow)));
+  /* Leaving: emphasized accelerate, so the spring's overshoot can't flip the
+     scale below 0 (derived, as for the badge). */
+  transition:
+    transform var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-emphasized-accelerate),
+    opacity var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.item[aria-current='page'] .indicator::before {
+  opacity: 1;
+  transform: none;
+  transition:
+    transform var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing),
+    opacity var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+/* Hover on an inactive item shows the indicator in a reduced state: half
+   its width (derived, spec §11). */
+@media (hover: hover) {
+  .item:not([aria-current='page']):hover .indicator::before {
+    opacity: var(--_hover-indicator-opacity);
+    transform: scaleX(calc(1 - 0.5 * var(--_indicator-grow)));
+    transition:
+      transform var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing),
+      opacity var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing);
+  }
+}
+
+.item:focus-visible .indicator {
+  outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
+  outline-offset: var(--md-sys-state-focus-indicator-outer-offset);
+}
+
+/* ---- Icon and label ---- */
+
+.icon {
+  grid-area: indicator;
+  place-self: center;
+  display: flex;
+  color: var(--_icon-color);
+  --md-icon-size: var(--_icon-size);
+  transition: color var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.item[data-layout='horizontal'] .icon {
+  grid-area: 1 / 3;
+}
+
+.label {
+  grid-area: label;
+  min-inline-size: 0;
+  font-family: var(--_label-font);
+  font-weight: var(--_label-weight);
+  font-size: var(--_label-size);
+  line-height: var(--_label-line-height);
+  letter-spacing: var(--_label-tracking);
+  text-align: center;
+  /* Labels wrap only when text is scaled up; never truncated (§6). */
+  overflow-wrap: anywhere;
+  transition: font-weight var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.item[data-layout='horizontal'] .label {
+  grid-area: 1 / 5;
+  align-self: center;
+  text-align: start;
+  white-space: nowrap;
+}
+
+/* Drawer labels truncate rather than wrap or shrink (README, Shared rules). */
+.item[data-layout='horizontal'][data-truncate] .label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Badge after the label (horizontal layout): 4px wrapper + the inline
+   badge's own 4px = 8px gap (derived, rail spec §4.2). */
+.trailingBadge {
+  grid-area: 1 / 6;
+  align-self: center;
+  display: flex;
+  padding-inline-start: var(--_trailing-badge-space);
+}
+
+/* badgeStyle="text": the value in the label's typescale and color. */
+.badgeText {
+  color: var(--_label-color);
+  font-family: var(--_label-font);
+  font-weight: var(--_label-weight);
+  font-size: var(--_label-size);
+  line-height: var(--_label-line-height);
+  letter-spacing: var(--_label-tracking);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The pill fades in place instead of growing. */
+  .item .indicator::before,
+  .item[aria-current='page'] .indicator::before {
+    transition-property: opacity;
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: reduce) {
+  .item:not([aria-current='page']):hover .indicator::before {
+    transition-property: opacity;
+  }
+}
+
+@media (forced-colors: active) {
+  .item[aria-current='page'] .indicator::before {
+    forced-color-adjust: none;
+    background: Highlight;
+  }
+
+  .item[aria-current='page'] .icon {
+    forced-color-adjust: none;
+    color: HighlightText;
+  }
+
+  .item:focus-visible .indicator {
+    outline-color: CanvasText;
+  }
+}

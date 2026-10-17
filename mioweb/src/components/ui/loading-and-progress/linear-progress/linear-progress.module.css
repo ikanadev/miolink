@@ -1,0 +1,53 @@
+/*
+ * Linear progress indicator (md.comp.progress-indicator,
+ * md.comp.progress-indicator.linear). The JS reads the geometry from the
+ * private variables below on resize and on prop changes, so the component
+ * tokens work as overrides; colors stay in CSS.
+ */
+.root {
+  composes: base from '../shared/progress-base.module.css';
+
+  --_active-thickness: 4px;
+  --_track-thickness: 4px;
+  --_gap: var(--md-sys-measurement-space50);
+  --_amplitude: 3px;
+  --_wavelength: 40px;
+  --_wavelength-indeterminate: 20px;
+  --_stop-size: 4px;
+  --_stop-trailing-space: var(--md-sys-measurement-space0);
+  /* Token height for the default 4px thickness; follows a custom thickness. */
+  --_height: max(var(--_active-thickness), var(--_track-thickness));
+
+  display: block;
+  box-sizing: border-box;
+  block-size: var(--_height);
+  min-inline-size: 40px;
+  /* Source: at least 4dp from the container's edges (web mapping: a
+     default margin, overridable). */
+  margin-inline: 4px;
+}
+
+.root[data-shape='wavy'] {
+  /* thickness + 2 × amplitude = md.comp.progress-indicator.linear.with-wave.height (10px) */
+  --_height: calc(max(var(--_active-thickness), var(--_track-thickness)) + 2 * var(--_amplitude));
+}
+
+.svg {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+}
+
+/* Fill from the leading edge. */
+.svg:dir(rtl) {
+  transform: scaleX(-1);
+}
+
+.root [data-part='track'] {
+  stroke-width: var(--_track-thickness);
+}
+
+.root [data-part='active'] {
+  stroke-width: var(--_active-thickness);
+}

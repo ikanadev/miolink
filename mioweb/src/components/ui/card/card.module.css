@@ -1,0 +1,359 @@
+/*
+ * Card. Spec: m3-guidelines/components/cards.md
+ *
+ * Structure: .root (container: shape, color, outline, elevation, state
+ * layer on ::before) > optional parts (.media, .content, .headline,
+ * .subhead, .supportingText, .actions, .icon). A directly actionable card
+ * contains one .action (a link or button, usually around the headline text)
+ * whose ::after stretches over the whole card; the card's state layer,
+ * focus ring and hover elevation are driven by it with :has(). The .action
+ * and its ancestors up to .root must not be positioned, so its <Ripple />
+ * covers the card.
+ *
+ * Attributes: data-variant, data-orientation, data-dragged, data-disabled.
+ */
+.root {
+  /* elevated (default) */
+  --_container-color: var(--md-sys-color-surface-container-low);
+  --_shape: var(--md-sys-shape-corner-medium);
+  --_elevation: var(--md-sys-elevation-level1);
+  --_hover-elevation: var(--md-sys-elevation-level2);
+  --_focus-elevation: var(--md-sys-elevation-level1);
+  --_pressed-elevation: var(--md-sys-elevation-level1);
+  --_dragged-elevation: var(--md-sys-elevation-level4);
+  --_disabled-elevation: var(--md-sys-elevation-level1);
+  --_disabled-container-color: var(--md-sys-color-surface);
+  --_disabled-container-opacity: 0.38;
+  --_icon-color: var(--md-sys-color-primary);
+  --_icon-size: 24px;
+  --_hover-state-layer-color: var(--md-sys-color-on-surface);
+  --_focus-state-layer-color: var(--md-sys-color-on-surface);
+  --_dragged-state-layer-color: var(--md-sys-color-on-surface);
+  /* Read by the <Ripple /> (pressed). */
+  --_state-layer-color: var(--md-sys-color-on-surface);
+  --_focus-indicator-color: var(--md-sys-color-secondary);
+  --_outline-width: 0px;
+  --_outline-color: transparent;
+
+  /* Content colors aren't card tokens (derived: on-surface / on-surface-variant). */
+  --_headline-color: var(--md-sys-color-on-surface);
+  --_text-color: var(--md-sys-color-on-surface-variant);
+
+  --_layer-color: var(--_hover-state-layer-color);
+  --_layer-opacity: 0;
+
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+  /* Content is truncated, never scrolled inside the card. */
+  overflow: hidden;
+  box-sizing: border-box;
+  margin: 0;
+  border: var(--_outline-width) solid var(--_outline-color);
+  border-radius: var(--_shape);
+  background: var(--_container-color);
+  box-shadow: var(--_elevation);
+  color: var(--_headline-color);
+  text-align: start;
+  list-style: none;
+  transition:
+    box-shadow var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects-easing),
+    border-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.root[data-orientation='horizontal'] {
+  flex-direction: row;
+}
+
+/* ---- Variant: filled ---- */
+
+.root[data-variant='filled'] {
+  --_container-color: var(--md-sys-color-surface-container-highest);
+  --_shape: var(--md-sys-shape-corner-medium);
+  --_elevation: var(--md-sys-elevation-level0);
+  --_hover-elevation: var(--md-sys-elevation-level1);
+  --_focus-elevation: var(--md-sys-elevation-level0);
+  --_pressed-elevation: var(--md-sys-elevation-level0);
+  --_dragged-elevation: var(--md-sys-elevation-level3);
+  --_disabled-elevation: var(--md-sys-elevation-level0);
+  /* Source value (on-surface); implemented as given, see the spec. */
+  --_disabled-container-color: var(--md-sys-color-on-surface);
+  --_disabled-container-opacity: 0.38;
+  --_icon-color: var(--md-sys-color-primary);
+  --_icon-size: 24px;
+  --_hover-state-layer-color: var(--md-sys-color-on-surface);
+  --_focus-state-layer-color: var(--md-sys-color-on-surface);
+  --_dragged-state-layer-color: var(--md-sys-color-on-surface);
+  --_state-layer-color: var(--md-sys-color-on-surface);
+  --_focus-indicator-color: var(--md-sys-color-secondary);
+}
+
+/* ---- Variant: outlined ---- */
+
+.root[data-variant='outlined'] {
+  --_container-color: var(--md-sys-color-surface);
+  --_shape: var(--md-sys-shape-corner-medium);
+  --_elevation: var(--md-sys-elevation-level0);
+  --_hover-elevation: var(--md-sys-elevation-level1);
+  --_focus-elevation: var(--md-sys-elevation-level0);
+  --_pressed-elevation: var(--md-sys-elevation-level0);
+  --_dragged-elevation: var(--md-sys-elevation-level3);
+  --_disabled-elevation: var(--md-sys-elevation-level0);
+  --_outline-width: 1px;
+  --_outline-color: var(--md-sys-color-outline-variant);
+  --_icon-color: var(--md-sys-color-primary);
+  --_icon-size: 24px;
+  --_hover-state-layer-color: var(--md-sys-color-on-surface);
+  --_focus-state-layer-color: var(--md-sys-color-on-surface);
+  --_dragged-state-layer-color: var(--md-sys-color-on-surface);
+  --_state-layer-color: var(--md-sys-color-on-surface);
+  --_focus-indicator-color: var(--md-sys-color-secondary);
+}
+
+/* ---- State layer (actionable or dragged cards only) ---- */
+
+.root::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--_layer-color);
+  opacity: var(--_layer-opacity);
+  pointer-events: none;
+  transition: opacity var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+@media (hover: hover) {
+  .root:not([data-disabled]):has(.action:hover) {
+    --_layer-color: var(--_hover-state-layer-color);
+    --_layer-opacity: var(--md-sys-state-hover-state-layer-opacity);
+    box-shadow: var(--_hover-elevation);
+  }
+
+  .root[data-variant='outlined']:not([data-disabled]):has(.action:hover) {
+    --_outline-color: var(--md-sys-color-outline-variant);
+  }
+}
+
+.root:not([data-disabled]):has(.action:focus-visible) {
+  --_layer-color: var(--_focus-state-layer-color);
+  --_layer-opacity: var(--md-sys-state-focus-state-layer-opacity);
+  box-shadow: var(--_focus-elevation);
+  outline: var(--md-sys-state-focus-indicator-thickness) solid var(--_focus-indicator-color);
+  outline-offset: var(--md-sys-state-focus-indicator-outer-offset);
+}
+
+.root[data-variant='outlined']:not([data-disabled]):has(.action:focus-visible) {
+  --_outline-color: var(--md-sys-color-on-surface);
+}
+
+/* Pressed: the ripple is the state layer; elevation returns to its pressed level. */
+.root:not([data-disabled]):has(.action:active) {
+  box-shadow: var(--_pressed-elevation);
+}
+
+.root[data-variant='outlined']:not([data-disabled]):has(.action:active) {
+  --_outline-color: var(--md-sys-color-outline-variant);
+}
+
+/* Dragged wins over every other state. Above siblings, below the app bar (z-index 10; derived). */
+.root[data-variant][data-dragged]:not([data-disabled]) {
+  --_layer-color: var(--_dragged-state-layer-color);
+  --_layer-opacity: var(--md-sys-state-dragged-state-layer-opacity);
+  z-index: 5;
+  box-shadow: var(--_dragged-elevation);
+}
+
+.root[data-variant='outlined'][data-dragged]:not([data-disabled]) {
+  --_outline-color: var(--md-sys-color-outline-variant);
+}
+
+/* ---- Disabled ---- */
+
+/* The disabled color at its opacity over the enabled container, so the card
+   stays opaque (derived, as Compose composites it). */
+.root[data-disabled] {
+  --_container-color: color-mix(
+    in srgb,
+    var(--_disabled-container-color) calc(var(--_disabled-container-opacity) * 100%),
+    var(--md-sys-color-surface-container-low)
+  );
+  /* Content isn't tokenized by the card (derived: the standard disabled content color). */
+  --_headline-color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+  --_text-color: var(--_headline-color);
+  --_icon-color: var(--_headline-color);
+  box-shadow: var(--_disabled-elevation);
+}
+
+.root[data-variant='filled'][data-disabled] {
+  --_container-color: color-mix(
+    in srgb,
+    var(--_disabled-container-color) calc(var(--_disabled-container-opacity) * 100%),
+    var(--md-sys-color-surface-container-highest)
+  );
+}
+
+/* Outlined has no disabled container token; only the outline fades. */
+.root[data-variant='outlined'][data-disabled] {
+  --_container-color: var(--md-sys-color-surface);
+  --_outline-color: color-mix(
+    in srgb,
+    var(--md-sys-color-outline)
+      calc(0.12 * 100%),
+    transparent
+  );
+}
+
+/* derived: media fades with the content */
+.root[data-disabled] .media {
+  opacity: 0.38;
+}
+
+/* ---- Primary action (stretched over the card) ---- */
+
+.action {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.action::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--_shape);
+  cursor: pointer;
+}
+
+.action:is(:disabled, [aria-disabled='true']) {
+  cursor: default;
+  pointer-events: none;
+}
+
+.action:is(:disabled, [aria-disabled='true'])::after {
+  cursor: default;
+}
+
+/* Secondary controls sit above the stretched action and keep their own states. */
+.root:has(.action) :is(a[href], button, input, select, textarea, summary, [tabindex]):not(.action) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- Parts (layout helpers) ---- */
+
+.media {
+  flex: none;
+  overflow: hidden;
+  /* derived: wide media by default; override with style or class */
+  aspect-ratio: 16 / 9;
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.root[data-orientation='horizontal'] .media {
+  /* derived: a thumbnail column that fills the card's height */
+  inline-size: min(40%, 160px);
+  aspect-ratio: auto;
+}
+
+.media > :is(img, video, picture, svg) {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  /* derived: 4px between text lines */
+  gap: var(--md-sys-measurement-space50);
+  min-inline-size: 0;
+  /* 16dp inline (spec); 16dp block (derived) */
+  padding: var(--md-sys-measurement-space200);
+}
+
+.headline,
+.subhead,
+.supportingText {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* derived: title-large (spec suggests title-large or headline-small) */
+.headline {
+  color: var(--_headline-color);
+  font-family: var(--md-sys-typescale-title-large-font);
+  font-weight: var(--md-sys-typescale-title-large-weight);
+  font-size: var(--md-sys-typescale-title-large-size);
+  line-height: var(--md-sys-typescale-title-large-line-height);
+  letter-spacing: var(--md-sys-typescale-title-large-tracking);
+}
+
+/* derived: body-medium, on-surface-variant */
+.subhead,
+.supportingText {
+  color: var(--_text-color);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-weight: var(--md-sys-typescale-body-medium-weight);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+}
+
+.supportingText {
+  margin-block-start: var(--md-sys-measurement-space100);
+}
+
+/* Truncate after --_max-lines lines. */
+:is(.headline, .subhead, .supportingText)[data-max-lines] {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--_max-lines);
+  line-clamp: var(--_max-lines);
+  overflow: hidden;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  /* derived: 8dp between actions, 16dp from the card edges */
+  gap: var(--md-sys-measurement-space100);
+  padding: 0 var(--md-sys-measurement-space200) var(--md-sys-measurement-space200);
+}
+
+.icon {
+  --md-icon-size: var(--_icon-size);
+  --md-icon-optical-size: 24;
+
+  color: var(--_icon-color);
+}
+
+@media (forced-colors: active) {
+  .root {
+    border-color: CanvasText;
+  }
+
+  .root:has(.action:focus-visible) {
+    outline-color: Highlight;
+  }
+}

@@ -1,0 +1,595 @@
+/*
+ * List. Spec: m3-guidelines/components/lists.md
+ *
+ * Structure (the flex row is .row):
+ *   non-interactive  li.item > div.row > leading, content, trailing
+ *   single-action    li.item > (a|button).action.row > ...
+ *   multi-action     li.item > div.row.split > (a|button).action + trailing
+ *   expandable       li.item (Collapsible root) > button.action.row + div.nested
+ *   select list      div.item.row.option (Listbox item) inside div.list (Listbox content)
+ *
+ * The item (li or option) holds colors and the morphing shape; children
+ * inherit the radius. In split rows the action is position: static, so its
+ * state layer and ripple cover the whole row while the trailing buttons sit
+ * above them.
+ *
+ * Item attributes: data-variant, data-segmented, data-selectable,
+ * data-lines, data-overline, data-selected, data-disabled, data-dragged,
+ * data-highlighted (Listbox), data-state (Collapsible).
+ */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  outline: none;
+}
+
+.list[data-segmented] {
+  gap: var(--md-sys-measurement-space25);
+  border-radius: var(--md-sys-shape-corner-large);
+}
+
+.listbox {
+  display: contents;
+}
+
+.visuallyHidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---- Item ---- */
+
+.item {
+  --_container-color: var(--md-sys-color-surface);
+  --_label-color: var(--md-sys-color-on-surface);
+  --_supporting-color: var(--md-sys-color-on-surface-variant);
+  --_overline-color: var(--md-sys-color-on-surface-variant);
+  --_trailing-text-color: var(--md-sys-color-on-surface-variant);
+  --_leading-icon-color: var(--md-sys-color-on-surface-variant);
+  --_trailing-icon-color: var(--md-sys-color-on-surface-variant);
+  --_state-layer-color: var(--md-sys-color-on-surface);
+  --_elevation: var(--md-sys-elevation-level0);
+
+  --_leading-space: var(--md-sys-measurement-space200);
+  --_trailing-space: var(--md-sys-measurement-space200);
+  --_top-space: var(--md-sys-measurement-space125);
+  --_bottom-space: var(--md-sys-measurement-space125);
+  --_between-space: var(--md-sys-measurement-space150);
+  --_height: 56px;
+  --_supporting-lines: 1;
+  --_align: center;
+  --_icon-optical-size: 20;
+  --_media-opacity: 1;
+
+  /* expressive */
+  --_shape: var(--md-sys-shape-corner-extra-small);
+  --_outer-shape: var(--_shape);
+  --_leading-icon-size: 20px;
+  --_trailing-icon-size: 20px;
+  --_image-shape: var(--md-sys-shape-corner-small);
+  --_shape-top: var(--_outer-shape);
+  --_shape-bottom: var(--_outer-shape);
+  --_focus-ring-offset: var(--md-sys-state-focus-indicator-inner-offset);
+
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+  margin: 0;
+  border-start-start-radius: var(--_shape-top);
+  border-start-end-radius: var(--_shape-top);
+  border-end-end-radius: var(--_shape-bottom);
+  border-end-start-radius: var(--_shape-bottom);
+  background: var(--_container-color);
+  box-shadow: var(--_elevation);
+  color: var(--_label-color);
+  list-style: none;
+  transition:
+    border-radius var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial-easing),
+    background-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    box-shadow var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.item[data-variant='baseline'] {
+  --_shape: var(--md-sys-shape-corner-none);
+  --_leading-icon-size: 24px;
+  --_trailing-icon-size: 24px;
+  --_image-shape: var(--md-sys-shape-corner-none);
+  --_icon-optical-size: 24;
+}
+
+.item[data-lines='2'] {
+  --_height: 72px;
+}
+
+.item[data-lines='3'] {
+  --_height: 88px;
+  --_align: flex-start;
+}
+
+/* 3-line item without overline: the supporting text gets two lines (derived). */
+.item[data-lines='3']:not([data-overline]) {
+  --_supporting-lines: 2;
+}
+
+/* ---- Segmented: 16px outer corners on the first and last items ---- */
+
+.item[data-segmented] {
+  --_container-color: var(--md-sys-color-surface);
+}
+
+.item[data-segmented]:first-child {
+  --_shape-top: max(var(--_outer-shape), var(--md-sys-shape-corner-large));
+}
+
+.item[data-segmented]:last-child {
+  --_shape-bottom: max(
+    var(--_outer-shape),
+    var(--md-sys-shape-corner-large)
+  );
+}
+
+/* ---- Shape morph (expressive): hover 12, focus/pressed/dragged 16 ---- */
+
+@media (hover: hover) {
+  .item[data-variant='expressive']:not([data-disabled]):is(
+      :has(> .action:hover, > .row > .action:hover),
+      .option:hover
+    ) {
+    --_shape: var(--md-sys-shape-corner-medium);
+  }
+}
+
+.item[data-variant='expressive']:not([data-disabled]):is(
+    :has(> .action:focus-visible, > .row > .action:focus-visible),
+    [data-highlighted]
+  ) {
+  --_shape: var(--md-sys-shape-corner-large);
+  --_state-layer-color: var(--md-sys-color-on-surface);
+}
+
+.item[data-variant='expressive']:not([data-disabled]):is(
+    :has(> .action:active, > .row > .action:active),
+    .option:active
+  ) {
+  --_shape: var(--md-sys-shape-corner-large);
+  --_state-layer-color: var(--md-sys-color-on-surface);
+}
+
+/* ---- Expanded (expand container: 16px, groups the nested items) ---- */
+
+.item[data-expandable][data-state='open'] {
+  --_container-color: var(--md-sys-color-surface);
+  --_outer-shape: var(--md-sys-shape-corner-large);
+}
+
+.item[data-expandable][data-segmented][data-state='open'] {
+  --_container-color: var(--md-sys-color-surface);
+}
+
+/* ---- Dragged ---- */
+
+.item[data-dragged] {
+  --_elevation: var(--md-sys-elevation-level4);
+  --_shape: var(--md-sys-shape-corner-large);
+  --_state-layer-color: var(--md-sys-color-on-surface);
+  z-index: 1;
+}
+
+.item[data-dragged] > .action::before,
+.item[data-dragged] > .row > .action::before,
+.item[data-dragged].option::before {
+  opacity: var(--md-sys-state-dragged-state-layer-opacity);
+}
+
+/* ---- Selectable lists: unselected trailing icons are on-surface ---- */
+
+.item[data-selectable]:not([data-selected]) {
+  --_trailing-icon-color: var(--md-sys-color-on-surface);
+}
+
+/* ---- Selected (highlight + 16px in every state, incl. baseline) ---- */
+
+.item[data-selected] {
+  --_container-color: var(--md-sys-color-secondary-container);
+  --_label-color: var(--md-sys-color-on-secondary-container);
+  --_supporting-color: var(--md-sys-color-on-secondary-container);
+  --_overline-color: var(--md-sys-color-on-secondary-container);
+  --_trailing-text-color: var(--md-sys-color-on-secondary-container);
+  --_leading-icon-color: var(--md-sys-color-on-secondary-container);
+  --_trailing-icon-color: var(--md-sys-color-on-secondary-container);
+  --_shape: var(--md-sys-shape-corner-large);
+  --_outer-shape: var(--_shape);
+}
+
+.item[data-selected][data-variant='baseline'] {
+  --_shape: var(--md-sys-shape-corner-large);
+}
+
+/* Selected + hover/focus/pressed: icons switch to on-surface. */
+.item[data-selected]:not([data-disabled]):is(
+    :has(> .action:is(:hover, :focus-visible, :active), > .row > .action:is(:hover, :focus-visible, :active)),
+    .option:is(:hover, :active),
+    [data-highlighted],
+    [data-dragged]
+  ) {
+  --_leading-icon-color: var(--md-sys-color-on-surface);
+  --_trailing-icon-color: var(--md-sys-color-on-surface);
+}
+
+/* ---- Disabled ---- */
+
+.item[data-disabled] {
+  --_label-color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+  --_supporting-color: var(--_label-color);
+  --_overline-color: var(--_label-color);
+  --_trailing-text-color: var(--_label-color);
+  --_leading-icon-color: var(--_label-color);
+  --_trailing-icon-color: var(--_label-color);
+}
+
+/* Spec token: on-surface at 0.38 for the selected disabled container. */
+.item[data-disabled][data-selected] {
+  --_container-color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+}
+
+.item[data-disabled] {
+  --_media-opacity: 0.38; /* derived: media dims with the 0.38 content opacity */
+}
+
+/* Long press opens the item's menu instead of the iOS link callout. */
+.item[data-contextmenu] {
+  -webkit-touch-callout: none;
+}
+
+/* ---- Row and action ---- */
+
+.row {
+  display: flex;
+  flex-direction: row;
+  align-items: var(--_align);
+  gap: var(--_between-space);
+  box-sizing: border-box;
+  inline-size: 100%;
+  min-block-size: var(--_height);
+  margin: 0;
+  padding-block: var(--_top-space) var(--_bottom-space);
+  padding-inline: var(--_leading-space) var(--_trailing-space);
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: start;
+  text-decoration: none;
+}
+
+.action {
+  composes: interactive from '../shared/interaction.module.css';
+}
+
+.option {
+  composes: interactive from '../shared/interaction.module.css';
+}
+
+/* Multi-action: the action spans leading + content, the trailing buttons follow. */
+.split {
+  position: relative;
+  padding-block: 0;
+  padding-inline-start: 0;
+}
+
+.split > .action {
+  position: static;
+  display: flex;
+  flex: 1;
+  align-items: var(--_align);
+  align-self: stretch;
+  gap: var(--_between-space);
+  min-inline-size: 0;
+  margin: 0;
+  padding-block: var(--_top-space) var(--_bottom-space);
+  padding-inline: var(--_leading-space) 0;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: start;
+  text-decoration: none;
+}
+
+.split > .trailing {
+  position: relative;
+  z-index: 1;
+}
+
+.item[data-lines='3'] > .split > .trailing {
+  align-self: flex-start;
+  margin-block-start: var(--_top-space);
+}
+
+/* Select lists: Ark keeps focus on the list; the highlighted option shows it. */
+.option[data-highlighted]::before {
+  opacity: var(--md-sys-state-focus-state-layer-opacity);
+}
+
+.option[data-highlighted] {
+  outline: var(--md-sys-state-focus-indicator-thickness) solid
+    var(--md-sys-color-secondary);
+  outline-offset: var(--_focus-ring-offset);
+}
+
+.item .action:focus-visible {
+  outline-color: var(--md-sys-color-secondary);
+}
+
+@media (forced-colors: active) {
+  .option[data-highlighted],
+  .action:focus-visible {
+    outline-color: Highlight;
+  }
+
+  .item[data-selected] {
+    outline: 2px solid CanvasText;
+    outline-offset: -2px;
+  }
+}
+
+/* ---- Slots ---- */
+
+.leading,
+.trailing {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.leading {
+  --md-icon-size: var(--_leading-icon-size);
+  --md-icon-optical-size: var(--_icon-optical-size);
+  color: var(--_leading-icon-color);
+}
+
+.trailing {
+  --md-icon-size: var(--_trailing-icon-size);
+  --md-icon-optical-size: var(--_icon-optical-size);
+  gap: var(--md-sys-measurement-space100); /* derived: between trailing text and icon */
+  color: var(--_trailing-icon-color);
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: var(--_align);
+  min-inline-size: 0;
+  align-self: stretch;
+  /* Single-line text never sets the list's width; the list fills its container. */
+  contain: inline-size;
+}
+
+.headline,
+.overline {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.headline {
+  color: var(--_label-color);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-weight: var(--md-sys-typescale-body-large-weight);
+  font-size: var(--md-sys-typescale-body-large-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  letter-spacing: var(--md-sys-typescale-body-large-tracking);
+}
+
+.supporting {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--_supporting-lines);
+  line-clamp: var(--_supporting-lines);
+  overflow-wrap: anywhere;
+  color: var(--_supporting-color);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-weight: var(--md-sys-typescale-body-medium-weight);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+}
+
+.overline {
+  color: var(--_overline-color);
+  font-family: var(--md-sys-typescale-label-small-font);
+  font-weight: var(--md-sys-typescale-label-small-weight);
+  font-size: var(--md-sys-typescale-label-small-size);
+  line-height: var(--md-sys-typescale-label-small-line-height);
+  letter-spacing: var(--md-sys-typescale-label-small-tracking);
+}
+
+.trailingText {
+  color: var(--_trailing-text-color);
+  white-space: nowrap;
+  font-family: var(--md-sys-typescale-label-small-font);
+  font-weight: var(--md-sys-typescale-label-small-weight);
+  font-size: var(--md-sys-typescale-label-small-size);
+  line-height: var(--md-sys-typescale-label-small-line-height);
+  letter-spacing: var(--md-sys-typescale-label-small-tracking);
+}
+
+/* Check icon: the non-color selection cue of select lists. */
+.indicator {
+  display: flex;
+}
+
+.indicator[hidden] {
+  display: none;
+}
+
+/* ---- Leading media ---- */
+
+.avatar {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  inline-size: 40px;
+  block-size: 40px;
+  overflow: hidden;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  font-family: var(--md-sys-typescale-title-medium-font);
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+  font-size: var(--md-sys-typescale-title-medium-size);
+  line-height: var(--md-sys-typescale-title-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-title-medium-tracking);
+  user-select: none;
+}
+
+.avatar,
+.image {
+  opacity: var(--_media-opacity);
+}
+
+.avatar img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.image {
+  display: block;
+  flex-shrink: 0;
+  inline-size: 56px;
+  block-size: 56px;
+  border-radius: var(--_image-shape);
+  /* derived: placeholder tone while the image loads or when it has none */
+  background: var(--md-sys-color-surface-container-highest);
+  object-fit: cover;
+}
+
+.image[data-kind='video'] {
+  inline-size: 100px;
+  block-size: 56px;
+  border-radius: var(--md-sys-shape-corner-small);
+}
+
+.image[data-kind='video-large'] {
+  inline-size: 114px;
+  block-size: 64px;
+  border-radius: var(--md-sys-shape-corner-small);
+}
+
+/* ---- Expand & collapse ---- */
+
+.expandIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* derived: container size isn't specified; 32px circle around the 20/24px chevron */
+  inline-size: 32px;
+  block-size: 32px;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  transition: background-color var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.expandIcon > * {
+  transition: rotate var(--md-sys-motion-spring-fast-spatial-duration)
+    var(--md-sys-motion-spring-fast-spatial-easing);
+}
+
+.item[data-state='open'] > .action .expandIcon {
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+}
+
+/* derived: the chevron turns 180deg when expanded */
+.item[data-state='open'] > .action .expandIcon > * {
+  rotate: 180deg;
+}
+
+/* Container transform along the block axis (derived: legacy enter/exit curves). */
+.nested {
+  overflow: hidden;
+}
+
+.nested[data-state='open'] {
+  animation: expand var(--md-sys-motion-duration-medium4) var(--md-sys-motion-easing-emphasized-decelerate);
+}
+
+.nested[data-state='closed'] {
+  animation: collapse var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-emphasized-accelerate);
+}
+
+@keyframes expand {
+  from {
+    block-size: 0;
+    opacity: 0;
+  }
+  to {
+    block-size: var(--height);
+    opacity: 1;
+  }
+}
+
+@keyframes collapse {
+  from {
+    block-size: var(--height);
+    opacity: 1;
+  }
+  to {
+    block-size: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nested[data-state='open'] {
+    animation: fade-in var(--md-sys-motion-duration-short3) linear;
+  }
+
+  .nested[data-state='closed'] {
+    animation: fade-out var(--md-sys-motion-duration-short2) linear;
+  }
+}
+
+/* ---- Divider ---- */
+
+/* Same line as Divider (divider.md); `inset` is its middle inset (16px both ends). */
+.divider {
+  composes: root from '../divider/divider.module.css';
+}

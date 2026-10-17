@@ -1,0 +1,355 @@
+/*
+ * Typography: reference typefaces (md.ref.typeface.*) and the type scale
+ * (md.sys.typescale.*): baseline, emphasized and the variable-font sets.
+ * Sizes and line heights are rem (px / 16) so text follows the user font
+ * size; tracking is rem too.
+ * Emphasized styles only change the weight. Components use baseline styles
+ * and swap to the emphasized token of the same role when they need emphasis.
+ */
+:root {
+  --md-ref-typeface-brand: Roboto, "Noto Sans", system-ui, sans-serif;
+  --md-ref-typeface-plain: Roboto, "Noto Sans", system-ui, sans-serif;
+  --md-ref-typeface-variable-brand: "Roboto Flex", Roboto, "Noto Sans", system-ui, sans-serif;
+  --md-ref-typeface-variable-plain: "Roboto Flex", Roboto, "Noto Sans", system-ui, sans-serif;
+  --md-ref-typeface-weight-regular: 400;
+  --md-ref-typeface-weight-medium: 500;
+  --md-ref-typeface-weight-semibold: 600;
+  --md-ref-typeface-weight-bold: 700;
+
+  /* display-large: 57/64px, 400, tracking -0.25px */
+  --md-sys-typescale-display-large-font: var(--md-ref-typeface-brand);
+  --md-sys-typescale-display-large-weight: 400;
+  --md-sys-typescale-display-large-size: 3.5625rem;
+  --md-sys-typescale-display-large-line-height: 4rem;
+  --md-sys-typescale-display-large-tracking: -0.015625rem;
+
+  /* display-medium: 45/52px, 400, tracking 0px */
+  --md-sys-typescale-display-medium-font: var(--md-ref-typeface-brand);
+  --md-sys-typescale-display-medium-weight: 400;
+  --md-sys-typescale-display-medium-size: 2.8125rem;
+  --md-sys-typescale-display-medium-line-height: 3.25rem;
+  --md-sys-typescale-display-medium-tracking: 0;
+
+  /* display-small: 36/44px, 400, tracking 0px */
+  --md-sys-typescale-display-small-font: var(--md-ref-typeface-brand);
+  --md-sys-typescale-display-small-weight: 400;
+  --md-sys-typescale-display-small-size: 2.25rem;
+  --md-sys-typescale-display-small-line-height: 2.75rem;
+  --md-sys-typescale-display-small-tracking: 0;
+
+  /* headline-large: 32/40px, 400, tracking 0px */
+  --md-sys-typescale-headline-large-font: var(--md-ref-typeface-brand);
+  --md-sys-typescale-headline-large-weight: 400;
+  --md-sys-typescale-headline-large-size: 2rem;
+  --md-sys-typescale-headline-large-line-height: 2.5rem;
+  --md-sys-typescale-headline-large-tracking: 0;
+
+  /* headline-medium: 28/36px, 400, tracking 0px */
+  --md-sys-typescale-headline-medium-font: var(--md-ref-typeface-brand);
+  --md-sys-typescale-headline-medium-weight: 400;
+  --md-sys-typescale-headline-medium-size: 1.75rem;
+  --md-sys-typescale-headline-medium-line-height: 2.25rem;
+  --md-sys-typescale-headline-medium-tracking: 0;
+
+  /* headline-small: 24/32px, 400, tracking 0px */
+  --md-sys-typescale-headline-small-font: var(--md-ref-typeface-brand);
+  --md-sys-typescale-headline-small-weight: 400;
+  --md-sys-typescale-headline-small-size: 1.5rem;
+  --md-sys-typescale-headline-small-line-height: 2rem;
+  --md-sys-typescale-headline-small-tracking: 0;
+
+  /* title-large: 22/28px, 400, tracking 0px */
+  --md-sys-typescale-title-large-font: var(--md-ref-typeface-brand);
+  --md-sys-typescale-title-large-weight: 400;
+  --md-sys-typescale-title-large-size: 1.375rem;
+  --md-sys-typescale-title-large-line-height: 1.75rem;
+  --md-sys-typescale-title-large-tracking: 0;
+
+  /* title-medium: 16/24px, 500, tracking 0.15px */
+  --md-sys-typescale-title-medium-font: var(--md-ref-typeface-plain);
+  --md-sys-typescale-title-medium-weight: 500;
+  --md-sys-typescale-title-medium-size: 1rem;
+  --md-sys-typescale-title-medium-line-height: 1.5rem;
+  --md-sys-typescale-title-medium-tracking: 0.009375rem;
+
+  /* title-small: 14/20px, 500, tracking 0.1px */
+  --md-sys-typescale-title-small-font: var(--md-ref-typeface-plain);
+  --md-sys-typescale-title-small-weight: 500;
+  --md-sys-typescale-title-small-size: 0.875rem;
+  --md-sys-typescale-title-small-line-height: 1.25rem;
+  --md-sys-typescale-title-small-tracking: 0.00625rem;
+
+  /* body-large: 16/24px, 400, tracking 0.5px */
+  --md-sys-typescale-body-large-font: var(--md-ref-typeface-plain);
+  --md-sys-typescale-body-large-weight: 400;
+  --md-sys-typescale-body-large-size: 1rem;
+  --md-sys-typescale-body-large-line-height: 1.5rem;
+  --md-sys-typescale-body-large-tracking: 0.03125rem;
+
+  /* body-medium: 14/20px, 400, tracking 0.25px */
+  --md-sys-typescale-body-medium-font: var(--md-ref-typeface-plain);
+  --md-sys-typescale-body-medium-weight: 400;
+  --md-sys-typescale-body-medium-size: 0.875rem;
+  --md-sys-typescale-body-medium-line-height: 1.25rem;
+  --md-sys-typescale-body-medium-tracking: 0.015625rem;
+
+  /* body-small: 12/16px, 400, tracking 0.4px */
+  --md-sys-typescale-body-small-font: var(--md-ref-typeface-plain);
+  --md-sys-typescale-body-small-weight: 400;
+  --md-sys-typescale-body-small-size: 0.75rem;
+  --md-sys-typescale-body-small-line-height: 1rem;
+  --md-sys-typescale-body-small-tracking: 0.025rem;
+
+  /* label-large: 14/20px, 500, tracking 0.1px */
+  --md-sys-typescale-label-large-font: var(--md-ref-typeface-plain);
+  --md-sys-typescale-label-large-weight: 500;
+  --md-sys-typescale-label-large-size: 0.875rem;
+  --md-sys-typescale-label-large-line-height: 1.25rem;
+  --md-sys-typescale-label-large-tracking: 0.00625rem;
+
+  /* label-medium: 12/16px, 500, tracking 0.5px */
+  --md-sys-typescale-label-medium-font: var(--md-ref-typeface-plain);
+  --md-sys-typescale-label-medium-weight: 500;
+  --md-sys-typescale-label-medium-size: 0.75rem;
+  --md-sys-typescale-label-medium-line-height: 1rem;
+  --md-sys-typescale-label-medium-tracking: 0.03125rem;
+
+  /* label-small: 11/16px, 500, tracking 0.5px */
+  --md-sys-typescale-label-small-font: var(--md-ref-typeface-plain);
+  --md-sys-typescale-label-small-weight: 500;
+  --md-sys-typescale-label-small-size: 0.6875rem;
+  --md-sys-typescale-label-small-line-height: 1rem;
+  --md-sys-typescale-label-small-tracking: 0.03125rem;
+
+  /* Emphasized */
+  --md-sys-typescale-emphasized-display-large-font: var(--md-sys-typescale-display-large-font);
+  --md-sys-typescale-emphasized-display-large-weight: 500;
+  --md-sys-typescale-emphasized-display-large-size: var(--md-sys-typescale-display-large-size);
+  --md-sys-typescale-emphasized-display-large-line-height: var(--md-sys-typescale-display-large-line-height);
+  --md-sys-typescale-emphasized-display-large-tracking: var(--md-sys-typescale-display-large-tracking);
+  --md-sys-typescale-emphasized-display-medium-font: var(--md-sys-typescale-display-medium-font);
+  --md-sys-typescale-emphasized-display-medium-weight: 500;
+  --md-sys-typescale-emphasized-display-medium-size: var(--md-sys-typescale-display-medium-size);
+  --md-sys-typescale-emphasized-display-medium-line-height: var(--md-sys-typescale-display-medium-line-height);
+  --md-sys-typescale-emphasized-display-medium-tracking: var(--md-sys-typescale-display-medium-tracking);
+  --md-sys-typescale-emphasized-display-small-font: var(--md-sys-typescale-display-small-font);
+  --md-sys-typescale-emphasized-display-small-weight: 500;
+  --md-sys-typescale-emphasized-display-small-size: var(--md-sys-typescale-display-small-size);
+  --md-sys-typescale-emphasized-display-small-line-height: var(--md-sys-typescale-display-small-line-height);
+  --md-sys-typescale-emphasized-display-small-tracking: var(--md-sys-typescale-display-small-tracking);
+  --md-sys-typescale-emphasized-headline-large-font: var(--md-sys-typescale-headline-large-font);
+  --md-sys-typescale-emphasized-headline-large-weight: 500;
+  --md-sys-typescale-emphasized-headline-large-size: var(--md-sys-typescale-headline-large-size);
+  --md-sys-typescale-emphasized-headline-large-line-height: var(--md-sys-typescale-headline-large-line-height);
+  --md-sys-typescale-emphasized-headline-large-tracking: var(--md-sys-typescale-headline-large-tracking);
+  --md-sys-typescale-emphasized-headline-medium-font: var(--md-sys-typescale-headline-medium-font);
+  --md-sys-typescale-emphasized-headline-medium-weight: 500;
+  --md-sys-typescale-emphasized-headline-medium-size: var(--md-sys-typescale-headline-medium-size);
+  --md-sys-typescale-emphasized-headline-medium-line-height: var(--md-sys-typescale-headline-medium-line-height);
+  --md-sys-typescale-emphasized-headline-medium-tracking: var(--md-sys-typescale-headline-medium-tracking);
+  --md-sys-typescale-emphasized-headline-small-font: var(--md-sys-typescale-headline-small-font);
+  --md-sys-typescale-emphasized-headline-small-weight: 500;
+  --md-sys-typescale-emphasized-headline-small-size: var(--md-sys-typescale-headline-small-size);
+  --md-sys-typescale-emphasized-headline-small-line-height: var(--md-sys-typescale-headline-small-line-height);
+  --md-sys-typescale-emphasized-headline-small-tracking: var(--md-sys-typescale-headline-small-tracking);
+  --md-sys-typescale-emphasized-title-large-font: var(--md-sys-typescale-title-large-font);
+  --md-sys-typescale-emphasized-title-large-weight: 500;
+  --md-sys-typescale-emphasized-title-large-size: var(--md-sys-typescale-title-large-size);
+  --md-sys-typescale-emphasized-title-large-line-height: var(--md-sys-typescale-title-large-line-height);
+  --md-sys-typescale-emphasized-title-large-tracking: var(--md-sys-typescale-title-large-tracking);
+  --md-sys-typescale-emphasized-title-medium-font: var(--md-sys-typescale-title-medium-font);
+  --md-sys-typescale-emphasized-title-medium-weight: 700;
+  --md-sys-typescale-emphasized-title-medium-size: var(--md-sys-typescale-title-medium-size);
+  --md-sys-typescale-emphasized-title-medium-line-height: var(--md-sys-typescale-title-medium-line-height);
+  --md-sys-typescale-emphasized-title-medium-tracking: var(--md-sys-typescale-title-medium-tracking);
+  --md-sys-typescale-emphasized-title-small-font: var(--md-sys-typescale-title-small-font);
+  --md-sys-typescale-emphasized-title-small-weight: 700;
+  --md-sys-typescale-emphasized-title-small-size: var(--md-sys-typescale-title-small-size);
+  --md-sys-typescale-emphasized-title-small-line-height: var(--md-sys-typescale-title-small-line-height);
+  --md-sys-typescale-emphasized-title-small-tracking: var(--md-sys-typescale-title-small-tracking);
+  --md-sys-typescale-emphasized-body-large-font: var(--md-sys-typescale-body-large-font);
+  --md-sys-typescale-emphasized-body-large-weight: 500;
+  --md-sys-typescale-emphasized-body-large-size: var(--md-sys-typescale-body-large-size);
+  --md-sys-typescale-emphasized-body-large-line-height: var(--md-sys-typescale-body-large-line-height);
+  --md-sys-typescale-emphasized-body-large-tracking: var(--md-sys-typescale-body-large-tracking);
+  --md-sys-typescale-emphasized-body-medium-font: var(--md-sys-typescale-body-medium-font);
+  --md-sys-typescale-emphasized-body-medium-weight: 500;
+  --md-sys-typescale-emphasized-body-medium-size: var(--md-sys-typescale-body-medium-size);
+  --md-sys-typescale-emphasized-body-medium-line-height: var(--md-sys-typescale-body-medium-line-height);
+  --md-sys-typescale-emphasized-body-medium-tracking: var(--md-sys-typescale-body-medium-tracking);
+  --md-sys-typescale-emphasized-body-small-font: var(--md-sys-typescale-body-small-font);
+  --md-sys-typescale-emphasized-body-small-weight: 500;
+  --md-sys-typescale-emphasized-body-small-size: var(--md-sys-typescale-body-small-size);
+  --md-sys-typescale-emphasized-body-small-line-height: var(--md-sys-typescale-body-small-line-height);
+  --md-sys-typescale-emphasized-body-small-tracking: var(--md-sys-typescale-body-small-tracking);
+  --md-sys-typescale-emphasized-label-large-font: var(--md-sys-typescale-label-large-font);
+  --md-sys-typescale-emphasized-label-large-weight: 700;
+  --md-sys-typescale-emphasized-label-large-size: var(--md-sys-typescale-label-large-size);
+  --md-sys-typescale-emphasized-label-large-line-height: var(--md-sys-typescale-label-large-line-height);
+  --md-sys-typescale-emphasized-label-large-tracking: var(--md-sys-typescale-label-large-tracking);
+  --md-sys-typescale-emphasized-label-medium-font: var(--md-sys-typescale-label-medium-font);
+  --md-sys-typescale-emphasized-label-medium-weight: 700;
+  --md-sys-typescale-emphasized-label-medium-size: var(--md-sys-typescale-label-medium-size);
+  --md-sys-typescale-emphasized-label-medium-line-height: var(--md-sys-typescale-label-medium-line-height);
+  --md-sys-typescale-emphasized-label-medium-tracking: var(--md-sys-typescale-label-medium-tracking);
+  --md-sys-typescale-emphasized-label-small-font: var(--md-sys-typescale-label-small-font);
+  --md-sys-typescale-emphasized-label-small-weight: 700;
+  --md-sys-typescale-emphasized-label-small-size: var(--md-sys-typescale-label-small-size);
+  --md-sys-typescale-emphasized-label-small-line-height: var(--md-sys-typescale-label-small-line-height);
+  --md-sys-typescale-emphasized-label-small-tracking: var(--md-sys-typescale-label-small-tracking);
+
+  /* Variable (Roboto Flex): same values as the static roles, only the font
+     changes. Set axes with font-variation-settings (wght = weight, wdth 100,
+     GRAD 0) and font-optical-sizing: auto. Roboto Flex isn't loaded yet, so
+     these fall back to Roboto. */
+  --md-sys-typescale-variable-display-large-font: var(--md-ref-typeface-variable-brand);
+  --md-sys-typescale-variable-display-large-weight: var(--md-sys-typescale-display-large-weight);
+  --md-sys-typescale-variable-display-large-size: var(--md-sys-typescale-display-large-size);
+  --md-sys-typescale-variable-display-large-line-height: var(--md-sys-typescale-display-large-line-height);
+  --md-sys-typescale-variable-display-large-tracking: var(--md-sys-typescale-display-large-tracking);
+  --md-sys-typescale-variable-display-medium-font: var(--md-ref-typeface-variable-brand);
+  --md-sys-typescale-variable-display-medium-weight: var(--md-sys-typescale-display-medium-weight);
+  --md-sys-typescale-variable-display-medium-size: var(--md-sys-typescale-display-medium-size);
+  --md-sys-typescale-variable-display-medium-line-height: var(--md-sys-typescale-display-medium-line-height);
+  --md-sys-typescale-variable-display-medium-tracking: var(--md-sys-typescale-display-medium-tracking);
+  --md-sys-typescale-variable-display-small-font: var(--md-ref-typeface-variable-brand);
+  --md-sys-typescale-variable-display-small-weight: var(--md-sys-typescale-display-small-weight);
+  --md-sys-typescale-variable-display-small-size: var(--md-sys-typescale-display-small-size);
+  --md-sys-typescale-variable-display-small-line-height: var(--md-sys-typescale-display-small-line-height);
+  --md-sys-typescale-variable-display-small-tracking: var(--md-sys-typescale-display-small-tracking);
+  --md-sys-typescale-variable-headline-large-font: var(--md-ref-typeface-variable-brand);
+  --md-sys-typescale-variable-headline-large-weight: var(--md-sys-typescale-headline-large-weight);
+  --md-sys-typescale-variable-headline-large-size: var(--md-sys-typescale-headline-large-size);
+  --md-sys-typescale-variable-headline-large-line-height: var(--md-sys-typescale-headline-large-line-height);
+  --md-sys-typescale-variable-headline-large-tracking: var(--md-sys-typescale-headline-large-tracking);
+  --md-sys-typescale-variable-headline-medium-font: var(--md-ref-typeface-variable-brand);
+  --md-sys-typescale-variable-headline-medium-weight: var(--md-sys-typescale-headline-medium-weight);
+  --md-sys-typescale-variable-headline-medium-size: var(--md-sys-typescale-headline-medium-size);
+  --md-sys-typescale-variable-headline-medium-line-height: var(--md-sys-typescale-headline-medium-line-height);
+  --md-sys-typescale-variable-headline-medium-tracking: var(--md-sys-typescale-headline-medium-tracking);
+  --md-sys-typescale-variable-headline-small-font: var(--md-ref-typeface-variable-brand);
+  --md-sys-typescale-variable-headline-small-weight: var(--md-sys-typescale-headline-small-weight);
+  --md-sys-typescale-variable-headline-small-size: var(--md-sys-typescale-headline-small-size);
+  --md-sys-typescale-variable-headline-small-line-height: var(--md-sys-typescale-headline-small-line-height);
+  --md-sys-typescale-variable-headline-small-tracking: var(--md-sys-typescale-headline-small-tracking);
+  --md-sys-typescale-variable-title-large-font: var(--md-ref-typeface-variable-brand);
+  --md-sys-typescale-variable-title-large-weight: var(--md-sys-typescale-title-large-weight);
+  --md-sys-typescale-variable-title-large-size: var(--md-sys-typescale-title-large-size);
+  --md-sys-typescale-variable-title-large-line-height: var(--md-sys-typescale-title-large-line-height);
+  --md-sys-typescale-variable-title-large-tracking: var(--md-sys-typescale-title-large-tracking);
+  --md-sys-typescale-variable-title-medium-font: var(--md-ref-typeface-variable-plain);
+  --md-sys-typescale-variable-title-medium-weight: var(--md-sys-typescale-title-medium-weight);
+  --md-sys-typescale-variable-title-medium-size: var(--md-sys-typescale-title-medium-size);
+  --md-sys-typescale-variable-title-medium-line-height: var(--md-sys-typescale-title-medium-line-height);
+  --md-sys-typescale-variable-title-medium-tracking: var(--md-sys-typescale-title-medium-tracking);
+  --md-sys-typescale-variable-title-small-font: var(--md-ref-typeface-variable-plain);
+  --md-sys-typescale-variable-title-small-weight: var(--md-sys-typescale-title-small-weight);
+  --md-sys-typescale-variable-title-small-size: var(--md-sys-typescale-title-small-size);
+  --md-sys-typescale-variable-title-small-line-height: var(--md-sys-typescale-title-small-line-height);
+  --md-sys-typescale-variable-title-small-tracking: var(--md-sys-typescale-title-small-tracking);
+  --md-sys-typescale-variable-body-large-font: var(--md-ref-typeface-variable-plain);
+  --md-sys-typescale-variable-body-large-weight: var(--md-sys-typescale-body-large-weight);
+  --md-sys-typescale-variable-body-large-size: var(--md-sys-typescale-body-large-size);
+  --md-sys-typescale-variable-body-large-line-height: var(--md-sys-typescale-body-large-line-height);
+  --md-sys-typescale-variable-body-large-tracking: var(--md-sys-typescale-body-large-tracking);
+  --md-sys-typescale-variable-body-medium-font: var(--md-ref-typeface-variable-plain);
+  --md-sys-typescale-variable-body-medium-weight: var(--md-sys-typescale-body-medium-weight);
+  --md-sys-typescale-variable-body-medium-size: var(--md-sys-typescale-body-medium-size);
+  --md-sys-typescale-variable-body-medium-line-height: var(--md-sys-typescale-body-medium-line-height);
+  --md-sys-typescale-variable-body-medium-tracking: var(--md-sys-typescale-body-medium-tracking);
+  --md-sys-typescale-variable-body-small-font: var(--md-ref-typeface-variable-plain);
+  --md-sys-typescale-variable-body-small-weight: var(--md-sys-typescale-body-small-weight);
+  --md-sys-typescale-variable-body-small-size: var(--md-sys-typescale-body-small-size);
+  --md-sys-typescale-variable-body-small-line-height: var(--md-sys-typescale-body-small-line-height);
+  --md-sys-typescale-variable-body-small-tracking: var(--md-sys-typescale-body-small-tracking);
+  --md-sys-typescale-variable-label-large-font: var(--md-ref-typeface-variable-plain);
+  --md-sys-typescale-variable-label-large-weight: var(--md-sys-typescale-label-large-weight);
+  --md-sys-typescale-variable-label-large-size: var(--md-sys-typescale-label-large-size);
+  --md-sys-typescale-variable-label-large-line-height: var(--md-sys-typescale-label-large-line-height);
+  --md-sys-typescale-variable-label-large-tracking: var(--md-sys-typescale-label-large-tracking);
+  --md-sys-typescale-variable-label-medium-font: var(--md-ref-typeface-variable-plain);
+  --md-sys-typescale-variable-label-medium-weight: var(--md-sys-typescale-label-medium-weight);
+  --md-sys-typescale-variable-label-medium-size: var(--md-sys-typescale-label-medium-size);
+  --md-sys-typescale-variable-label-medium-line-height: var(--md-sys-typescale-label-medium-line-height);
+  --md-sys-typescale-variable-label-medium-tracking: var(--md-sys-typescale-label-medium-tracking);
+  --md-sys-typescale-variable-label-small-font: var(--md-ref-typeface-variable-plain);
+  --md-sys-typescale-variable-label-small-weight: var(--md-sys-typescale-label-small-weight);
+  --md-sys-typescale-variable-label-small-size: var(--md-sys-typescale-label-small-size);
+  --md-sys-typescale-variable-label-small-line-height: var(--md-sys-typescale-label-small-line-height);
+  --md-sys-typescale-variable-label-small-tracking: var(--md-sys-typescale-label-small-tracking);
+  --md-sys-typescale-variable-emphasized-display-large-font: var(--md-ref-typeface-variable-brand);
+  --md-sys-typescale-variable-emphasized-display-large-weight: var(--md-sys-typescale-emphasized-display-large-weight);
+  --md-sys-typescale-variable-emphasized-display-large-size: var(--md-sys-typescale-emphasized-display-large-size);
+  --md-sys-typescale-variable-emphasized-display-large-line-height: var(--md-sys-typescale-emphasized-display-large-line-height);
+  --md-sys-typescale-variable-emphasized-display-large-tracking: var(--md-sys-typescale-emphasized-display-large-tracking);
+  --md-sys-typescale-variable-emphasized-display-medium-font: var(--md-ref-typeface-variable-brand);
+  --md-sys-typescale-variable-emphasized-display-medium-weight: var(--md-sys-typescale-emphasized-display-medium-weight);
+  --md-sys-typescale-variable-emphasized-display-medium-size: var(--md-sys-typescale-emphasized-display-medium-size);
+  --md-sys-typescale-variable-emphasized-display-medium-line-height: var(--md-sys-typescale-emphasized-display-medium-line-height);
+  --md-sys-typescale-variable-emphasized-display-medium-tracking: var(--md-sys-typescale-emphasized-display-medium-tracking);
+  --md-sys-typescale-variable-emphasized-display-small-font: var(--md-ref-typeface-variable-brand);
+  --md-sys-typescale-variable-emphasized-display-small-weight: var(--md-sys-typescale-emphasized-display-small-weight);
+  --md-sys-typescale-variable-emphasized-display-small-size: var(--md-sys-typescale-emphasized-display-small-size);
+  --md-sys-typescale-variable-emphasized-display-small-line-height: var(--md-sys-typescale-emphasized-display-small-line-height);
+  --md-sys-typescale-variable-emphasized-display-small-tracking: var(--md-sys-typescale-emphasized-display-small-tracking);
+  --md-sys-typescale-variable-emphasized-headline-large-font: var(--md-ref-typeface-variable-brand);
+  --md-sys-typescale-variable-emphasized-headline-large-weight: var(--md-sys-typescale-emphasized-headline-large-weight);
+  --md-sys-typescale-variable-emphasized-headline-large-size: var(--md-sys-typescale-emphasized-headline-large-size);
+  --md-sys-typescale-variable-emphasized-headline-large-line-height: var(--md-sys-typescale-emphasized-headline-large-line-height);
+  --md-sys-typescale-variable-emphasized-headline-large-tracking: var(--md-sys-typescale-emphasized-headline-large-tracking);
+  --md-sys-typescale-variable-emphasized-headline-medium-font: var(--md-ref-typeface-variable-brand);
+  --md-sys-typescale-variable-emphasized-headline-medium-weight: var(--md-sys-typescale-emphasized-headline-medium-weight);
+  --md-sys-typescale-variable-emphasized-headline-medium-size: var(--md-sys-typescale-emphasized-headline-medium-size);
+  --md-sys-typescale-variable-emphasized-headline-medium-line-height: var(--md-sys-typescale-emphasized-headline-medium-line-height);
+  --md-sys-typescale-variable-emphasized-headline-medium-tracking: var(--md-sys-typescale-emphasized-headline-medium-tracking);
+  --md-sys-typescale-variable-emphasized-headline-small-font: var(--md-ref-typeface-variable-brand);
+  --md-sys-typescale-variable-emphasized-headline-small-weight: var(--md-sys-typescale-emphasized-headline-small-weight);
+  --md-sys-typescale-variable-emphasized-headline-small-size: var(--md-sys-typescale-emphasized-headline-small-size);
+  --md-sys-typescale-variable-emphasized-headline-small-line-height: var(--md-sys-typescale-emphasized-headline-small-line-height);
+  --md-sys-typescale-variable-emphasized-headline-small-tracking: var(--md-sys-typescale-emphasized-headline-small-tracking);
+  --md-sys-typescale-variable-emphasized-title-large-font: var(--md-ref-typeface-variable-brand);
+  --md-sys-typescale-variable-emphasized-title-large-weight: var(--md-sys-typescale-emphasized-title-large-weight);
+  --md-sys-typescale-variable-emphasized-title-large-size: var(--md-sys-typescale-emphasized-title-large-size);
+  --md-sys-typescale-variable-emphasized-title-large-line-height: var(--md-sys-typescale-emphasized-title-large-line-height);
+  --md-sys-typescale-variable-emphasized-title-large-tracking: var(--md-sys-typescale-emphasized-title-large-tracking);
+  --md-sys-typescale-variable-emphasized-title-medium-font: var(--md-ref-typeface-variable-plain);
+  --md-sys-typescale-variable-emphasized-title-medium-weight: var(--md-sys-typescale-emphasized-title-medium-weight);
+  --md-sys-typescale-variable-emphasized-title-medium-size: var(--md-sys-typescale-emphasized-title-medium-size);
+  --md-sys-typescale-variable-emphasized-title-medium-line-height: var(--md-sys-typescale-emphasized-title-medium-line-height);
+  --md-sys-typescale-variable-emphasized-title-medium-tracking: var(--md-sys-typescale-emphasized-title-medium-tracking);
+  --md-sys-typescale-variable-emphasized-title-small-font: var(--md-ref-typeface-variable-plain);
+  --md-sys-typescale-variable-emphasized-title-small-weight: var(--md-sys-typescale-emphasized-title-small-weight);
+  --md-sys-typescale-variable-emphasized-title-small-size: var(--md-sys-typescale-emphasized-title-small-size);
+  --md-sys-typescale-variable-emphasized-title-small-line-height: var(--md-sys-typescale-emphasized-title-small-line-height);
+  --md-sys-typescale-variable-emphasized-title-small-tracking: var(--md-sys-typescale-emphasized-title-small-tracking);
+  --md-sys-typescale-variable-emphasized-body-large-font: var(--md-ref-typeface-variable-plain);
+  --md-sys-typescale-variable-emphasized-body-large-weight: var(--md-sys-typescale-emphasized-body-large-weight);
+  --md-sys-typescale-variable-emphasized-body-large-size: var(--md-sys-typescale-emphasized-body-large-size);
+  --md-sys-typescale-variable-emphasized-body-large-line-height: var(--md-sys-typescale-emphasized-body-large-line-height);
+  --md-sys-typescale-variable-emphasized-body-large-tracking: var(--md-sys-typescale-emphasized-body-large-tracking);
+  --md-sys-typescale-variable-emphasized-body-medium-font: var(--md-ref-typeface-variable-plain);
+  --md-sys-typescale-variable-emphasized-body-medium-weight: var(--md-sys-typescale-emphasized-body-medium-weight);
+  --md-sys-typescale-variable-emphasized-body-medium-size: var(--md-sys-typescale-emphasized-body-medium-size);
+  --md-sys-typescale-variable-emphasized-body-medium-line-height: var(--md-sys-typescale-emphasized-body-medium-line-height);
+  --md-sys-typescale-variable-emphasized-body-medium-tracking: var(--md-sys-typescale-emphasized-body-medium-tracking);
+  --md-sys-typescale-variable-emphasized-body-small-font: var(--md-ref-typeface-variable-plain);
+  --md-sys-typescale-variable-emphasized-body-small-weight: var(--md-sys-typescale-emphasized-body-small-weight);
+  --md-sys-typescale-variable-emphasized-body-small-size: var(--md-sys-typescale-emphasized-body-small-size);
+  --md-sys-typescale-variable-emphasized-body-small-line-height: var(--md-sys-typescale-emphasized-body-small-line-height);
+  --md-sys-typescale-variable-emphasized-body-small-tracking: var(--md-sys-typescale-emphasized-body-small-tracking);
+  --md-sys-typescale-variable-emphasized-label-large-font: var(--md-ref-typeface-variable-plain);
+  --md-sys-typescale-variable-emphasized-label-large-weight: var(--md-sys-typescale-emphasized-label-large-weight);
+  --md-sys-typescale-variable-emphasized-label-large-size: var(--md-sys-typescale-emphasized-label-large-size);
+  --md-sys-typescale-variable-emphasized-label-large-line-height: var(--md-sys-typescale-emphasized-label-large-line-height);
+  --md-sys-typescale-variable-emphasized-label-large-tracking: var(--md-sys-typescale-emphasized-label-large-tracking);
+  --md-sys-typescale-variable-emphasized-label-medium-font: var(--md-ref-typeface-variable-plain);
+  --md-sys-typescale-variable-emphasized-label-medium-weight: var(--md-sys-typescale-emphasized-label-medium-weight);
+  --md-sys-typescale-variable-emphasized-label-medium-size: var(--md-sys-typescale-emphasized-label-medium-size);
+  --md-sys-typescale-variable-emphasized-label-medium-line-height: var(--md-sys-typescale-emphasized-label-medium-line-height);
+  --md-sys-typescale-variable-emphasized-label-medium-tracking: var(--md-sys-typescale-emphasized-label-medium-tracking);
+  --md-sys-typescale-variable-emphasized-label-small-font: var(--md-ref-typeface-variable-plain);
+  --md-sys-typescale-variable-emphasized-label-small-weight: var(--md-sys-typescale-emphasized-label-small-weight);
+  --md-sys-typescale-variable-emphasized-label-small-size: var(--md-sys-typescale-emphasized-label-small-size);
+  --md-sys-typescale-variable-emphasized-label-small-line-height: var(--md-sys-typescale-emphasized-label-small-line-height);
+  --md-sys-typescale-variable-emphasized-label-small-tracking: var(--md-sys-typescale-emphasized-label-small-tracking);
+}

@@ -1,0 +1,43 @@
+/*
+ * Circular progress indicator (md.comp.progress-indicator,
+ * md.comp.progress-indicator.circular). The JS reads the geometry from the
+ * private variables below on resize and on prop changes, so the component
+ * tokens work as overrides; colors stay in CSS.
+ */
+.root {
+  composes: base from '../shared/progress-base.module.css';
+
+  --_active-thickness: 4px;
+  --_track-thickness: 4px;
+  --_gap: var(--md-sys-measurement-space50);
+  /* Values at 48px; the JS scales them with the size (derived). */
+  --_amplitude: 1.6px;
+  --_wavelength: 15px;
+
+  display: inline-block;
+  flex: none;
+  vertical-align: middle;
+  box-sizing: border-box;
+  inline-size: var(--_size, 40px);
+  block-size: var(--_size, 40px);
+}
+
+.root[data-shape='wavy'] {
+  inline-size: var(--_size, 48px);
+  block-size: var(--_size, 48px);
+}
+
+.svg {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+}
+
+.root [data-part='track'] {
+  stroke-width: var(--_track-thickness);
+}
+
+.root [data-part='active'] {
+  stroke-width: var(--_active-thickness);
+}

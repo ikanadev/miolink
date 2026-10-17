@@ -1,0 +1,494 @@
+/*
+ * Menu. Spec: m3-guidelines/components/menus.md
+ *
+ * Content attributes: data-variant (vertical | baseline), data-color
+ * (standard | vibrant), data-layout (list | gap), data-density (0 to -3),
+ * data-instant, data-focus-visible (last input was the keyboard), and Ark's
+ * data-state, data-side and data-has-nested (one of its submenus is open).
+ * Item state: data-highlighted (hover or keyboard), data-disabled,
+ * aria-checked / data-selected, aria-expanded (submenu open).
+ *
+ * The content sets the role variables (--_label-color, ...); each item maps
+ * them to its own --_item-* variables, which the state rules change.
+ */
+.content {
+  /* vertical, standard (md.comp.menus, md.comp.menus.standard) */
+  --_container-color: var(--md-sys-color-surface-container-low);
+  --_container-elevation: var(--md-sys-elevation-level2);
+  --_container-shape: var(--md-sys-shape-corner-large);
+  --_container-inactive-shape: var(--md-sys-shape-corner-small);
+  --_container-padding: var(--md-sys-measurement-space25);
+  --_gap: var(--md-sys-measurement-space25);
+  --_group-shape: var(--md-sys-shape-corner-small);
+  /* Derived: the baseline menu's 112-280px; vertical menus don't specify a width. */
+  --_min-width: 112px;
+  --_max-width: 280px;
+
+  --_section-label-color: var(--md-sys-color-on-surface-variant);
+  --_item-container-color: var(--md-sys-color-surface-container-low);
+  --_label-color: var(--md-sys-color-on-surface);
+  --_supporting-color: var(--md-sys-color-on-surface-variant);
+  --_trailing-text-color: var(--md-sys-color-on-surface-variant);
+  --_leading-icon-color: var(--md-sys-color-on-surface-variant);
+  --_trailing-icon-color: var(--md-sys-color-on-surface-variant);
+  /* Icon color while hovered, focused or pressed. */
+  --_active-icon-color: var(--md-sys-color-on-surface-variant);
+  --_state-layer: var(--md-sys-color-on-surface);
+  --_disabled-color: var(--md-sys-color-on-surface);
+  --_selected-container-color: var(--md-sys-color-tertiary-container);
+  --_selected-color: var(--md-sys-color-on-tertiary-container);
+  --_selected-state-layer: var(--md-sys-color-on-tertiary-container);
+  /* Selected icons keep the selected content color; baseline overrides these. */
+  --_selected-supporting-color: var(--_selected-color);
+  --_selected-icon-color: var(--_selected-color);
+
+  --_item-height: 44px;
+  --_item-top-space: var(--md-sys-measurement-space100);
+  --_item-bottom-space: var(--md-sys-measurement-space100);
+  --_item-leading-space: var(--md-sys-measurement-space200);
+  --_item-trailing-space: var(--md-sys-measurement-space200);
+  --_item-between-space: var(--md-sys-measurement-space150);
+  --_icon-size: 20px;
+  --_icon-optical-size: 20;
+  --_item-shape: var(--md-sys-shape-corner-extra-small);
+  --_item-outer-shape: var(--md-sys-shape-corner-medium);
+  --_item-selected-shape: var(--md-sys-shape-corner-medium);
+  --_focus-ring-color: var(--md-sys-color-secondary);
+  --_focus-ring-thickness: var(--md-sys-state-focus-indicator-thickness);
+  --_focus-ring-offset: var(--md-sys-state-focus-indicator-inner-offset);
+  /* Derived: the baseline divider spacing (8px above and below). */
+  --_divider-space: var(--md-sys-measurement-space100);
+  --_divider-color: var(--md-sys-color-outline-variant);
+  --_density: 0;
+
+  --_shape: var(--_container-shape);
+  --_background: var(--_container-color);
+  --_shadow: var(--_container-elevation);
+
+  z-index: calc(1000 + var(--layer-index, 0));
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  box-sizing: border-box;
+  min-inline-size: var(--_min-width);
+  max-inline-size: min(var(--_max-width), var(--available-width, 100vw));
+  max-block-size: var(--available-height, 100vh);
+  padding: var(--_container-padding);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: var(--_shape);
+  background: var(--_background);
+  box-shadow: var(--_shadow);
+  color: var(--_label-color);
+  outline: none;
+  transition: border-radius var(--md-sys-motion-spring-fast-spatial-duration)
+    var(--md-sys-motion-spring-fast-spatial-easing);
+}
+
+.content[hidden] {
+  display: none;
+}
+
+/* While the pointer or focus is in one of its submenus, the menu morphs to the
+   inactive shape; it's active again once one of its own items is highlighted. */
+.content[data-has-nested]:not(:has(.item[data-highlighted]:not([aria-expanded='true']))) {
+  --_shape: var(--_container-inactive-shape);
+}
+
+/* ---- Color: vibrant (md.comp.menus.vibrant; vertical only) ---- */
+
+.content[data-color='vibrant']:not([data-variant='baseline']) {
+  --_container-color: var(--md-sys-color-tertiary-container);
+  --_section-label-color: var(--md-sys-color-on-tertiary-container);
+  --_item-container-color: var(--md-sys-color-tertiary-container);
+  --_label-color: var(--md-sys-color-on-tertiary-container);
+  --_supporting-color: var(--md-sys-color-on-tertiary-container);
+  --_trailing-text-color: var(--md-sys-color-on-tertiary-container);
+  --_leading-icon-color: var(--md-sys-color-on-tertiary-container);
+  --_trailing-icon-color: var(--md-sys-color-on-tertiary-container);
+  --_active-icon-color: var(--md-sys-color-tertiary);
+  --_state-layer: var(--md-sys-color-on-tertiary-container);
+  --_disabled-color: var(--md-sys-color-on-tertiary-container);
+  --_selected-container-color: var(--md-sys-color-tertiary);
+  --_selected-color: var(--md-sys-color-on-tertiary);
+  --_selected-state-layer: var(--md-sys-color-on-tertiary);
+}
+
+/* ---- Variant: baseline (md.comp.menu; values from the spec's diagrams) ---- */
+
+.content[data-variant='baseline'] {
+  --_container-color: var(--md-sys-color-surface-container);
+  --_container-shape: var(--md-sys-shape-corner-extra-small);
+  --_container-inactive-shape: var(--_container-shape);
+  /* Derived: 8px list padding above and below, as in the M3 baseline menu kit. */
+  --_container-padding: var(--md-sys-measurement-space100) 0;
+  --_item-container-color: transparent;
+  --_selected-container-color: var(--md-sys-color-surface-container-highest);
+  --_selected-color: var(--_label-color);
+  --_selected-supporting-color: var(--_supporting-color);
+  --_selected-icon-color: var(--_leading-icon-color);
+  --_selected-state-layer: var(--_state-layer);
+  --_item-height: 48px;
+  --_item-leading-space: var(--md-sys-measurement-space150);
+  --_item-trailing-space: var(--md-sys-measurement-space150);
+  --_icon-size: 24px;
+  --_icon-optical-size: 24;
+  --_item-shape: var(--md-sys-shape-corner-none);
+  --_item-outer-shape: var(--md-sys-shape-corner-none);
+  --_item-selected-shape: var(--md-sys-shape-corner-none);
+}
+
+/* ---- Density (web only). Derived: -4px of item height per step. ---- */
+
+.content[data-density='-1'] {
+  --_density: -1;
+}
+
+.content[data-density='-2'] {
+  --_density: -2;
+}
+
+.content[data-density='-3'] {
+  --_density: -3;
+}
+
+/* ---- Layout: gap (each group its own segment; not recommended on web) ---- */
+
+.content[data-layout='gap']:not([data-variant='baseline']) {
+  --_background: transparent;
+  --_shadow: none;
+  gap: var(--_gap);
+  padding: 0;
+  overflow: visible;
+}
+
+.content[data-layout='gap']:not([data-variant='baseline']) > .group {
+  padding: var(--_container-padding);
+  border-radius: var(--_group-shape);
+  background: var(--_container-color);
+  box-shadow: var(--_container-elevation);
+}
+
+/* Derived: the outer corners of the first and last segment follow the container shape. */
+.content[data-layout='gap']:not([data-variant='baseline']) > .group:first-child {
+  border-start-start-radius: var(--_shape);
+  border-start-end-radius: var(--_shape);
+}
+
+.content[data-layout='gap']:not([data-variant='baseline']) > .group:last-child {
+  border-end-start-radius: var(--_shape);
+  border-end-end-radius: var(--_shape);
+}
+
+/* ---- Enter / exit: expand from the trigger along the y axis, short fades ---- */
+
+/* Negative insets keep the level2 shadow visible while revealing. */
+@keyframes expandDown {
+  from {
+    clip-path: inset(-16px -16px 100% -16px);
+  }
+  to {
+    clip-path: inset(-16px);
+  }
+}
+
+@keyframes expandUp {
+  from {
+    clip-path: inset(100% -16px -16px -16px);
+  }
+  to {
+    clip-path: inset(-16px);
+  }
+}
+
+@keyframes collapseUp {
+  from {
+    clip-path: inset(-16px);
+  }
+  to {
+    clip-path: inset(-16px -16px 100% -16px);
+  }
+}
+
+@keyframes collapseDown {
+  from {
+    clip-path: inset(-16px);
+  }
+  to {
+    clip-path: inset(100% -16px -16px -16px);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+  }
+}
+
+/* Derived timing (the spec gives none): enter 300ms emphasized decelerate,
+   exit 150ms standard accelerate, with shorter linear fades. :where() keeps
+   these below the instant and reduced-motion rules. */
+.content:where([data-state='open']) {
+  animation:
+    expandDown var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized-decelerate),
+    fadeIn var(--md-sys-motion-duration-short3) linear;
+}
+
+.content:where([data-state='open'][data-side='top']) {
+  animation-name: expandUp, fadeIn;
+}
+
+.content:where([data-state='closed']) {
+  animation:
+    collapseUp var(--md-sys-motion-duration-short3) var(--md-sys-motion-easing-standard-accelerate),
+    fadeOut var(--md-sys-motion-duration-short3) linear;
+}
+
+.content:where([data-state='closed'][data-side='top']) {
+  animation-name: collapseDown, fadeOut;
+}
+
+.content[data-instant] {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content[data-state] {
+    animation: none;
+  }
+}
+
+/* ---- Groups, section labels, dividers ---- */
+
+.group {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+/* Derived: the spec gives no section label style; title-small with the item's spaces. */
+.groupLabel {
+  flex-shrink: 0;
+  padding-block: var(--md-sys-measurement-space100);
+  padding-inline: var(--_item-leading-space) var(--_item-trailing-space);
+  color: var(--_section-label-color);
+  font-family: var(--md-sys-typescale-title-small-font);
+  font-weight: var(--md-sys-typescale-title-small-weight);
+  font-size: var(--md-sys-typescale-title-small-size);
+  line-height: var(--md-sys-typescale-title-small-line-height);
+  letter-spacing: var(--md-sys-typescale-title-small-tracking);
+}
+
+.divider {
+  flex-shrink: 0;
+  block-size: 1px;
+  margin-block: var(--_divider-space);
+  margin-inline: 0;
+  padding: 0;
+  border: 0;
+  background: var(--_divider-color);
+}
+
+/* ---- Item ---- */
+
+.item {
+  composes: interactive from '../shared/interaction.module.css';
+
+  --_item-background: var(--_item-container-color);
+  --_item-label: var(--_label-color);
+  --_item-supporting: var(--_supporting-color);
+  --_item-trailing-text: var(--_trailing-text-color);
+  --_item-leading-icon: var(--_leading-icon-color);
+  --_item-trailing-icon: var(--_trailing-icon-color);
+  --_state-layer-color: var(--_state-layer);
+  --_shape-top: var(--_item-shape);
+  --_shape-bottom: var(--_item-shape);
+  --md-icon-size: var(--_icon-size);
+  --md-icon-optical-size: var(--_icon-optical-size);
+
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--_item-between-space);
+  box-sizing: border-box;
+  min-block-size: calc(var(--_item-height) + var(--_density) * 4px);
+  padding-block: calc(var(--_item-top-space) + var(--_density) * 2px)
+    calc(var(--_item-bottom-space) + var(--_density) * 2px);
+  padding-inline: var(--_item-leading-space) var(--_item-trailing-space);
+  border-start-start-radius: var(--_shape-top);
+  border-start-end-radius: var(--_shape-top);
+  border-end-start-radius: var(--_shape-bottom);
+  border-end-end-radius: var(--_shape-bottom);
+  background: var(--_item-background);
+  color: var(--_item-label);
+  text-align: start;
+  text-decoration: none;
+  user-select: none;
+  transition:
+    border-radius var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial-easing),
+    background-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    color var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+/* Derived: on touch screens items grow to the 48px minimum target. */
+@media (pointer: coarse) {
+  .item {
+    min-block-size: max(48px, calc(var(--_item-height) + var(--_density) * 4px));
+  }
+}
+
+/* First and last item: 12px outer corners. :where() keeps the selected shape above these. */
+.item:where(.content > :first-child, .content > .group:first-child > :first-child) {
+  --_shape-top: var(--_item-outer-shape);
+}
+
+.item:where(.content > :last-child, .content > .group:last-child > :last-child) {
+  --_shape-bottom: var(--_item-outer-shape);
+}
+
+/* In the gap layout every segment has its own first and last item. */
+.item:where(.content[data-layout='gap'] > .group > :first-child) {
+  --_shape-top: var(--_item-outer-shape);
+}
+
+.item:where(.content[data-layout='gap'] > .group > :last-child) {
+  --_shape-bottom: var(--_item-outer-shape);
+}
+
+/* Keyboard focus: Ark highlights the item while DOM focus stays on the content. */
+.content[data-focus-visible] .item[data-highlighted] {
+  outline: var(--_focus-ring-thickness) solid var(--_focus-ring-color);
+  outline-offset: var(--_focus-ring-offset);
+}
+
+.content[data-focus-visible] .item[data-highlighted]::before {
+  opacity: var(--md-sys-state-focus-state-layer-opacity);
+}
+
+/* Active: the item whose submenu is open keeps the hover layer. */
+.item[aria-expanded='true']::before {
+  opacity: var(--md-sys-state-hover-state-layer-opacity);
+}
+
+/* Hovered, focused or pressed icons (tertiary in vibrant). */
+.item:is([data-highlighted], :active) {
+  --_item-leading-icon: var(--_active-icon-color);
+  --_item-trailing-icon: var(--_active-icon-color);
+}
+
+/* Selected: filled, 12px on every corner. */
+.item:is([aria-checked='true'], [data-selected]) {
+  --_item-background: var(--_selected-container-color);
+  --_item-label: var(--_selected-color);
+  --_item-supporting: var(--_selected-supporting-color);
+  --_item-trailing-text: var(--_selected-supporting-color);
+  --_item-leading-icon: var(--_selected-icon-color);
+  --_item-trailing-icon: var(--_selected-icon-color);
+  --_state-layer-color: var(--_selected-state-layer);
+  --_shape-top: var(--_item-selected-shape);
+  --_shape-bottom: var(--_item-selected-shape);
+}
+
+.item[data-disabled] {
+  --_item-label: color-mix(in srgb, var(--_disabled-color) 38%, transparent);
+  --_item-supporting: var(--_item-label);
+  --_item-trailing-text: var(--_item-label);
+  --_item-leading-icon: var(--_item-label);
+  --_item-trailing-icon: var(--_item-label);
+}
+
+/* Vibrant gives no selected + disabled container opacity; derived: the standard 0.38. */
+.item[data-disabled]:is([aria-checked='true'], [data-selected]) {
+  --_item-background: color-mix(in srgb, var(--_selected-container-color) 38%, transparent);
+  --_item-label: color-mix(in srgb, var(--_selected-color) 38%, transparent);
+}
+
+/* ---- Item parts ---- */
+
+.leading,
+.trailing {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: var(--_icon-size);
+}
+
+.leading {
+  color: var(--_item-leading-icon);
+}
+
+.trailing {
+  color: var(--_item-trailing-icon);
+}
+
+.trailing[hidden] {
+  display: none;
+}
+
+.text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.label {
+  color: var(--_item-label);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  font-size: var(--md-sys-typescale-label-large-size);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+}
+
+.supporting {
+  color: var(--_item-supporting);
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-weight: var(--md-sys-typescale-body-small-weight);
+  font-size: var(--md-sys-typescale-body-small-size);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  letter-spacing: var(--md-sys-typescale-body-small-tracking);
+}
+
+.trailingText {
+  flex-shrink: 0;
+  color: var(--_item-trailing-text);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  font-size: var(--md-sys-typescale-label-large-size);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+}
+
+.badge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+/* ---- Trigger: pressed state layer while its menu is open ---- */
+
+.trigger[data-state='open'][aria-expanded='true']::before {
+  opacity: var(--md-sys-state-pressed-state-layer-opacity);
+}
+
+@media (forced-colors: active) {
+  .content,
+  .content[data-layout='gap'] > .group {
+    border: 1px solid CanvasText;
+  }
+
+  .content[data-focus-visible] .item[data-highlighted] {
+    outline-color: Highlight;
+  }
+}

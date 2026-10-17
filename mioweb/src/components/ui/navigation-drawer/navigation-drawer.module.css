@@ -1,0 +1,322 @@
+/*
+ * Navigation drawer (legacy; the expanded navigation rail replaces it).
+ * Spec: m3-guidelines/components/navigation/navigation-drawer.md
+ *
+ * Structure: .root (<nav>, standard, in the layout) or .scrim +
+ * .positioner > .modal (Ark Dialog Content) > .modalNav (modal, in a
+ * portal), both around the same .sheet: optional .header, .headline,
+ * then .list of .listItem (items), .section (.subhead + .list) and
+ * .divider. Items come from shared/navigation-item.module.css; this file
+ * restyles them through their --_* variables by targeting
+ * [data-drawer-item].
+ *
+ * Attributes:
+ * - .root: data-variant="standard", data-open ("true" | "false"; always
+ *   "true" unless dismissible).
+ * - .modal: data-variant="modal", data-state (Ark), data-dragging (swipe
+ *   in progress), dir; --_drag holds the swipe offset (set inline).
+ */
+
+/* ---- Sheet (shared by both variants) ---- */
+
+.sheet {
+  /* 12px indicator inset + 16px inside the pill = 28px content padding (spec §4.2). */
+  --_inset: var(--md-sys-measurement-space150);
+  --_pad: var(--md-sys-measurement-space200);
+
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  inline-size: 360px;
+  max-inline-size: 100%;
+  block-size: 100%;
+  /* Sheet block padding 12px (derived, spec §11). */
+  padding: var(--md-sys-measurement-space150) var(--_inset);
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* Scrolls on its own; never chains to the page (spec §6). */
+  overscroll-behavior: contain;
+  /* Start-anchored: rounded end corners only, mirrored in RTL (corner.large, 16px). */
+  border-start-end-radius: var(--md-sys-shape-corner-large);
+  border-end-end-radius: var(--md-sys-shape-corner-large);
+  background: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  padding-inline: var(--_pad);
+}
+
+/* Headline and subheads: 56px rows aligned with the labels, title-small,
+   on-surface-variant (derived heights, spec §4.2 / §4.3). */
+.headline,
+.subhead {
+  display: flex;
+  flex: none;
+  align-items: center;
+  box-sizing: border-box;
+  min-block-size: 56px;
+  margin: 0;
+  padding-inline: var(--_pad);
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-title-small-font);
+  font-weight: var(--md-sys-typescale-title-small-weight);
+  font-size: var(--md-sys-typescale-title-small-size);
+  line-height: var(--md-sys-typescale-title-small-line-height);
+  letter-spacing: var(--md-sys-typescale-title-small-tracking);
+}
+
+/* Items touch: 0px between elements (spec §4.2). */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.listItem {
+  display: grid;
+  min-inline-size: 0;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Full width of the sheet (through the 12px inset), 8px block margin (derived). */
+.divider {
+  flex: none;
+  block-size: 1px;
+  margin-block: var(--md-sys-measurement-space100);
+  margin-inline: calc(-1 * var(--_inset));
+  background: var(--md-sys-color-outline-variant);
+}
+
+/* ---- Items ---- */
+
+/* 56px full-width pill (336px in the 360px sheet), 16px inside it, 24px
+   icon, 12px icon-label gap (spec §4.2), label-large (§4.3), badge text
+   at the end at least 12px after the label. The active label stays
+   label-large weight and on-secondary-container (it sits in the pill).
+   The pill fades in place (§6); no reduced pill on hover (§5). */
+.sheet [data-drawer-item] {
+  --_min-height: 56px;
+  --_indicator-height: 56px;
+  --_indicator-padding-inline: var(--_pad);
+  --_icon-size: 24px;
+  --_icon-label-space: var(--md-sys-measurement-space150);
+  --_leading-track: 0px;
+  --_label-track: minmax(0, 1fr);
+  --_fill-track: 0px;
+  --_trailing-track: 0px;
+  --_trailing-badge-space: var(--md-sys-measurement-space150);
+  --_active-label-color: var(--md-sys-color-on-secondary-container);
+  --_label-font: var(--md-sys-typescale-label-large-font);
+  --_label-size: var(--md-sys-typescale-label-large-size);
+  --_label-line-height: var(--md-sys-typescale-label-large-line-height);
+  --_label-tracking: var(--md-sys-typescale-label-large-tracking);
+  --_label-weight: var(--md-sys-typescale-label-large-weight);
+  --_active-label-weight: var(--md-sys-typescale-label-large-weight);
+  --_hover-indicator-opacity: 0;
+  --_indicator-grow: 0;
+}
+
+/* Inactive hover/focus: content and state layer on-surface (spec §4.1 †). */
+@media (hover: hover) {
+  .sheet [data-drawer-item]:not([aria-current='page']):hover {
+    --_icon-color: var(--md-sys-color-on-surface);
+    --_label-color: var(--md-sys-color-on-surface);
+    --_state-layer-color: var(--md-sys-color-on-surface);
+  }
+}
+
+.sheet [data-drawer-item]:not([aria-current='page']):focus-visible {
+  --_icon-color: var(--md-sys-color-on-surface);
+  --_label-color: var(--md-sys-color-on-surface);
+  --_state-layer-color: var(--md-sys-color-on-surface);
+}
+
+/* Inactive pressed: on-surface content, on-secondary-container ripple
+   (previews the active style). */
+.sheet [data-drawer-item]:not([aria-current='page']):is(:active, [data-key-pressed]) {
+  --_icon-color: var(--md-sys-color-on-surface);
+  --_label-color: var(--md-sys-color-on-surface);
+  --_state-layer-color: var(--md-sys-color-on-secondary-container);
+}
+
+/* ---- Standard ---- */
+
+/*
+ * A flex item beside the content, sticky and as tall as the window. The
+ * dismissible drawer animates its inline size; the sheet inside keeps
+ * 360px and stays pinned to the end of the box, so it reads as a slide
+ * from the start edge while the content reflows (enter emphasized
+ * decelerate 400ms, exit emphasized accelerate 200ms, spec §6).
+ */
+.root {
+  position: sticky;
+  inset-block-start: 0;
+  display: flex;
+  flex: none;
+  justify-content: flex-end;
+  box-sizing: border-box;
+  inline-size: 360px;
+  /* Web mapping: 100% of the window. Override block-size in shorter containers. */
+  block-size: 100dvh;
+  overflow: clip;
+  transition:
+    inline-size var(--md-sys-motion-duration-medium4) var(--md-sys-motion-easing-emphasized-decelerate),
+    visibility 0s;
+}
+
+.root[data-open='false'] {
+  inline-size: 0;
+  visibility: hidden;
+  transition:
+    inline-size var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-emphasized-accelerate),
+    visibility 0s linear var(--md-sys-motion-duration-short4);
+}
+
+.root > .sheet {
+  flex: none;
+  max-inline-size: none;
+}
+
+/* ---- Modal ---- */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-index, 1000) - 1);
+  /* Scrim at 32% (guidelines); fades linearly with the sheet's durations (spec §6). */
+  background: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
+}
+
+.scrim[data-state='open'] {
+  animation: fade-in var(--md-sys-motion-duration-medium4) var(--md-sys-motion-easing-linear);
+}
+
+.scrim[data-state='closed'] {
+  animation: fade-out var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-linear) forwards;
+}
+
+.positioner {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-index, 1000);
+  display: flex;
+  justify-content: flex-start;
+}
+
+.modal {
+  /* -1: slides toward the left (LTR start edge); +1 in RTL. */
+  --_slide: -1;
+
+  position: relative;
+  z-index: calc(1000 + var(--layer-index, 0));
+  display: flex;
+  box-sizing: border-box;
+  /* Leaves a 56px strip of scrim to tap on narrow windows (derived, spec §4.2). */
+  max-inline-size: calc(100vw - 56px);
+  block-size: 100%;
+  border-start-end-radius: var(--md-sys-shape-corner-large);
+  border-end-end-radius: var(--md-sys-shape-corner-large);
+  box-shadow: var(--md-sys-elevation-level1);
+  outline: none;
+  /* Horizontal swipes are ours; vertical ones scroll the list. */
+  touch-action: pan-y;
+  /* Swipe offset, eased back when the swipe doesn't close. */
+  transform: translateX(var(--_drag, 0px));
+  transition: transform var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-emphasized-decelerate);
+}
+
+.modal[dir='rtl'] {
+  --_slide: 1;
+}
+
+.modal[data-dragging] {
+  transition: none;
+}
+
+.modalNav {
+  display: flex;
+  block-size: 100%;
+  max-inline-size: 100%;
+}
+
+.modalNav > .sheet {
+  /* Safe areas on notched devices (spec §4.2). */
+  padding-block: calc(var(--md-sys-measurement-space150) + env(safe-area-inset-top, 0px))
+    calc(var(--md-sys-measurement-space150) + env(safe-area-inset-bottom, 0px));
+}
+
+/* Enter/exit beyond bounds (spec §6): emphasized decelerate 400ms in,
+   emphasized accelerate 200ms out, from wherever a swipe left it. The
+   extra 24px hides the shadow. */
+.modal[data-state='open'] {
+  animation: drawer-in var(--md-sys-motion-duration-medium4) var(--md-sys-motion-easing-emphasized-decelerate);
+}
+
+.modal[data-state='closed'] {
+  animation: drawer-out var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-emphasized-accelerate)
+    forwards;
+}
+
+@keyframes drawer-in {
+  from {
+    transform: translateX(calc((100% + 24px) * var(--_slide)));
+  }
+}
+
+@keyframes drawer-out {
+  from {
+    transform: translateX(var(--_drag, 0px));
+  }
+  to {
+    transform: translateX(calc((100% + 24px) * var(--_slide)));
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The standard drawer's width changes at once; the modal fades instead of sliding. */
+  .root,
+  .root[data-open='false'] {
+    transition: none;
+  }
+
+  .modal[data-state='open'] {
+    animation: fade-in var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+  }
+
+  .modal[data-state='closed'] {
+    animation: fade-out var(--md-sys-motion-duration-short3) var(--md-sys-motion-easing-linear) forwards;
+  }
+}
+
+@media (forced-colors: active) {
+  .sheet {
+    border-inline-end: 1px solid CanvasText;
+  }
+
+  .divider {
+    background: CanvasText;
+  }
+}

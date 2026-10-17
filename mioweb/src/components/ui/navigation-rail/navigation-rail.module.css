@@ -1,0 +1,414 @@
+/*
+ * Navigation rail (md.comp.nav-rail). Spec:
+ * m3-guidelines/components/navigation/navigation-rail.md
+ *
+ * Structure: .root (<nav>, in the layout) or .positioner > .modal (Ark
+ * Dialog Content) > .modalNav, both around the same .inner column:
+ * .header (logo, menu button, FAB), .scroll (.list of items, .secondary
+ * with .section > .subhead + .list). Items come from
+ * shared/navigation-item.module.css; this file restyles them through
+ * their --_* variables by targeting [data-rail-item].
+ *
+ * Attributes:
+ * - .root: data-expanded ("true" | "false", standard rail), data-hidden
+ *   (hide-when-collapsed, collapsed), data-no-fill, data-divider.
+ * - .inner: data-layout (vertical = collapsed, horizontal = expanded),
+ *   data-narrow, data-indicator (hug | fill), data-align (top | center),
+ *   data-animating (expand/collapse running).
+ * - .modal: data-behavior (collapse | hide), data-narrow, data-no-fill,
+ *   data-state (Ark).
+ *
+ * Expand/collapse: .inner switches to its target width at once and the
+ * <nav> animates its inline size between the measured widths (the
+ * component sets it inline) with overflow clipped, so icons keep their x
+ * position while the content next to the rail reflows (spec §10d fallback:
+ * instant item layout switch, width animates, labels fade).
+ */
+
+/* ---- Container (standard) ---- */
+
+.root {
+  --_container-color: var(--md-sys-color-surface);
+
+  position: sticky;
+  inset-block-start: 0;
+  flex: none;
+  box-sizing: border-box;
+  inline-size: fit-content;
+  /* Web mapping: 100% of the window. Override block-size in shorter containers. */
+  block-size: 100dvh;
+  overflow: clip;
+  border-radius: var(--md-sys-shape-corner-none);
+  background: var(--_container-color);
+  /* Expanding nav rail: default spatial spring (guidelines). */
+  transition:
+    inline-size var(--md-sys-motion-spring-default-spatial-duration)
+      var(--md-sys-motion-spring-default-spatial-easing),
+    visibility 0s;
+}
+
+.root[data-no-fill] {
+  --_container-color: transparent;
+}
+
+/* Optional divider on the edge facing the content (spec §2). */
+.root[data-divider] {
+  border-inline-end: 1px solid var(--md-sys-color-outline-variant);
+}
+
+/* Hide when collapsed: no width, out of the tab order and the
+   accessibility tree once the width animation is done. */
+.root[data-hidden] {
+  inline-size: 0;
+  visibility: hidden;
+  border-inline-end-width: 0;
+  transition:
+    inline-size var(--md-sys-motion-spring-default-spatial-duration)
+      var(--md-sys-motion-spring-default-spatial-easing),
+    visibility 0s linear var(--md-sys-motion-spring-default-spatial-duration);
+}
+
+/* ---- Inner column (shared by the standard and modal rail) ---- */
+
+.inner {
+  --_collapsed-width: 96px;
+  /* Hug mode start offset (derived, spec §11): (96 - 56) / 2 = 20px, so
+     the icon x is the same collapsed and expanded. */
+  --_hug-start: calc((var(--_collapsed-width) - 56px) / 2);
+
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  inline-size: var(--_collapsed-width);
+  block-size: 100%;
+  /* Top space 44px; bottom padding 16px (derived, spec §11). */
+  padding-block: 44px var(--md-sys-measurement-space200);
+}
+
+.inner[data-narrow] {
+  --_collapsed-width: 80px;
+}
+
+/* Expanded: hugs its content, 220-360px. max-content (not fit-content) so
+   the width doesn't depend on the animating <nav>. */
+.inner[data-layout='horizontal'] {
+  inline-size: max-content;
+  min-inline-size: 220px;
+  max-inline-size: 360px;
+}
+
+/* ---- Header: logo, menu button, FAB (always top-aligned) ---- */
+
+.header {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-start;
+  /* Menu-FAB gap: derived 4px (spec §11). */
+  gap: var(--md-sys-measurement-space50);
+  /* FAB (56px) starts at the hug offset in both layouts: it doesn't move. */
+  padding-inline-start: var(--_hug-start);
+  /* item.header-space-minimum: header -> first item (spec §11). */
+  margin-block-end: var(--md-sys-measurement-space500);
+}
+
+/* Centers the 40px menu button on the 56px FAB column, so its icon lines
+   up with the item icons (derived). */
+.menu {
+  margin-inline-start: calc((56px - 40px) / 2);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  min-block-size: 40px;
+  margin-block-end: var(--md-sys-measurement-space100);
+}
+
+/* Nested FAB: level0 resting (spec §4.4); level1 on hover (derived). */
+.header .fab[data-color] {
+  --_elevation-rest: var(--md-sys-elevation-level0);
+  --_elevation-hover: var(--md-sys-elevation-level1);
+}
+
+/* ---- Items ---- */
+
+/* Items and sections scroll when they overflow; the header stays (derived). */
+.scroll {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-block-size: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  /* collapsed.item.vertical-space */
+  gap: var(--md-sys-measurement-space50);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Expanded items touch (0px, derived, spec §11). */
+.inner[data-layout='horizontal'] .list {
+  gap: 0;
+}
+
+.inner[data-align='center'] .scroll > .list {
+  margin-block: auto;
+}
+
+.listItem {
+  display: grid;
+  min-inline-size: 0;
+}
+
+/* Collapsed (vertical) item: the bar's sizes (64px, 56x32 pill, 4px gap,
+   label-medium), no reduced pill on hover (spec §5: state layer only) and
+   the same label weight when active (spec §4.3). */
+.inner [data-rail-item] {
+  --_hover-indicator-opacity: 0;
+  --_active-label-weight: var(--md-sys-typescale-label-medium-weight);
+}
+
+/* item.vertical.leading/trailing-space 16/16: max label width = rail - 32.
+   On the label rather than the item, so the 56px pill still centers in the
+   80px narrow rail (48px of content otherwise). */
+.inner[data-layout='vertical'] [data-rail-item] [data-part='label'] {
+  margin-inline: var(--md-sys-measurement-space200);
+}
+
+/* Expanded (horizontal) item: 56px pill hugging icon and label (16 / 8 /
+   16), label-large, start-aligned at the hug offset; active label
+   on-secondary-container since it sits inside the pill (color diagram). */
+.inner[data-layout='horizontal'] [data-rail-item] {
+  --_min-height: 56px;
+  --_indicator-height: 56px;
+  --_icon-label-space: var(--md-sys-measurement-space100);
+  --_active-label-color: var(--md-sys-color-on-secondary-container);
+  --_label-font: var(--md-sys-typescale-label-large-font);
+  --_label-size: var(--md-sys-typescale-label-large-size);
+  --_label-line-height: var(--md-sys-typescale-label-large-line-height);
+  --_label-tracking: var(--md-sys-typescale-label-large-tracking);
+  --_label-weight: var(--md-sys-typescale-label-large-weight);
+  --_active-label-weight: var(--md-sys-typescale-label-large-weight);
+  --_leading-track: var(--_hug-start);
+  --_trailing-track: minmax(0, 1fr);
+}
+
+/* Fill: the pill spans the rail minus 16px on each side
+   (item.horizontal.full-width.leading/trailing-space). */
+.inner[data-layout='horizontal'][data-indicator='fill'] [data-rail-item] {
+  --_leading-track: var(--md-sys-measurement-space200);
+  --_fill-track: minmax(0, 1fr);
+  --_trailing-track: var(--md-sys-measurement-space200);
+}
+
+/* ---- Secondary destinations (expanded only) ---- */
+
+.secondary {
+  display: flex;
+  flex-direction: column;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Subhead: title-small, on-surface-variant (derived, spec §4.3), aligned
+   with the item icons; 56px tall like an item (derived). */
+.subhead {
+  display: flex;
+  align-items: center;
+  min-block-size: 56px;
+  padding-inline: calc(var(--_hug-start) + var(--md-sys-measurement-space200))
+    var(--md-sys-measurement-space200);
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-title-small-font);
+  font-weight: var(--md-sys-typescale-title-small-weight);
+  font-size: var(--md-sys-typescale-title-small-size);
+  line-height: var(--md-sys-typescale-title-small-line-height);
+  letter-spacing: var(--md-sys-typescale-title-small-tracking);
+}
+
+/* ---- Expand/collapse: labels fade in once the old ones are gone ---- */
+
+/* Clean fade (spec §6): the old labels are removed at once, the new ones
+   wait the fast effects duration (the would-be fade-out), then fade in on
+   the default effects spring (derived timing). */
+.inner[data-animating] [data-part='label'],
+.inner[data-animating] .secondary {
+  animation: label-in var(--md-sys-motion-spring-default-effects-duration)
+    var(--md-sys-motion-spring-default-effects-easing)
+    var(--md-sys-motion-spring-fast-effects-duration) both;
+}
+
+@keyframes label-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ---- Modal expanded rail ---- */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-index, 1000) - 1);
+  /* Scrim at 32% beneath expanded navigation (guidelines). */
+  background: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
+}
+
+.scrim[data-state='open'] {
+  animation: fade-in var(--md-sys-motion-spring-default-effects-duration)
+    var(--md-sys-motion-spring-default-effects-easing);
+}
+
+.scrim[data-state='closed'] {
+  animation: fade-out var(--md-sys-motion-spring-default-effects-duration)
+    var(--md-sys-motion-spring-default-effects-easing);
+}
+
+.positioner {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-index, 1000);
+  display: flex;
+  justify-content: flex-start;
+}
+
+.modal {
+  /* Collapsed width the modal grows from, or 0 when hidden (spec §6). */
+  --_from-width: 96px;
+
+  position: relative;
+  z-index: calc(1000 + var(--layer-index, 0));
+  box-sizing: border-box;
+  block-size: 100%;
+  max-inline-size: 100vw;
+  overflow: hidden;
+  /* corner.large on the end corners only; the start edge is flush with the window (derived, spec §11). */
+  border-start-end-radius: var(--md-sys-shape-corner-large);
+  border-end-end-radius: var(--md-sys-shape-corner-large);
+  background: var(--md-sys-color-surface-container);
+  box-shadow: var(--md-sys-elevation-level2);
+  outline: none;
+}
+
+.modal[data-narrow] {
+  --_from-width: 80px;
+}
+
+.modal[data-behavior='hide'] {
+  --_from-width: 0px;
+}
+
+.modal[data-no-fill] {
+  background: var(--md-sys-color-surface);
+}
+
+.modalNav {
+  block-size: 100%;
+}
+
+/* Grows from the collapsed rail's width (a clip, so the items don't
+   move): default spatial in; exits on the default effects curve, shorter
+   (derived, spec §6). The end inset goes past the box so the shadow
+   shows. */
+.modal[data-state='open'] {
+  animation: modal-in var(--md-sys-motion-spring-default-spatial-duration)
+    var(--md-sys-motion-spring-default-spatial-easing);
+}
+
+.modal[data-state='closed'] {
+  animation: modal-out var(--md-sys-motion-spring-default-effects-duration)
+    var(--md-sys-motion-spring-default-effects-easing) forwards;
+}
+
+.modal[dir='rtl'][data-state='open'] {
+  animation-name: modal-in-rtl;
+}
+
+.modal[dir='rtl'][data-state='closed'] {
+  animation-name: modal-out-rtl;
+}
+
+@keyframes modal-in {
+  from {
+    clip-path: inset(0 calc(100% - var(--_from-width)) 0 0);
+  }
+  to {
+    clip-path: inset(0 -24px 0 0);
+  }
+}
+
+@keyframes modal-out {
+  from {
+    clip-path: inset(0 -24px 0 0);
+  }
+  to {
+    clip-path: inset(0 calc(100% - var(--_from-width)) 0 0);
+  }
+}
+
+@keyframes modal-in-rtl {
+  from {
+    clip-path: inset(0 0 0 calc(100% - var(--_from-width)));
+  }
+  to {
+    clip-path: inset(0 0 0 -24px);
+  }
+}
+
+@keyframes modal-out-rtl {
+  from {
+    clip-path: inset(0 0 0 -24px);
+  }
+  to {
+    clip-path: inset(0 0 0 calc(100% - var(--_from-width)));
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Width changes at once; the modal fades instead of growing. */
+  .root,
+  .root[data-hidden] {
+    transition: none;
+  }
+
+  .modal[data-state='open'],
+  .modal[dir='rtl'][data-state='open'] {
+    animation: fade-in var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+  }
+
+  .modal[data-state='closed'],
+  .modal[dir='rtl'][data-state='closed'] {
+    animation: fade-out var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing) forwards;
+  }
+}
+
+@media (forced-colors: active) {
+  .root,
+  .modal {
+    border-inline-end: 1px solid CanvasText;
+  }
+}

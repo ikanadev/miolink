@@ -1,0 +1,737 @@
+/*
+ * Text field. Spec: m3-guidelines/components/text-fields.md
+ *
+ * Structure: .root (Ark Field.Root) > .field (container: leading, body with
+ * label and input row, trailing, then the filled .indicator or the outlined
+ * .outline with its notch) + .footer (supporting or error text, counter).
+ *
+ * Attributes on .root: data-variant, data-floated, data-focused,
+ * data-label, data-leading, data-trailing, data-multiline, data-dense;
+ * Ark adds data-invalid, data-disabled, data-readonly.
+ *
+ * Every part reads a --_<part> color (label, input, leading, trailing,
+ * supporting, line = active indicator or outline). The variant blocks
+ * resolve one --_<part>-<state> value per state from the md.comp tokens and
+ * the state rules below pick one, in order: hover < focus < error <
+ * error hover < error focus < disabled. State selectors are wrapped in
+ * :where() so that order, not specificity, decides.
+ */
+.root {
+  /* Layout (spec 4.2) */
+  --_height: 56px;
+  --_pad-block: 8px;
+  /* Resting label / unlabeled input top: (56 - 24) / 2. Derived. */
+  --_rest-top: 16px;
+  --_pad-inline: var(--md-sys-measurement-space200);
+  --_pad-inline-icon: var(--md-sys-measurement-space150);
+  --_icon-gap: var(--md-sys-measurement-space200);
+  --_notch-pad: var(--md-sys-measurement-space50);
+  --_footer-gap: var(--md-sys-measurement-space200);
+  --_footer-pad-top: var(--md-sys-measurement-space50);
+  --_pad-start: var(--_pad-inline);
+  --_pad-end: var(--_pad-inline);
+  /* Inline offset of the input text (and the label) from the container edge. */
+  --_text-start: var(--_pad-start);
+  --_text-end: var(--_pad-end);
+
+  --_line: var(--_line-enabled);
+  --_line-width: var(--_line-width-enabled);
+  --_label: var(--_label-enabled);
+  --_input: var(--_input-enabled);
+  --_leading: var(--_leading-enabled);
+  --_trailing: var(--_trailing-enabled);
+  --_supporting: var(--_supporting-enabled);
+  --_container: var(--_container-enabled, transparent);
+  --_caret: var(--_caret-enabled);
+  /* Outlined has no state layer. */
+  --_state-layer-color: var(--_state-layer-color-enabled, transparent);
+
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+/* ---- Variant tokens ---- */
+
+.root[data-variant='filled'] {
+  --_shape: var(--md-sys-shape-corner-extra-small-top);
+  --_container-enabled: var(--md-sys-color-surface-container-highest);
+  --_container-disabled: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface)
+      calc(0.04 * 100%),
+    transparent
+  );
+  /* The shared state layer reads the hover opacity from the sys token. */
+  --_state-layer-color-enabled: var(--md-sys-color-on-surface);
+  --_state-layer-color-error: var(--md-sys-color-on-surface);
+  --_caret-enabled: var(--md-sys-color-primary);
+  --_caret-error: var(--md-sys-color-error);
+  --_prefix: var(--md-sys-color-on-surface-variant);
+  --_suffix: var(--md-sys-color-on-surface-variant);
+  --_placeholder: var(--md-sys-color-on-surface-variant);
+  --_leading-size: 24px;
+  --_trailing-size: 24px;
+  /* 2px per the height token; the 3px thickness token is the alternative (spec 4.2 note). */
+  --_line-width-enabled: 1px;
+  --_line-width-hover: 1px;
+  --_line-width-focus: 2px;
+  --_line-width-disabled: 1px;
+  --_input-font: var(--md-sys-typescale-body-large-font);
+  --_input-weight: var(--md-sys-typescale-body-large-weight);
+  --_input-size: var(--md-sys-typescale-body-large-size);
+  --_input-line-height: var(--md-sys-typescale-body-large-line-height);
+  --_input-tracking: var(--md-sys-typescale-body-large-tracking);
+  --_label-font: var(--md-sys-typescale-body-large-font);
+  --_label-weight: var(--md-sys-typescale-body-large-weight);
+  --_label-size: var(--md-sys-typescale-body-large-size);
+  --_label-line-height: var(--md-sys-typescale-body-large-line-height);
+  --_label-tracking: var(--md-sys-typescale-body-large-tracking);
+  --_label-populated-size: var(--md-sys-typescale-body-small-size);
+  --_label-populated-line-height: var(--md-sys-typescale-body-small-line-height);
+  --_supporting-font: var(--md-sys-typescale-body-small-font);
+  --_supporting-weight: var(--md-sys-typescale-body-small-weight);
+  --_supporting-size: var(--md-sys-typescale-body-small-size);
+  --_supporting-line-height: var(--md-sys-typescale-body-small-line-height);
+  --_supporting-tracking: var(--md-sys-typescale-body-small-tracking);
+
+  --_label-enabled: var(--md-sys-color-on-surface-variant);
+  --_label-hover: var(--md-sys-color-on-surface-variant);
+  --_label-focus: var(--md-sys-color-primary);
+  --_label-error: var(--md-sys-color-error);
+  --_label-error-hover: var(--md-sys-color-on-error-container);
+  --_label-error-focus: var(--md-sys-color-error);
+  --_label-disabled: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface)
+      calc(0.38 * 100%),
+    transparent
+  );
+
+  --_input-enabled: var(--md-sys-color-on-surface);
+  --_input-hover: var(--md-sys-color-on-surface);
+  --_input-focus: var(--md-sys-color-on-surface);
+  --_input-error: var(--md-sys-color-on-surface);
+  --_input-error-hover: var(--md-sys-color-on-surface);
+  --_input-error-focus: var(--md-sys-color-on-surface);
+  --_input-disabled: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface)
+      calc(0.38 * 100%),
+    transparent
+  );
+
+  --_leading-enabled: var(--md-sys-color-on-surface-variant);
+  --_leading-hover: var(--md-sys-color-on-surface-variant);
+  --_leading-focus: var(--md-sys-color-on-surface-variant);
+  --_leading-error: var(--md-sys-color-on-surface-variant);
+  --_leading-error-hover: var(--md-sys-color-on-surface-variant);
+  --_leading-error-focus: var(--md-sys-color-on-surface-variant);
+  --_leading-disabled: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface)
+      calc(0.38 * 100%),
+    transparent
+  );
+
+  --_trailing-enabled: var(--md-sys-color-on-surface-variant);
+  --_trailing-hover: var(--md-sys-color-on-surface-variant);
+  --_trailing-focus: var(--md-sys-color-on-surface-variant);
+  --_trailing-error: var(--md-sys-color-error);
+  --_trailing-error-hover: var(--md-sys-color-on-error-container);
+  --_trailing-error-focus: var(--md-sys-color-error);
+  --_trailing-disabled: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface)
+      calc(0.38 * 100%),
+    transparent
+  );
+
+  --_supporting-enabled: var(--md-sys-color-on-surface-variant);
+  --_supporting-hover: var(--md-sys-color-on-surface-variant);
+  --_supporting-focus: var(--md-sys-color-on-surface-variant);
+  --_supporting-error: var(--md-sys-color-error);
+  --_supporting-error-hover: var(--md-sys-color-error);
+  --_supporting-error-focus: var(--md-sys-color-error);
+  --_supporting-disabled: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface)
+      calc(0.38 * 100%),
+    transparent
+  );
+
+  --_line-enabled: var(--md-sys-color-on-surface-variant);
+  --_line-hover: var(--md-sys-color-on-surface);
+  --_line-focus: var(--md-sys-color-primary);
+  --_line-error: var(--md-sys-color-error);
+  --_line-error-hover: var(--md-sys-color-on-error-container);
+  --_line-error-focus: var(--md-sys-color-error);
+  --_line-disabled: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface)
+      calc(0.38 * 100%),
+    transparent
+  );
+}
+
+.root[data-variant='outlined'] {
+  --_shape: var(--md-sys-shape-corner-extra-small);
+  --_caret-enabled: var(--md-sys-color-primary);
+  --_caret-error: var(--md-sys-color-error);
+  --_prefix: var(--md-sys-color-on-surface-variant);
+  --_suffix: var(--md-sys-color-on-surface-variant);
+  --_placeholder: var(--md-sys-color-on-surface-variant);
+  --_leading-size: 24px;
+  --_trailing-size: 24px;
+  --_line-width-enabled: 1px;
+  --_line-width-hover: 1px;
+  --_line-width-focus: 3px;
+  --_line-width-disabled: 1px;
+  --_input-font: var(--md-sys-typescale-body-large-font);
+  --_input-weight: var(--md-sys-typescale-body-large-weight);
+  --_input-size: var(--md-sys-typescale-body-large-size);
+  --_input-line-height: var(--md-sys-typescale-body-large-line-height);
+  --_input-tracking: var(--md-sys-typescale-body-large-tracking);
+  --_label-font: var(--md-sys-typescale-body-large-font);
+  --_label-weight: var(--md-sys-typescale-body-large-weight);
+  --_label-size: var(--md-sys-typescale-body-large-size);
+  --_label-line-height: var(--md-sys-typescale-body-large-line-height);
+  --_label-tracking: var(--md-sys-typescale-body-large-tracking);
+  --_label-populated-size: var(--md-sys-typescale-body-small-size);
+  --_label-populated-line-height: var(--md-sys-typescale-body-small-line-height);
+  --_supporting-font: var(--md-sys-typescale-body-small-font);
+  --_supporting-weight: var(--md-sys-typescale-body-small-weight);
+  --_supporting-size: var(--md-sys-typescale-body-small-size);
+  --_supporting-line-height: var(--md-sys-typescale-body-small-line-height);
+  --_supporting-tracking: var(--md-sys-typescale-body-small-tracking);
+
+  --_label-enabled: var(--md-sys-color-on-surface-variant);
+  --_label-hover: var(--md-sys-color-on-surface);
+  --_label-focus: var(--md-sys-color-primary);
+  --_label-error: var(--md-sys-color-error);
+  --_label-error-hover: var(--md-sys-color-on-error-container);
+  --_label-error-focus: var(--md-sys-color-error);
+  --_label-disabled: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface)
+      calc(0.38 * 100%),
+    transparent
+  );
+
+  --_input-enabled: var(--md-sys-color-on-surface);
+  --_input-hover: var(--md-sys-color-on-surface);
+  --_input-focus: var(--md-sys-color-on-surface);
+  --_input-error: var(--md-sys-color-on-surface);
+  --_input-error-hover: var(--md-sys-color-on-surface);
+  --_input-error-focus: var(--md-sys-color-on-surface);
+  --_input-disabled: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface)
+      calc(0.38 * 100%),
+    transparent
+  );
+
+  --_leading-enabled: var(--md-sys-color-on-surface-variant);
+  --_leading-hover: var(--md-sys-color-on-surface-variant);
+  --_leading-focus: var(--md-sys-color-on-surface-variant);
+  --_leading-error: var(--md-sys-color-on-surface-variant);
+  --_leading-error-hover: var(--md-sys-color-on-surface-variant);
+  --_leading-error-focus: var(--md-sys-color-on-surface-variant);
+  --_leading-disabled: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface)
+      calc(0.38 * 100%),
+    transparent
+  );
+
+  --_trailing-enabled: var(--md-sys-color-on-surface-variant);
+  --_trailing-hover: var(--md-sys-color-on-surface-variant);
+  --_trailing-focus: var(--md-sys-color-on-surface-variant);
+  --_trailing-error: var(--md-sys-color-error);
+  --_trailing-error-hover: var(--md-sys-color-on-error-container);
+  --_trailing-error-focus: var(--md-sys-color-error);
+  --_trailing-disabled: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface)
+      calc(0.38 * 100%),
+    transparent
+  );
+
+  --_supporting-enabled: var(--md-sys-color-on-surface-variant);
+  --_supporting-hover: var(--md-sys-color-on-surface-variant);
+  --_supporting-focus: var(--md-sys-color-on-surface-variant);
+  --_supporting-error: var(--md-sys-color-error);
+  --_supporting-error-hover: var(--md-sys-color-error);
+  --_supporting-error-focus: var(--md-sys-color-error);
+  --_supporting-disabled: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface)
+      calc(0.38 * 100%),
+    transparent
+  );
+
+  --_line-enabled: var(--md-sys-color-outline);
+  --_line-hover: var(--md-sys-color-on-surface);
+  --_line-focus: var(--md-sys-color-primary);
+  --_line-error: var(--md-sys-color-error);
+  --_line-error-hover: var(--md-sys-color-on-error-container);
+  --_line-error-focus: var(--md-sys-color-error);
+  --_line-disabled: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface)
+      calc(0.12 * 100%),
+    transparent
+  );
+}
+
+/* ---- Layout modifiers ---- */
+
+.root[data-leading] {
+  --_pad-start: var(--_pad-inline-icon);
+  --_text-start: calc(var(--_pad-inline-icon) + var(--_leading-size) + var(--_icon-gap));
+}
+
+.root[data-trailing] {
+  --_pad-end: var(--_pad-inline-icon);
+  --_text-end: calc(var(--_pad-inline-icon) + var(--_trailing-size) + var(--_icon-gap));
+}
+
+/* Opt-in density (spec 2: "never by default"). 48px is derived. */
+.root[data-dense] {
+  --_height: 48px;
+  --_pad-block: 4px;
+  --_rest-top: 12px;
+}
+
+/* ---- States ---- */
+
+@media (hover: hover) {
+  .root:where(:has(.field:hover)) {
+    --_line: var(--_line-hover);
+    --_line-width: var(--_line-width-hover);
+    --_label: var(--_label-hover);
+    --_input: var(--_input-hover);
+    --_leading: var(--_leading-hover);
+    --_trailing: var(--_trailing-hover);
+    --_supporting: var(--_supporting-hover);
+  }
+}
+
+.root:where([data-focused]) {
+  --_line: var(--_line-focus);
+  --_line-width: var(--_line-width-focus);
+  --_label: var(--_label-focus);
+  --_input: var(--_input-focus);
+  --_leading: var(--_leading-focus);
+  --_trailing: var(--_trailing-focus);
+  --_supporting: var(--_supporting-focus);
+}
+
+.root:where([data-invalid]) {
+  --_line: var(--_line-error);
+  --_label: var(--_label-error);
+  --_input: var(--_input-error);
+  --_leading: var(--_leading-error);
+  --_trailing: var(--_trailing-error);
+  --_supporting: var(--_supporting-error);
+  --_caret: var(--_caret-error);
+  --_state-layer-color: var(--_state-layer-color-error, transparent);
+}
+
+@media (hover: hover) {
+  .root:where([data-invalid]:has(.field:hover)) {
+    --_line: var(--_line-error-hover);
+    --_label: var(--_label-error-hover);
+    --_input: var(--_input-error-hover);
+    --_leading: var(--_leading-error-hover);
+    --_trailing: var(--_trailing-error-hover);
+    --_supporting: var(--_supporting-error-hover);
+  }
+}
+
+.root:where([data-invalid][data-focused]) {
+  --_line: var(--_line-error-focus);
+  --_label: var(--_label-error-focus);
+  --_input: var(--_input-error-focus);
+  --_leading: var(--_leading-error-focus);
+  --_trailing: var(--_trailing-error-focus);
+  --_supporting: var(--_supporting-error-focus);
+}
+
+.root:where([data-disabled]) {
+  --_line: var(--_line-disabled);
+  --_line-width: var(--_line-width-disabled);
+  --_label: var(--_label-disabled);
+  --_input: var(--_input-disabled);
+  --_leading: var(--_leading-disabled);
+  --_trailing: var(--_trailing-disabled);
+  --_supporting: var(--_supporting-disabled);
+  --_container: var(--_container-disabled, transparent);
+}
+
+/* ---- Container ---- */
+
+.field {
+  composes: interactive from '../shared/interaction.module.css';
+
+  display: flex;
+  align-items: center;
+  gap: var(--_icon-gap);
+  box-sizing: border-box;
+  min-block-size: var(--_height);
+  padding-inline: var(--_pad-start) var(--_pad-end);
+  border-radius: var(--_shape);
+  background: var(--_container);
+  cursor: text;
+  transition: background-color var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+/* Multi-line fields keep their icons on the first line. Derived. */
+.root[data-multiline] .field {
+  align-items: flex-start;
+}
+
+.root[data-multiline] .leading,
+.root[data-multiline] .trailing {
+  margin-block-start: var(--_rest-top);
+}
+
+.leading,
+.trailing {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 24px;
+  cursor: default;
+  /* Icon buttons in the slots use their own (currentColor) state layer. */
+  --_state-layer-color: initial;
+  transition: color var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.leading {
+  --md-icon-size: var(--_leading-size);
+  color: var(--_leading);
+}
+
+.trailing {
+  --md-icon-size: var(--_trailing-size);
+  color: var(--_trailing);
+}
+
+.trailing [data-color='standard']:not([data-state='on'], :disabled, [data-disabled], [aria-disabled='true']) {
+  --_icon-color: var(--_trailing);
+}
+
+/* Icon buttons (40px) overhang by 8px so their glyph keeps the 12px edge
+   padding and the 16px gap to the text. Derived. */
+.leading > button,
+.trailing > button {
+  margin-inline: -8px;
+}
+
+.root[data-multiline] .leading > button,
+.root[data-multiline] .trailing > button {
+  margin-block: -8px;
+}
+
+/* ---- Body: label + input row ---- */
+
+.body {
+  display: flex;
+  flex: 1;
+  min-inline-size: 0;
+  align-self: stretch;
+  align-items: center;
+  padding-block: var(--_rest-top);
+}
+
+.root[data-multiline] .body {
+  align-items: flex-start;
+}
+
+/* Filled with a label: the floated label takes the top line, input below it
+   (8 + 16 + 24 + 8 = 56, spec 4.2 derived). */
+.root[data-variant='filled'][data-label] .body {
+  padding-block: calc(var(--_pad-block) + var(--_label-populated-line-height)) var(--_pad-block);
+}
+
+.input {
+  flex: 1;
+  min-inline-size: 0;
+  inline-size: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: none;
+  color: var(--_input);
+  caret-color: var(--_caret);
+  font-family: var(--_input-font);
+  font-weight: var(--_input-weight);
+  font-size: var(--_input-size);
+  line-height: var(--_input-line-height);
+  letter-spacing: var(--_input-tracking);
+  text-align: start;
+}
+
+textarea.input {
+  display: block;
+  resize: none;
+  overflow: auto;
+}
+
+.input::placeholder {
+  color: var(--_placeholder);
+  opacity: 1;
+}
+
+/* With a label, the placeholder shows only while focused and empty (spec 5,
+   derived): the resting label occupies its place otherwise. */
+.root[data-label]:not([data-focused]) .input::placeholder {
+  opacity: 0;
+}
+
+.input:disabled {
+  cursor: default;
+}
+
+.prefix,
+.suffix {
+  flex-shrink: 0;
+  font-family: var(--_input-font);
+  font-weight: var(--_input-weight);
+  font-size: var(--_input-size);
+  line-height: var(--_input-line-height);
+  letter-spacing: var(--_input-tracking);
+  white-space: nowrap;
+  transition: opacity var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.prefix {
+  color: var(--_prefix);
+}
+
+.suffix {
+  color: var(--_suffix);
+}
+
+.root:where([data-disabled]) :is(.prefix, .suffix) {
+  color: var(--_input-disabled);
+}
+
+/* Prefix and suffix would collide with a resting label (spec 5, derived). */
+.root[data-label]:not([data-floated]):not(:has(.input:autofill)) :is(.prefix, .suffix) {
+  opacity: 0;
+}
+
+/* ---- Label ---- */
+
+.label {
+  position: absolute;
+  z-index: 1;
+  inset-block-start: var(--_rest-top);
+  inset-inline-start: var(--_text-start);
+  max-inline-size: calc(100% - var(--_text-start) - var(--_text-end));
+  overflow: hidden;
+  color: var(--_label);
+  font-family: var(--_label-font);
+  font-weight: var(--_label-weight);
+  font-size: var(--_label-size);
+  line-height: var(--_label-line-height);
+  letter-spacing: var(--_label-tracking);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: text;
+  /* Float motion: fast effects (no overshoot), ~150ms, per spec 6 (derived). */
+  transition-property: inset-block-start, inset-inline-start, max-inline-size, font-size, line-height,
+    color;
+  transition-duration: var(--md-sys-motion-spring-fast-effects-duration);
+  transition-timing-function: var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.root:is([data-floated], :has(.input:autofill)) .label {
+  font-size: var(--_label-populated-size);
+  line-height: var(--_label-populated-line-height);
+}
+
+.root[data-variant='filled']:is([data-floated], :has(.input:autofill)) .label {
+  inset-block-start: var(--_pad-block);
+}
+
+/* Outlined: the floated label is centered on the top outline, in the notch,
+   at the leading edge even with a leading icon (derived from the M3 specs). */
+.root[data-variant='outlined']:is([data-floated], :has(.input:autofill)) .label {
+  inset-block-start: calc(var(--_label-populated-line-height) / -2);
+  inset-inline-start: calc(var(--_pad-inline-icon) + var(--_notch-pad));
+  max-inline-size: calc(100% - var(--_pad-inline-icon) - var(--_notch-pad) - var(--_text-end));
+}
+
+.asterisk {
+  margin-inline-start: 2px; /* derived */
+}
+
+/* ---- Filled: active indicator ---- */
+
+.indicator {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  block-size: var(--_line-width);
+  background: var(--_line);
+  pointer-events: none;
+  transition:
+    block-size var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    background-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+/* ---- Outlined: outline with a notch for the floated label ---- */
+
+.outline {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.outlineStart,
+.notch,
+.outlineEnd {
+  box-sizing: border-box;
+  border: 0 solid var(--_line);
+  transition:
+    border-width var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    border-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.outlineStart {
+  flex-shrink: 0;
+  /* At least the corner radius; the notch starts at the 12px icon padding. */
+  inline-size: var(--_pad-inline-icon);
+  border-width: var(--_line-width) 0 var(--_line-width) var(--_line-width);
+  border-start-start-radius: inherit;
+  border-end-start-radius: inherit;
+}
+
+.outlineEnd {
+  flex: 1;
+  border-width: var(--_line-width) var(--_line-width) var(--_line-width) 0;
+  border-start-end-radius: inherit;
+  border-end-end-radius: inherit;
+}
+
+/* The notch is as wide as the floated label (an invisible copy at the
+   floated size) plus 4px on each side; its top edge is a line that shrinks
+   away when the label floats. */
+.notch {
+  position: relative;
+  flex-shrink: 0;
+  max-inline-size: calc(100% - var(--_pad-inline-icon) - var(--_text-end) + var(--_notch-pad));
+  padding-inline: var(--_notch-pad);
+  border-block-end-width: var(--_line-width);
+}
+
+.notch::before {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 0;
+  block-size: var(--_line-width);
+  background: var(--_line);
+  transition:
+    scale var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    block-size var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing),
+    background-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.root:is([data-floated], :has(.input:autofill)) .notch::before {
+  scale: 0 1;
+}
+
+.notchLabel {
+  display: block;
+  overflow: hidden;
+  visibility: hidden;
+  font-family: var(--_label-font);
+  font-weight: var(--_label-weight);
+  font-size: var(--_label-populated-size);
+  line-height: var(--_label-populated-line-height);
+  letter-spacing: var(--_label-tracking);
+  white-space: nowrap;
+}
+
+.notchLabel .asterisk {
+  margin-inline-start: 2px;
+}
+
+/* ---- Footer: supporting / error text and counter ---- */
+
+.footer {
+  display: flex;
+  gap: var(--_footer-gap);
+  padding-block-start: var(--_footer-pad-top);
+  /* Aligned with the 16px text inset. Derived. */
+  padding-inline: var(--_pad-inline);
+  color: var(--_supporting);
+  font-family: var(--_supporting-font);
+  font-weight: var(--_supporting-weight);
+  font-size: var(--_supporting-size);
+  line-height: var(--_supporting-line-height);
+  letter-spacing: var(--_supporting-tracking);
+  transition: color var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects-easing);
+}
+
+.supporting {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.counter {
+  flex-shrink: 0;
+  margin-inline-start: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+/* "Character count, " before the counter for screen readers. */
+.visuallyHidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (forced-colors: active) {
+  .indicator,
+  .notch::before {
+    background: CanvasText;
+  }
+
+  .outlineStart,
+  .notch,
+  .outlineEnd {
+    border-color: CanvasText;
+  }
+
+  .root:where([data-focused]) .indicator,
+  .root:where([data-focused]) .notch::before {
+    background: Highlight;
+  }
+
+  .root:where([data-focused]) :is(.outlineStart, .notch, .outlineEnd) {
+    border-color: Highlight;
+  }
+}
