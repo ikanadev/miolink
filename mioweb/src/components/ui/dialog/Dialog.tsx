@@ -468,7 +468,7 @@ export const DialogAction = (props: DialogActionProps) => {
 };
 
 /**
- * M3 dialog (m3-guidelines/components/dialogs.md): basic (optional hero
+ * M3 dialog: basic (optional hero
  * icon, headline, supporting text, scrolling content with dividers, up to
  * two text actions, side by side or stacked) and full-screen (56px header
  * with close, headline and confirming action; optional bottom bar), which

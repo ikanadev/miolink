@@ -38,7 +38,7 @@ export type SwitchProps = Omit<
 };
 
 /**
- * M3 switch (m3-guidelines/components/switch.md). Ark UI `Switch`: the root
+ * M3 switch. Ark UI `Switch`: the root
  * is a `<label>`, a visually hidden native `<input type="checkbox"
  * role="switch">` holds focus and form participation (`name`, `value`,
  * `required`, `form`), and the track/handle react to Ark's data attributes.

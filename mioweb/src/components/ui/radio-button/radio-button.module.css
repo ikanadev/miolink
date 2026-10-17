@@ -1,5 +1,5 @@
 /*
- * Radio button. Spec: m3-guidelines/components/radio-button.md
+ * Radio button.
  *
  * Ark parts: .group is RadioGroup.Root (role="radiogroup"), .groupLabel its
  * Label. Each .root is a RadioGroup.Item (<label>) holding .control (the

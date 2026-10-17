@@ -87,7 +87,7 @@ const LOCAL = [
 ] as const;
 
 /**
- * M3 Expressive app bar (m3-guidelines/components/app-bars.md): search,
+ * M3 Expressive app bar: search,
  * small, medium flexible and large flexible. The container fills with
  * surface-container when content scrolls under it (no shadow).
  *

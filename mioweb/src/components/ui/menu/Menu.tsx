@@ -451,7 +451,7 @@ export const MenuDivider = (props: MenuDividerProps) => {
 };
 
 /**
- * M3 Expressive menu (m3-guidelines/components/menus.md): vertical (standard
+ * M3 Expressive menu: vertical (standard
  * or vibrant color, list or gap layout, density 0 to -3) or baseline, with
  * action, link, checkbox, radio and submenu items, groups with section
  * labels and dividers, and context menus. Behavior is Ark UI `Menu`.

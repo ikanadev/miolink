@@ -142,7 +142,7 @@ const LOCAL = [
 ] as const;
 
 /**
- * M3 Expressive toolbar (m3-guidelines/components/toolbars.md): docked
+ * M3 Expressive toolbar: docked
  * (full-width bottom bar) or floating (pill, horizontal or vertical, with
  * an optional FAB), standard or vibrant colors. `role="toolbar"` with a
  * roving tabindex: one Tab stop, Arrow keys (Left/Right, Up/Down when

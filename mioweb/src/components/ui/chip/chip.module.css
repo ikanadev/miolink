@@ -1,5 +1,5 @@
 /*
- * Chips. Spec: m3-guidelines/components/chips.md
+ * Chips.
  *
  * Structure: .root (non-focusable span: container, outline on ::after,
  * elevation) > .primary (the button or link: Ripple, leading slot, label)

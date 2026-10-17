@@ -47,7 +47,7 @@ export type ExtendedFabProps = Omit<
 };
 
 /**
- * M3 extended FAB (m3-guidelines/components/buttons/extended-fab.md): small,
+ * M3 extended FAB: small,
  * medium, large (and baseline) sizes, six color styles (plus the baseline
  * surface and branded ones), an optional icon, and the collapse into a FAB.
  *

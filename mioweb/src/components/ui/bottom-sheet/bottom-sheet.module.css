@@ -1,5 +1,5 @@
 /*
- * Bottom sheet. Spec: m3-guidelines/components/sheets/bottom-sheets.md
+ * Bottom sheet.
  *
  * Structure (in a portal): .scrim (Ark Drawer Backdrop, modal only) +
  * .positioner (Ark Positioner) > .container (Ark Content) > .handleRegion

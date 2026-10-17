@@ -427,7 +427,7 @@ export const SideSheetClose = (props: SideSheetCloseProps) => {
 };
 
 /**
- * M3 side sheet (m3-guidelines/components/sheets/side-sheets.md): modal
+ * M3 side sheet: modal
  * (portal, scrim, focus trap) and standard (in the layout flow, the main
  * content shrinks to make room), docked or detached, on the inline-end edge
  * (or start), with a header (back, headline, close), a scrolling body and

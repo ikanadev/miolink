@@ -1,5 +1,5 @@
 /*
- * Tooltips. Spec: m3-guidelines/components/tooltips.md
+ * Tooltips.
  *
  * .content is the Ark Tooltip (plain) or Popover (rich) content part:
  * data-variant="plain" | "rich", data-state="open" | "closed", data-side

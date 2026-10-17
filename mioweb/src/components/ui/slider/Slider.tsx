@@ -110,7 +110,7 @@ const SEGMENTS: Record<SliderVariant, Segment[]> = {
 type Stop = { fraction: number; end?: 'start' | 'end'; state: 'active' | 'inactive' | 'hidden' };
 
 /**
- * M3 slider (m3-guidelines/components/sliders.md) on Ark UI `Slider`. Ark
+ * M3 slider on Ark UI `Slider`. Ark
  * owns the behavior: pointer drag and select-jump (nearest handle for
  * range), keyboard, the focusable `role="slider"` handles, aria values and
  * hidden inputs for forms. Ark positions the handles; `thumbSize` is the

@@ -1,5 +1,5 @@
 /*
- * Side sheet. Spec: m3-guidelines/components/sheets/side-sheets.md
+ * Side sheet.
  *
  * Structure: modal sheets render in a portal as .scrim (Ark Backdrop) +
  * .positioner (Ark Positioner, fixed over the window); standard sheets render

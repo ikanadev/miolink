@@ -47,7 +47,7 @@ type FabMenuState = { close: (focusToggle: boolean) => void };
 const FabMenuContext = createContext<FabMenuState>();
 
 /**
- * M3 FAB menu (m3-guidelines/components/buttons/fab-menu.md): a FAB that
+ * M3 FAB menu: a FAB that
  * opens 2-6 related actions. Open, the FAB morphs into a 56px round close
  * button (primary, secondary or tertiary set, following the FAB's color)
  * and the items rise above it, trailing-aligned.

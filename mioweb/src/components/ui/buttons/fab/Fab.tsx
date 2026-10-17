@@ -51,7 +51,7 @@ export type FabLinkProps = Common & AnchorAttrs & { href: string };
 export type FabProps = FabButtonProps | FabLinkProps;
 
 /**
- * M3 FAB (m3-guidelines/components/buttons/floating-action-button.md):
+ * M3 FAB:
  * icon-only, three sizes, six color styles plus the baseline surface style,
  * level3 elevation (level4 on hover), scale-from-center enter/exit through
  * `visible`, and a plain tooltip (`Tooltip`) with the label.

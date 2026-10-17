@@ -198,7 +198,7 @@ type DialOption = {
 };
 
 /**
- * M3 time picker (m3-guidelines/components/date-and-time-pickers/time-pickers.md):
+ * M3 time picker:
  * a modal dialog with the dial picker (hour/minute time selector, AM/PM
  * period selector and a 256px clock face, vertical or horizontal) or the
  * input picker (two numeric fields), switched by the keyboard/clock icon

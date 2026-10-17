@@ -99,7 +99,7 @@ const SWIPE_CLOSE_VELOCITY = 0.5;
 const SWIPE_SLOP = 10;
 
 /**
- * Navigation drawer (m3-guidelines/components/navigation/navigation-drawer.md),
+ * Navigation drawer,
  * a list of destinations in a 360px sheet on the start edge, with an
  * optional headline, section subheads and dividers. Exactly one
  * destination is active.

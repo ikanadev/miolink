@@ -95,7 +95,7 @@ const GroupItemContent: Component<{ value: string; children: (selected: boolean)
 };
 
 /**
- * M3 button (m3-guidelines/components/buttons/buttons.md): default or
+ * M3 button: default or
  * toggle, five color styles, five sizes, round or square with the pressed
  * and selected shape morphs, optional leading icon. Toggles are Ark UI
  * `Toggle`; inside a selectable `ButtonGroup`, items with a `value` are Ark

@@ -1,5 +1,5 @@
 /*
- * Carousel. Spec: m3-guidelines/components/carousel.md
+ * Carousel.
  *
  * Structure: .root (section) > .scroller (scroll container) > .track (ul)
  * > .item (li) > .mask (the link or button: shape, container, state layer

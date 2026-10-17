@@ -1,5 +1,5 @@
 /*
- * Switch. Spec: m3-guidelines/components/switch.md
+ * Switch.
  *
  * Ark parts: .root is the <label> (Switch.Root) holding the label text,
  * then .control, the 52x32 track (Switch.Control), and a visually hidden

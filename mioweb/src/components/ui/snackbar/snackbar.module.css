@@ -1,5 +1,5 @@
 /*
- * Snackbar. Spec: m3-guidelines/components/snackbar.md
+ * Snackbar.
  *
  * .group is Ark's toast region (fixed, inline styles from Ark; its offsets
  * read --_margin and --_bottom-offset below). .root is one snackbar, with

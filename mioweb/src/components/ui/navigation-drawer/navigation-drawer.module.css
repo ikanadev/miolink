@@ -1,6 +1,5 @@
 /*
  * Navigation drawer (legacy; the expanded navigation rail replaces it).
- * Spec: m3-guidelines/components/navigation/navigation-drawer.md
  *
  * Structure: .root (<nav>, standard, in the layout) or .scrim +
  * .positioner > .modal (Ark Dialog Content) > .modalNav (modal, in a

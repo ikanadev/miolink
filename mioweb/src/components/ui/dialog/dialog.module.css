@@ -1,5 +1,5 @@
 /*
- * Dialog. Spec: m3-guidelines/components/dialogs.md
+ * Dialog.
  *
  * Structure (in a portal): .scrim (Ark Backdrop) + .positioner (Ark
  * Positioner) > .container (Ark Content) > .header (icon, headline) or .bar

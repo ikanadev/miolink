@@ -126,8 +126,7 @@ const LOCAL = [
 const ITEM_SELECTOR = '[data-rail-item]';
 
 /**
- * M3 Expressive navigation rail
- * (m3-guidelines/components/navigation/navigation-rail.md): a vertical
+ * M3 Expressive navigation rail: a vertical
  * `<nav>` on the leading edge with an optional menu button, FAB and logo
  * at the top and 3-7 destinations, exactly one active.
  *

@@ -49,8 +49,7 @@ const CYCLE = 1750;
 type Span = [number, number];
 
 /**
- * M3 linear progress indicator
- * (m3-guidelines/components/loading-and-progress/progress-indicators.md):
+ * M3 linear progress indicator:
  * determinate or indeterminate, flat or wavy, configurable thickness, 4px
  * gap between the active indicator and the track, a stop indicator for
  * determinate progress, and a dot as soon as progress starts.

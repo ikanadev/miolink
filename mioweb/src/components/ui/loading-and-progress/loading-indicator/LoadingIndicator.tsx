@@ -26,8 +26,7 @@ const MORPH_DAMPING = 0.6;
 const ROTATION_PERIOD = 4666;
 
 /**
- * M3 Expressive loading indicator
- * (m3-guidelines/components/loading-and-progress/loading-indicator.md): a
+ * M3 Expressive loading indicator: a
  * shape that keeps morphing through seven Material shapes while turning, for
  * short indeterminate waits (200ms-5s). Default (uncontained) or contained;
  * 24-240px.

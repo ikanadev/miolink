@@ -154,7 +154,7 @@ const call = (handler: unknown, e: Event) => {
 const present = (v: unknown) => v != null && v !== false && v !== '';
 
 /**
- * M3 text field (m3-guidelines/components/text-fields.md): filled or
+ * M3 text field: filled or
  * outlined, single-line or multi-line (growing or fixed text area), with
  * the floating label, leading/trailing icons or icon buttons, prefix and
  * suffix text, supporting/error text and a character counter. Built on Ark

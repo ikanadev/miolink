@@ -83,7 +83,7 @@ const SnackbarItem: Component<ItemProps> = (props) => {
 };
 
 /**
- * Renders the snackbars of a `Snackbar` manager (m3-guidelines/components/snackbar.md)
+ * Renders the snackbars of a `Snackbar` manager
  * with Ark UI `Toaster`: a persistent polite live region at the bottom of
  * the window, in a portal. Mount it once per manager.
  *

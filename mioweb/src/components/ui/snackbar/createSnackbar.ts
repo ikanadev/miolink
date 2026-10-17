@@ -87,7 +87,7 @@ const durationFor = (options: SnackbarOptions) => {
 };
 
 /**
- * A snackbar manager (m3-guidelines/components/snackbar.md) on an Ark UI
+ * A snackbar manager on an Ark UI
  * toast store: one snackbar at a time, a FIFO queue, `replace` for updated
  * information, timers that pause while the snackbar is hovered or focused,
  * dismiss reasons. Render it with `<SnackbarHost snackbar={...} />` once.

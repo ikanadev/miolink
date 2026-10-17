@@ -44,7 +44,7 @@ export const badgeAccessibleText = (
 };
 
 /**
- * M3 badge (m3-guidelines/components/badges.md): a 6px dot (small) or a 16px
+ * M3 badge: a 6px dot (small) or a 16px
  * pill with up to 4 characters (large), error / on-error, anchored inside
  * an icon's upper trailing corner or inline after a label.
  *

@@ -43,8 +43,7 @@ const SWEEP_MIN = 0.1;
 const SWEEP_MAX = 0.87;
 
 /**
- * M3 circular progress indicator
- * (m3-guidelines/components/loading-and-progress/progress-indicators.md):
+ * M3 circular progress indicator:
  * determinate or indeterminate, flat or wavy, 24-240px, configurable
  * thickness, with a 4px gap between the active indicator and the track.
  * Fills clockwise from 12 o'clock and isn't mirrored in RTL.

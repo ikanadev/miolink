@@ -1,5 +1,5 @@
 /*
- * Date picker. Spec: m3-guidelines/components/date-and-time-pickers/date-pickers.md
+ * Date picker.
  *
  * Structure: .root > .fields (outlined TextFields; the last one holds the
  * calendar button) + hidden form inputs.

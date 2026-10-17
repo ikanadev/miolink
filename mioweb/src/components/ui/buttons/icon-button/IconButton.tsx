@@ -87,7 +87,7 @@ const GroupItemIcon: Component<{ value: string; children: (selected: boolean) =>
 };
 
 /**
- * M3 icon button (m3-guidelines/components/buttons/icon-buttons.md):
+ * M3 icon button:
  * default or toggle, four color styles, five sizes, three widths, round or
  * square with the pressed and selected shape morphs, optional tooltip.
  * Toggles are Ark UI `Toggle`; inside a selectable `ButtonGroup`, items with

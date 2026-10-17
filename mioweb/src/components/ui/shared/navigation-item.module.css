@@ -1,6 +1,5 @@
 /*
- * Navigation item shared by the navigation bar and the navigation rail
- * (m3-guidelines/components/navigation/README.md, "Shared rules"): an
+ * Navigation item shared by the navigation bar and the navigation rail: an
  * <a> or <button> whose whole box is the hit target, with the pill
  * indicator, state layer, ripple and focus ring confined to the indicator
  * area.

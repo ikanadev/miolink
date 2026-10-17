@@ -30,7 +30,7 @@ export type RadioGroupProps = Omit<
 };
 
 /**
- * M3 radio group (m3-guidelines/components/radio-button.md): Ark UI
+ * M3 radio group: Ark UI
  * `RadioGroup` (role="radiogroup"). It owns the selected value and passes
  * `name`, `disabled`, `required`, `readOnly` and `form` to the native radio
  * inputs inside its `RadioButton`s, so exclusivity, arrow keys, Tab to the

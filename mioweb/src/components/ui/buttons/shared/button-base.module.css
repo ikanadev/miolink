@@ -1,7 +1,6 @@
 /*
  * Base of the label buttons: Button and both halves of SplitButton.
- * Spec: m3-guidelines/components/buttons/buttons.md (§4, §10) and the shared
- * base in buttons/README.md. Compose it:
+ * Compose it:
  *
  *   .root { composes: base from '../shared/button-base.module.css'; }
  *

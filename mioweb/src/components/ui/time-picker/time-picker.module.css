@@ -1,5 +1,5 @@
 /*
- * Time picker. Spec: m3-guidelines/components/date-and-time-pickers/time-pickers.md
+ * Time picker.
  *
  * Structure: .root > .field (outlined TextField with the clock button) +
  * hidden form input. In a portal: .scrim + .dialogPositioner > .dialog

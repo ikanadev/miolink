@@ -106,7 +106,7 @@ const defaultStatus = (count: number, value: string) =>
   count === 0 ? (value ? 'No results' : '') : `${count} ${count === 1 ? 'suggestion' : 'suggestions'}`;
 
 /**
- * M3 Expressive search (m3-guidelines/components/search.md): a search bar
+ * M3 Expressive search: a search bar
  * that opens focused search, with suggestions or results in a list.
  *
  * The bar's input is a combobox trigger. Activating it (click, Enter,

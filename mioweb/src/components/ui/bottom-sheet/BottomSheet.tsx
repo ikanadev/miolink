@@ -494,7 +494,7 @@ export const BottomSheetClose = (props: BottomSheetCloseProps) => {
 };
 
 /**
- * M3 bottom sheet (m3-guidelines/components/sheets/bottom-sheets.md):
+ * M3 bottom sheet:
  * modal (scrim, focus trap) and standard (coexists with the page), with a
  * drag handle that cycles the detents, drag to resize and swipe to dismiss,
  * and a close/collapse button at full height. Behavior is Ark UI `Drawer`.

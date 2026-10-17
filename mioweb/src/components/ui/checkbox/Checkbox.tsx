@@ -37,7 +37,7 @@ export type CheckboxProps = Omit<
 };
 
 /**
- * M3 checkbox (m3-guidelines/components/checkbox.md): unchecked, checked
+ * M3 checkbox: unchecked, checked
  * and indeterminate, with error and disabled states and an optional label.
  * Ark UI `Checkbox`: the root is a `<label>`, a visually hidden native input
  * holds focus and form participation (`name`, `value`, `required`, `form`),

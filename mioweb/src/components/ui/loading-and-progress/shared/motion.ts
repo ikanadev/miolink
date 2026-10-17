@@ -35,7 +35,7 @@ export const easeEmphasizedDecelerate = cubicBezier(0.05, 0.7, 0.1, 1);
 
 /**
  * Position of an underdamped spring from 0 to 1 at time t (seconds), unit
- * mass, starting at rest (guidelines.md, "Implementing springs on the web").
+ * mass, starting at rest.
  */
 export const springAt = (t: number, stiffness: number, damping: number) => {
   const w0 = Math.sqrt(stiffness);

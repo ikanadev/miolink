@@ -24,7 +24,7 @@ export type TabsProps = Omit<ArkTabs.RootProps, 'asChild' | 'orientation' | 'onV
 };
 
 /**
- * M3 tabs (m3-guidelines/components/tabs.md) on Ark UI `Tabs`: holds the
+ * M3 tabs on Ark UI `Tabs`: holds the
  * selected value and connects a `TabList` to its `TabPanel`s. Manual
  * activation by default (spec §8): arrows, Home and End move focus, Space
  * or Enter (or a click) selects.

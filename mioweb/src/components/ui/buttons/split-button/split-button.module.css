@@ -1,5 +1,5 @@
 /*
- * Split button. Spec: m3-guidelines/components/buttons/split-button.md
+ * Split button.
  *
  * Both halves compose the shared label-button base (default colors, size,
  * typography, elevation, disabled) and carry data-color / data-size. This

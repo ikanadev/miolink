@@ -38,7 +38,7 @@ export type CardProps = JSX.HTMLAttributes<HTMLElement> & {
 };
 
 /**
- * M3 card (m3-guidelines/components/cards.md): elevated, filled or outlined
+ * M3 card: elevated, filled or outlined
  * container for content about one subject.
  *
  * - Non-actionable (default): a plain container; controls inside handle

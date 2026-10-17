@@ -2,7 +2,6 @@
  * Reference tokens (md.ref.palette.*): baseline tonal palettes generated from
  * source color #6750a4. Context-free. Components never read these; the
  * system color roles in color.css point to them.
- * Generated from m3-guidelines/guidelines.md ("Baseline tonal palettes").
  */
 :root {
   --md-ref-palette-primary100: #ffffff;

@@ -40,7 +40,7 @@ export type SplitButtonProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'childre
 };
 
 /**
- * M3 split button (m3-guidelines/components/buttons/split-button.md): a
+ * M3 split button: a
  * leading button for the main action and a trailing menu button whose
  * chevron rotates while its menu (the Ark UI `Menu` of `../../menu`) is open.
  * Both halves reuse the button base: four color styles, five sizes. The menu

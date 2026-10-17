@@ -218,7 +218,7 @@ type Ctx = {
 };
 
 /**
- * M3 date picker (m3-guidelines/components/date-and-time-pickers/date-pickers.md):
+ * M3 date picker:
  * docked (outlined field + calendar drop-down with month and year menus),
  * modal (dialog with header, month grid and year grid; a range is a
  * full-screen, vertically scrolling picker on compact windows) and modal

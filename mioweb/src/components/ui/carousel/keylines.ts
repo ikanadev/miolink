@@ -1,7 +1,7 @@
 /*
  * Keyline layout engine for the multi-browse and hero carousel layouts
- * (m3-guidelines/components/carousel.md §6.1, itself derived from the
- * Material Components Android / Compose carousel strategies).
+ * (derived from the Material Components Android / Compose carousel
+ * strategies).
  *
  * Every item has an "unadjusted" position: where its center would be if all
  * items were large and laid out in a row (`base + i * step - p`). A keyline

@@ -90,7 +90,7 @@ export type CarouselProps = Omit<JSX.HTMLAttributes<HTMLElement>, 'children'> & 
 };
 
 /**
- * M3 carousel (m3-guidelines/components/carousel.md): a scrollable row of
+ * M3 carousel: a scrollable row of
  * visual items.
  *
  * - `multi-browse` / `hero` (optionally `align="center"`): items morph

@@ -65,7 +65,7 @@ export type TooltipProps = {
 };
 
 /**
- * M3 plain tooltip (m3-guidelines/components/tooltips.md): a one-line
+ * M3 plain tooltip: a one-line
  * inverse-surface label shown on hover, keyboard focus or long-press. Built
  * on Ark UI `Tooltip`; the trigger keeps its own markup (Ark `asChild`).
  *

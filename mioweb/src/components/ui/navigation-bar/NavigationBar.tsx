@@ -77,8 +77,7 @@ const LOCAL = [
 ] as const;
 
 /**
- * M3 Expressive flexible navigation bar
- * (m3-guidelines/components/navigation/navigation-bar.md): a 64px
+ * M3 Expressive flexible navigation bar: a 64px
  * surface-container bar with 3-5 destinations, exactly one active. A
  * `<nav>` around a `<ul>`; items are links (`href`) or buttons with
  * `aria-current="page"` on the active one, and Tab moves between them (not

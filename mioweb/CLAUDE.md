@@ -8,15 +8,11 @@ isn't built yet; `App.tsx` shows the component gallery.
 Read `../miobackend/CLAUDE.md` for the domain model and sync protocol, and
 `../mioandroid/CLAUDE.md` for the client behavior the web app should match.
 
-## Material 3 specs
+## Material 3
 
-`m3-guidelines/` is the design source of truth. Read `m3-guidelines/README.md`,
-then `guidelines.md` (tokens, color, type, shape, elevation, motion, states,
-accessibility), then the component file in `m3-guidelines/components/`
-before building or changing a component. Follow each file's implementation
-checklist (section 9), except where "Component rules" below says otherwise
-(this project doesn't use `--md-comp-*` variables). Values marked "derived" or "(web mapping)" aren't
-verbatim from M3; when you pick one, say so in a comment.
+Components follow the Material 3 Expressive guidelines
+(https://m3.material.io). Values that aren't verbatim from M3 (derived or
+web mappings) say so in a comment.
 
 ## Commands
 
@@ -37,8 +33,8 @@ src/
   styles/
     index.css            fonts, token imports, document base (body = surface / on-surface, body-large)
     tokens/              M3 design tokens as CSS custom properties, on :root
-      palette.css        md.ref.palette.* (baseline, source #6750a4)        GENERATED from guidelines.md
-      color.css          md.sys.color.* light/dark x standard/medium/high  GENERATED from guidelines.md
+      palette.css        md.ref.palette.* (baseline, source #6750a4)        M3 baseline values
+      color.css          md.sys.color.* light/dark x standard/medium/high  M3 baseline values
       typography.css     md.ref.typeface.*, md.sys.typescale.* (baseline, emphasized, variable)
       shape.css, elevation.css, state.css, spacing.css, motion.css
   components/ui/
@@ -72,16 +68,17 @@ src/
 - Motion: expressive by default; `data-motion-scheme="standard"` on any
   subtree. `prefers-reduced-motion` turns spatial springs into short
   non-overshooting curves inside `motion.css`, so components get it for free.
-- `palette.css` and `color.css` are generated from the tables in
-  `guidelines.md`; regenerate them instead of editing values by hand.
+- `palette.css` and `color.css` hold M3's baseline scheme (source
+  `#6750a4`). Replace them as a whole (a new source color or an M3 update)
+  instead of tweaking single values.
 
 ## Component rules
 
 - **Tokens only.** Components read `--md-sys-*` tokens, never `--md-ref-*`,
   hex values or `light-dark()`. Dark mode and contrast then work without
   component code.
-- **No `--md-comp-*` variables.** The specs list `md.comp.*` tokens and
-  their blueprints read them as override hooks
+- **No `--md-comp-*` variables.** M3 defines `md.comp.*` tokens, and
+  its reference implementations read them as override hooks
   (`var(--md-comp-button-filled-container-color, var(--md-sys-color-primary))`).
   Don't copy that: write the value directly, a `--md-sys-*` token or a
   literal (`--_container-color: var(--md-sys-color-primary);`), so the CSS
@@ -115,8 +112,8 @@ src/
 - **Motion.** Spatial springs (`--md-sys-motion-spring-*-spatial-{easing,duration}`)
   for size, position and corner radius; effects springs for color and
   opacity; the legacy easing/duration tokens for enter/exit transitions.
-- **Elevation.** `box-shadow: var(--md-sys-elevation-levelN)` only where the
-  spec asks for a shadow; tonal surfaces are the default separation.
+- **Elevation.** `box-shadow: var(--md-sys-elevation-levelN)` only where M3
+  asks for a shadow; tonal surfaces are the default separation.
 - **Icons** are `<Icon name="..." />` (Material Symbols ligatures, `filled`,
   `size`, `mirror` for directional glyphs). Parents can set `--md-icon-size`
   and `--md-icon-optical-size`.
@@ -135,8 +132,8 @@ src/
   Don't destructure props. Resolve slot children with `children()` only when
   you need to inspect them.
 - **Accessibility.** Native elements first; icon-only controls take a
-  required `label` used as `aria-label`; follow the keyboard table in the
-  component's spec.
+  required `label` used as `aria-label`; follow M3's keyboard interactions for
+  the component.
 - **Exports.** `index.ts` in the component folder exports the component and
   its public types; `components/ui/index.ts` re-exports every folder.
 - **Demo.** Each component has `src/gallery/demos/<name>.demo.tsx` showing

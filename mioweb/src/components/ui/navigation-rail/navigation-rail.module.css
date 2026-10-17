@@ -1,6 +1,5 @@
 /*
- * Navigation rail (md.comp.nav-rail). Spec:
- * m3-guidelines/components/navigation/navigation-rail.md
+ * Navigation rail (md.comp.nav-rail).
  *
  * Structure: .root (<nav>, in the layout) or .positioner > .modal (Ark
  * Dialog Content) > .modalNav, both around the same .inner column:

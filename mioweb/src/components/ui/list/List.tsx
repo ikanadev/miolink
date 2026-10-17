@@ -113,7 +113,7 @@ export type SelectListProps = CommonProps &
 const COMMON = ['variant', 'segmented', 'label', 'class', 'children'] as const;
 
 /**
- * M3 Expressive list (m3-guidelines/components/lists.md). Holds `ListItem`s
+ * M3 Expressive list. Holds `ListItem`s
  * and `ListDivider`s.
  *
  * - `selection="none"` (default): a native `<ul>`. Interactive items are

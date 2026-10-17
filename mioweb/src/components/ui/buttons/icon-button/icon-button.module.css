@@ -1,5 +1,5 @@
 /*
- * Icon button. Spec: m3-guidelines/components/buttons/icon-buttons.md
+ * Icon button.
  *
  * Attributes: data-color, data-size, data-width, data-shape; toggles (Ark
  * Toggle, or ToggleGroup inside a ButtonGroup) add data-state="off" | "on".

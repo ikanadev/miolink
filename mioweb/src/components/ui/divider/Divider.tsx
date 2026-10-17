@@ -22,7 +22,7 @@ export type DividerProps = Omit<JSX.HTMLAttributes<HTMLElement>, 'children' | 'r
 };
 
 /**
- * M3 divider (m3-guidelines/components/divider.md): a 1px outline-variant
+ * M3 divider: a 1px outline-variant
  * line that groups content. Non-interactive, never focusable, no motion.
  * Horizontal dividers render an `<hr>`, vertical ones a `<div>`.
  */

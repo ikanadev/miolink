@@ -156,7 +156,7 @@ const attachPressBounce = (root: HTMLElement) => {
 };
 
 /**
- * M3 button group (m3-guidelines/components/buttons/button-groups.md): an
+ * M3 button group: an
  * invisible container for `Button` and `IconButton` items that sets their
  * size and shape, adds the gap and morphs them on press and selection.
  *

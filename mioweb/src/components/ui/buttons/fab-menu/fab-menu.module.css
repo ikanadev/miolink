@@ -1,5 +1,5 @@
 /*
- * FAB menu. Spec: m3-guidelines/components/buttons/fab-menu.md
+ * FAB menu.
  *
  * The root is the FAB's box (the caller positions it, e.g. fixed at the
  * bottom-end with 16px margins). The toggle is a `Fab` pinned to the box's

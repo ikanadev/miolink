@@ -66,7 +66,7 @@ export type RichTooltipProps = {
 const RichTooltipContext = createContext<{ close: (reason: TooltipCloseReason) => void }>();
 
 /**
- * M3 rich tooltip (m3-guidelines/components/tooltips.md): optional subhead,
+ * M3 rich tooltip: optional subhead,
  * supporting text and up to two text actions on a surface-container card.
  *
  * Built on Ark UI `Popover` (non-modal), not `Tooltip`: its content is

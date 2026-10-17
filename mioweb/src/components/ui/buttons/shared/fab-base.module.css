@@ -1,7 +1,6 @@
 /*
  * Base of the floating buttons: Fab, ExtendedFab and the FabMenu toggle.
- * Specs: m3-guidelines/components/buttons/floating-action-button.md,
- * extended-fab.md, fab-menu.md. Compose it:
+ * Compose it:
  *
  *   .root { composes: base from '../shared/fab-base.module.css'; }
  *
