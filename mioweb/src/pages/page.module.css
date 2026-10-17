@@ -1,0 +1,200 @@
+/*
+ * Page layout shared by the app's pages. Margins follow the M3 window size
+ * classes: 16px compact, 24px medium and up.
+ */
+
+.body {
+  display: grid;
+  gap: var(--md-sys-measurement-space400);
+  /* derived: wide enough for five or six link cards */
+  max-inline-size: 1280px;
+  margin-inline: auto;
+  padding: var(--md-sys-measurement-space200) var(--md-sys-measurement-space200)
+    /* room so the last row clears the FAB (56px + 16px margin) */ 96px;
+}
+
+@media (min-width: 600px) {
+  .body {
+    padding-inline: var(--md-sys-measurement-space300);
+    padding-block-end: var(--md-sys-measurement-space600);
+  }
+}
+
+/* ---- Heading under the search app bar ---- */
+
+.heading {
+  display: grid;
+  gap: var(--md-sys-measurement-space50);
+}
+
+.headingTitle {
+  margin: 0;
+  font-family: var(--md-sys-typescale-headline-medium-font);
+  font-weight: var(--md-sys-typescale-headline-medium-weight);
+  font-size: var(--md-sys-typescale-headline-medium-size);
+  line-height: var(--md-sys-typescale-headline-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-headline-medium-tracking);
+}
+
+.headingMeta {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-weight: var(--md-sys-typescale-body-medium-weight);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+}
+
+/* ---- Sections ---- */
+
+.section {
+  display: grid;
+  gap: var(--md-sys-measurement-space150);
+  min-inline-size: 0;
+}
+
+.sectionHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--md-sys-measurement-space100);
+  min-block-size: 48px;
+}
+
+.sectionTitle {
+  display: flex;
+  flex: 1;
+  align-items: baseline;
+  gap: var(--md-sys-measurement-space100);
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-title-medium-font);
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+  font-size: var(--md-sys-typescale-title-medium-size);
+  line-height: var(--md-sys-typescale-title-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-title-medium-tracking);
+}
+
+.sectionMeta {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-weight: var(--md-sys-typescale-body-medium-weight);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+}
+
+.sectionActions {
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-measurement-space100);
+}
+
+/* ---- Empty and loading states ---- */
+
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--md-sys-measurement-space200);
+  /* derived: a readable measure for the explanation */
+  max-inline-size: 440px;
+  margin: var(--md-sys-measurement-space900) auto;
+  padding-inline: var(--md-sys-measurement-space200);
+  text-align: center;
+}
+
+.emptyIcon {
+  display: grid;
+  place-items: center;
+  /* derived: 96px tonal circle around a 40px icon */
+  inline-size: 96px;
+  block-size: 96px;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.emptyTitle {
+  margin: 0;
+  font-family: var(--md-sys-typescale-headline-small-font);
+  font-weight: var(--md-sys-typescale-headline-small-weight);
+  font-size: var(--md-sys-typescale-headline-small-size);
+  line-height: var(--md-sys-typescale-headline-small-line-height);
+  letter-spacing: var(--md-sys-typescale-headline-small-tracking);
+}
+
+.emptyText {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-weight: var(--md-sys-typescale-body-large-weight);
+  font-size: var(--md-sys-typescale-body-large-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  letter-spacing: var(--md-sys-typescale-body-large-tracking);
+}
+
+.emptyActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--md-sys-measurement-space100);
+  margin-block-start: var(--md-sys-measurement-space100);
+}
+
+.loading {
+  display: grid;
+  place-items: center;
+  min-block-size: 50dvh;
+}
+
+/* The sync indicator takes the icon button's 48px target, so the bar doesn't shift. */
+.syncing {
+  display: grid;
+  place-items: center;
+  inline-size: 48px;
+  block-size: 48px;
+}
+
+/* ---- Breadcrumbs ---- */
+
+.breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--md-sys-measurement-space50);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.breadcrumbs li {
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-measurement-space50);
+  min-inline-size: 0;
+}
+
+.crumbSeparator {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.crumbCurrent {
+  padding-inline: var(--md-sys-measurement-space150);
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  font-size: var(--md-sys-typescale-label-large-size);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+}
+
+/* ---- FAB (compact windows) ---- */
+
+.fab {
+  position: fixed;
+  /* M3 FAB: 16px from the edges, above the 64px navigation bar */
+  inset-inline-end: calc(16px + env(safe-area-inset-right, 0px));
+  inset-block-end: calc(64px + 16px + env(safe-area-inset-bottom, 0px));
+  z-index: 10;
+}

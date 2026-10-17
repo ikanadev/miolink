@@ -1,0 +1,35 @@
+/* "Save in" row of the new link dialog: where the link goes, and Change. */
+.destination {
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-measurement-space200);
+  min-block-size: 56px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.destinationText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.destinationLabel {
+  font-family: var(--md-sys-typescale-label-medium-font);
+  font-weight: var(--md-sys-typescale-label-medium-weight);
+  font-size: var(--md-sys-typescale-label-medium-size);
+  line-height: var(--md-sys-typescale-label-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-label-medium-tracking);
+}
+
+.destinationPath {
+  overflow: hidden;
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-weight: var(--md-sys-typescale-body-large-weight);
+  font-size: var(--md-sys-typescale-body-large-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  letter-spacing: var(--md-sys-typescale-body-large-tracking);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

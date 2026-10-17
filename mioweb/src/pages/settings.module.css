@@ -1,0 +1,96 @@
+.columns {
+  display: grid;
+  gap: var(--md-sys-measurement-space400);
+  /* derived: a comfortable measure for forms */
+  max-inline-size: 640px;
+}
+
+.form {
+  display: grid;
+  gap: var(--md-sys-measurement-space200);
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--md-sys-measurement-space100);
+}
+
+.appearance {
+  display: grid;
+  gap: var(--md-sys-measurement-space300);
+}
+
+.option {
+  display: grid;
+  gap: var(--md-sys-measurement-space100);
+  justify-items: start;
+}
+
+.optionLabel {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  font-size: var(--md-sys-typescale-label-large-size);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+}
+
+.sync {
+  display: grid;
+  gap: var(--md-sys-measurement-space150);
+}
+
+.syncList {
+  /* The list's 16px item padding lines its icons up with the page edge. */
+  margin-inline: calc(-1 * var(--md-sys-measurement-space200));
+}
+
+/* ---- First run ---- */
+
+.setup {
+  display: grid;
+  gap: var(--md-sys-measurement-space400);
+  /* derived: a narrow column for a two-field form */
+  max-inline-size: 480px;
+  margin-inline: auto;
+  padding: var(--md-sys-measurement-space900) var(--md-sys-measurement-space200);
+}
+
+.setupHeader {
+  display: grid;
+  justify-items: center;
+  gap: var(--md-sys-measurement-space200);
+  text-align: center;
+}
+
+.logo {
+  display: grid;
+  place-items: center;
+  /* derived: 72px brand mark */
+  inline-size: 72px;
+  block-size: 72px;
+  border-radius: var(--md-sys-shape-corner-extra-large);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.setupTitle {
+  margin: 0;
+  font-family: var(--md-sys-typescale-headline-medium-font);
+  font-weight: var(--md-sys-typescale-headline-medium-weight);
+  font-size: var(--md-sys-typescale-headline-medium-size);
+  line-height: var(--md-sys-typescale-headline-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-headline-medium-tracking);
+}
+
+.setupText {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-weight: var(--md-sys-typescale-body-large-weight);
+  font-size: var(--md-sys-typescale-body-large-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  letter-spacing: var(--md-sys-typescale-body-large-tracking);
+}

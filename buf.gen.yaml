@@ -28,3 +28,7 @@ plugins:
   - remote: buf.build/connectrpc/kotlin:v0.9.0
     out: mioandroid/gen/src/main/java
     opt: generateCoroutineMethods=true
+  # Web. The plugin version must match @bufbuild/protobuf in mioweb/package.json.
+  - remote: buf.build/bufbuild/es:v2.16.0
+    out: mioweb/src/gen
+    opt: target=ts

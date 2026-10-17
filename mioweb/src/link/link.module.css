@@ -1,0 +1,97 @@
+/*
+ * Saved links as cards (grid) or list rows. Sizes not given by M3 are
+ * marked derived.
+ */
+
+.grid {
+  display: grid;
+  /* derived: cards at least 220px wide, as many columns as fit */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: var(--md-sys-measurement-space150);
+  margin: 0;
+  padding: 0;
+}
+
+.media {
+  /* derived: 1.91:1, the Open Graph image ratio most thumbnails come from */
+  aspect-ratio: 1.91;
+}
+
+.cardBody {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  min-inline-size: 0;
+}
+
+.cardContent {
+  padding-inline-end: 0;
+}
+
+.cardTitle {
+  /* derived: title-medium; title-large is too big for a 220px card */
+  font-family: var(--md-sys-typescale-title-medium-font);
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+  font-size: var(--md-sys-typescale-title-medium-size);
+  line-height: var(--md-sys-typescale-title-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-title-medium-tracking);
+}
+
+.cardMenu {
+  flex: none;
+  /* derived: aligns the 48px target with the content's 16px padding */
+  padding: var(--md-sys-measurement-space50);
+}
+
+.detail {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.thumbnail {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+/* No thumbnail: the site's initial on a tonal container. */
+.placeholder {
+  --_container: var(--md-sys-color-primary-container);
+  --_content: var(--md-sys-color-on-primary-container);
+
+  display: grid;
+  place-items: center;
+  inline-size: 100%;
+  block-size: 100%;
+  background: var(--_container);
+  color: var(--_content);
+  font-family: var(--md-sys-typescale-display-small-font);
+  font-weight: var(--md-sys-typescale-display-small-weight);
+  font-size: var(--md-sys-typescale-display-small-size);
+  line-height: var(--md-sys-typescale-display-small-line-height);
+  letter-spacing: var(--md-sys-typescale-display-small-tracking);
+  user-select: none;
+}
+
+.placeholder[data-tone='secondary'] {
+  --_container: var(--md-sys-color-secondary-container);
+  --_content: var(--md-sys-color-on-secondary-container);
+}
+
+.placeholder[data-tone='tertiary'] {
+  --_container: var(--md-sys-color-tertiary-container);
+  --_content: var(--md-sys-color-on-tertiary-container);
+}
+
+/* In a list row: the size of ListItemImage kind="video" (100 x 56). */
+.placeholder[data-row] {
+  flex-shrink: 0;
+  inline-size: 100px;
+  block-size: 56px;
+  border-radius: var(--md-sys-shape-corner-small);
+  font-family: var(--md-sys-typescale-title-large-font);
+  font-weight: var(--md-sys-typescale-title-large-weight);
+  font-size: var(--md-sys-typescale-title-large-size);
+  line-height: var(--md-sys-typescale-title-large-line-height);
+  letter-spacing: var(--md-sys-typescale-title-large-tracking);
+}

@@ -1,0 +1,45 @@
+.grid {
+  display: grid;
+  /* derived: cards at least 200px wide, as many columns as fit */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  gap: var(--md-sys-measurement-space150);
+  margin: 0;
+  padding: 0;
+}
+
+.card {
+  flex-direction: row;
+  align-items: center;
+}
+
+.content {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--md-sys-measurement-space200);
+  padding-inline-end: 0;
+}
+
+.icon {
+  flex: none;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-sys-measurement-space25);
+  min-inline-size: 0;
+}
+
+.name {
+  /* derived: title-medium for a one-line folder name */
+  font-family: var(--md-sys-typescale-title-medium-font);
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+  font-size: var(--md-sys-typescale-title-medium-size);
+  line-height: var(--md-sys-typescale-title-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-title-medium-tracking);
+}
+
+.menu {
+  flex: none;
+  padding-inline-end: var(--md-sys-measurement-space50);
+}

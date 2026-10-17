@@ -23,6 +23,9 @@ Generated output is committed so each client builds without buf:
   remote plugin versions in `buf.gen.yaml` must match the runtime libraries in
   `mioandroid/gradle/libs.versions.toml` (protoc `v36.x` with protobuf
   `4.36.x`, `connectrpc/kotlin` with the same `connect-kotlin` version).
+- `mioweb`: `mioweb/src/gen/miolink/<domain>/v1` (TypeScript). The
+  `bufbuild/es` plugin version must match `@bufbuild/protobuf` in
+  `mioweb/package.json`.
 
 ## Layout
 

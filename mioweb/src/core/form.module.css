@@ -1,0 +1,17 @@
+.form {
+  display: grid;
+  gap: var(--md-sys-measurement-space200);
+  /* derived: the field's floating label needs room above the first line */
+  padding-block-start: var(--md-sys-measurement-space100);
+}
+
+/* A failure the user can retry from the dialog (not tied to one field). */
+.error {
+  margin: 0;
+  color: var(--md-sys-color-error);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-weight: var(--md-sys-typescale-body-medium-weight);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+}

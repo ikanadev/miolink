@@ -1,0 +1,29 @@
+.shell {
+  display: flex;
+  min-block-size: 100dvh;
+}
+
+.rail {
+  flex: none;
+}
+
+.main {
+  flex: 1;
+  min-inline-size: 0;
+  /* Compact windows: room for the fixed navigation bar (64px, M3 nav bar Specs). */
+  padding-block-end: calc(64px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 600px) {
+  .main {
+    padding-block-end: 0;
+  }
+}
+
+.setup {
+  min-block-size: 100dvh;
+}
+
+.search {
+  inline-size: 100%;
+}

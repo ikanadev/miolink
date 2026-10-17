@@ -1,0 +1,42 @@
+.body {
+  display: grid;
+  gap: var(--md-sys-measurement-space200);
+  padding-block-end: var(--md-sys-measurement-space200);
+}
+
+.preview {
+  display: block;
+  overflow: hidden;
+  /* derived: 1.91:1, the Open Graph image ratio */
+  aspect-ratio: 1.91;
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.preview:focus-visible {
+  outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
+  outline-offset: var(--md-sys-state-focus-indicator-outer-offset);
+}
+
+.url {
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-measurement-space100);
+}
+
+.url a {
+  flex: 1;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+  color: var(--md-sys-color-primary);
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-weight: var(--md-sys-typescale-body-medium-weight);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+}
+
+.urlActions {
+  display: flex;
+  flex: none;
+}
