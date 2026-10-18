@@ -110,9 +110,8 @@ Run from `miobackend/`:
 | `make migration name=<snake_case>` | Create a new numbered up/down migration pair |
 | `make run` | Start the server with settings from `.env` |
 | `make test` / `make lint` | Run tests / `go vet` + `buf lint` + `buf format` check |
-| `make keygen` | Create a new API key and print its `MIOLINK_API_KEY_HASH` value |
-| `make docker-build` | Build the `miobackend` Docker image (`DOCKER=podman` to use Podman) |
-| `make docker-up` | Build and start the server with `docker compose`; data lives in the `data` volume at `/data` (`down -v` deletes it) |
+| `make keygen` | Create a new API key and print its `MIOLINK_API_KEY_HASH` value (runs `../keygen.sh`) |
+| `make docker-build` | Build the `miobackend` Docker image (`DOCKER=podman` to use Podman). `../compose.yaml` runs it with the web client |
 
 sqlc and the migrate CLI live in a separate `tools/go.mod` so their heavy
 dependency trees stay out of the app's module. Invoke them through the
@@ -139,7 +138,6 @@ internal/<domain>/       one package per proto domain (health, tree, directory, 
   handler_test.go
 tasks/                   NNN_<name>.md work items, one per session
 Dockerfile               multi-stage build, distroless/static:nonroot runtime
-compose.yaml             one service, named volume at /data, secrets from .env
 ```
 
 ## Rules

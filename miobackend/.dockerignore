@@ -13,4 +13,3 @@ thumbnails/
 # Not needed to build the image
 Dockerfile
 .dockerignore
-compose.yaml

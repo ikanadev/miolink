@@ -5,7 +5,7 @@ export
 SQLC    := GOWORK=off go tool -modfile=tools/go.mod sqlc
 MIGRATE := GOWORK=off go tool -modfile=tools/go.mod migrate
 
-.PHONY: generate proto sqlc migration run build test lint keygen docker-build docker-up
+.PHONY: generate proto sqlc migration run build test lint keygen docker-build
 
 DOCKER ?= docker
 
@@ -48,16 +48,9 @@ lint:
 
 ## keygen: create a new API key and print its hash for .env
 keygen:
-	@key=$$(openssl rand -base64 32 | tr '+/' '-_' | tr -d '='); \
-	echo "API key (save it in your password manager, enter it on each client, never commit it):"; \
-	echo "  $$key"; \
-	echo "Set in .env:"; \
-	echo "  MIOLINK_API_KEY_HASH=$$(printf '%s' "$$key" | sha256sum | cut -d' ' -f1)"
+	@../keygen.sh
 
 ## docker-build: build the miobackend Docker image
 docker-build:
 	$(DOCKER) build -t miobackend .
 
-## docker-up: build and start the server with docker compose (data in a named volume)
-docker-up:
-	$(DOCKER) compose up -d --build

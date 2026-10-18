@@ -1,0 +1,15 @@
+# Installed and built inside the image
+node_modules/
+dist/
+.tanstack/
+
+# Local settings and secrets
+.env
+.env*.local
+
+# Not needed to build the image
+Dockerfile
+.dockerignore
+*.md
+.idea/
+.DS_Store
