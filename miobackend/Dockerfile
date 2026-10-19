@@ -8,16 +8,17 @@ RUN go mod download
 COPY . .
 RUN go build -trimpath -ldflags="-s -w" -o /out/miobackend ./cmd/miobackend
 # /data is the volume mount point. A fresh named volume copies the ownership
-# of this directory, so the nonroot user (65532) can write to it.
+# of this directory, so the nonroot user (65532) can write to it; a bind-mounted
+# directory must be owned by 65532 on the host.
 RUN mkdir -p /out/data && chown 65532:65532 /out/data
 
 # Final stage: static binary on distroless (includes CA certificates).
 FROM gcr.io/distroless/static:nonroot
 COPY --from=build /out/miobackend /miobackend
 COPY --from=build --chown=65532:65532 /out/data /data
-# Container-internal settings; ../compose.yaml doesn't repeat them. It maps
-# its host port to 8080 and mounts the data volume at /data, so changing
-# these means changing those too.
+# Container-internal settings; the server's compose file doesn't repeat them.
+# It maps its host port to 8080 and mounts the data directory at /data, so
+# changing these means changing those too.
 ENV MIOLINK_ADDR=:8080 \
     MIOLINK_DATABASE_PATH=/data/miolink.db \
     MIOLINK_THUMBNAILS_DIR=/data/thumbnails

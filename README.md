@@ -5,81 +5,66 @@ directories and synced to every client (web and Android).
 
 ## Deploy
 
-`compose.yaml` runs two containers:
+The server runs two containers, started by a compose file in the home server
+repo (`apps/miolink/` there), behind Caddy:
 
-| Service | Port | What it is |
+| Image | Port | What it is |
 | --- | --- | --- |
-| `mioweb` | 3000 | The web client (static build served by nginx) |
-| `miobackend` | 3001 | The API (Connect RPC), with SQLite and thumbnails in the `data` volume |
+| `localhost/miolink/mioweb` | 3000 | The web client (static build served by nginx) |
+| `localhost/miolink/miobackend` | 3001 | The API (Connect RPC), with SQLite and thumbnails in `./data` |
 
-A reverse proxy in front (Caddy) handles TLS and routes a domain to each port.
-Both ports are published on `127.0.0.1` by default; set `MIOLINK_BIND_ADDR`
-in `.env` to change it.
+There's no registry. `deploy.sh` builds both images here, sends them to the
+server over SSH (`docker save | ssh … docker load`) and restarts the stack
+there:
 
-### 1. Generate the API key
+```sh
+./deploy.sh
+```
+
+1. It refuses to run with uncommitted changes in `miobackend/` or `mioweb/`,
+   so every image tag is a commit (`git rev-parse --short HEAD`).
+2. It builds both images with Podman (`DOCKER=docker` to use Docker).
+3. It sends each image to `home-server` and loads it there.
+4. It sets `MIOLINK_VERSION` to the new tag in the server's `.env` and runs
+   `docker compose up -d`.
+5. It keeps the 5 previous versions for rollback and removes older ones.
+
+`MIOLINK_DEPLOY_HOST` and `MIOLINK_DEPLOY_DIR` change the SSH host and the
+compose directory on the server (default `server/homeserver/apps/miolink`).
+
+### API key
 
 All clients share one API key. The server never sees the key, only its
-SHA-256 hash, so you generate both first:
+SHA-256 hash:
 
 ```sh
 ./keygen.sh
 ```
 
-It prints the key and the `MIOLINK_API_KEY_HASH=...` line. Save the key in
-your password manager; it's shown only once and you enter it on every client.
+It prints the key and the `MIOLINK_API_KEY_HASH=...` line for the server's
+`.env`. Save the key in your password manager; it's shown only once and you
+enter it on every client. To rotate it, run `./keygen.sh` again, replace the
+hash in the server's `.env`, run `docker compose up -d` there, and enter the
+new key on every client.
 
-### 2. Create `.env`
+### Rollback
 
-```sh
-cp .env.example .env
-```
-
-Fill in:
-
-- `MIOLINK_API_KEY_HASH`: the hash printed by `./keygen.sh` (not the key).
-- `MIOLINK_CORS_ORIGINS`: the public URL of the web client, e.g.
-  `https://miolink.example.com`. The browser calls the API directly, so it's
-  blocked without this.
-
-`.env` is gitignored; never commit it.
-
-### 3. Start
+On the server, in the compose directory:
 
 ```sh
-docker compose up -d --build
-docker compose logs -f
+docker images localhost/miolink/miobackend   # versions still loaded
+# set MIOLINK_VERSION in .env to one of them, then:
+docker compose up -d
 ```
 
-Then open the web client, enter the API's public URL and the key in the
-setup form.
-
-### 4. Reverse proxy
-
-Example Caddy site blocks, with Caddy on the same host:
-
-```caddy
-miolink.example.com {
-  reverse_proxy localhost:3000
-}
-
-api.miolink.example.com {
-  reverse_proxy localhost:3001
-}
-```
-
-### Update, stop, rotate the key
-
-```sh
-git pull && docker compose up -d --build   # rebuild and restart
-docker compose down                        # stop; keeps the data volume
-docker compose down -v                     # stop and DELETE all links and thumbnails
-```
-
-To rotate the key, run `./keygen.sh` again, replace `MIOLINK_API_KEY_HASH` in
-`.env`, run `docker compose up -d`, and enter the new key on every client.
+The backend applies new database migrations when it starts, and rolling back
+doesn't undo them. To roll back past a migration, restore a backup of
+`data/miolink.db` too.
 
 ## Development
 
-Each app has its own instructions: [miobackend](miobackend/CLAUDE.md),
+Run the backend with `make run` in `miobackend/` (settings in
+`miobackend/.env`) and the web client with `pnpm dev` in `mioweb/`. Each app
+has its own instructions: [miobackend](miobackend/CLAUDE.md),
 [mioweb](mioweb/CLAUDE.md), [mioandroid](mioandroid/CLAUDE.md). The API is
 defined in [proto](proto/README.md).

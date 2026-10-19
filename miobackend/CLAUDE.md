@@ -111,7 +111,7 @@ Run from `miobackend/`:
 | `make run` | Start the server with settings from `.env` |
 | `make test` / `make lint` | Run tests / `go vet` + `buf lint` + `buf format` check |
 | `make keygen` | Create a new API key and print its `MIOLINK_API_KEY_HASH` value (runs `../keygen.sh`) |
-| `make docker-build` | Build the `miobackend` Docker image (`DOCKER=podman` to use Podman). `../compose.yaml` runs it with the web client |
+| `make docker-build` | Build the `miobackend` Docker image (`DOCKER=podman` to use Podman). `../deploy.sh` builds and deploys it with the web client |
 
 sqlc and the migrate CLI live in a separate `tools/go.mod` so their heavy
 dependency trees stay out of the app's module. Invoke them through the

@@ -15,12 +15,11 @@ directories, like a filesystem, and synced to every client.
 `buf.yaml` and `buf.gen.yaml` live here, at the repository root, and `go.work`
 includes `miobackend`.
 
-`compose.yaml` runs the deployed apps: `mioweb` (nginx serving the build) on
-port 3000 and `miobackend` on port 3001, published on `MIOLINK_BIND_ADDR`
-(default `127.0.0.1`) for the Caddy reverse proxy in front, which handles TLS
-and routing. Settings come from the root `.env` (see `.env.example`); the
-database and thumbnails live in the `data` volume. `keygen.sh` creates the API
-key and its hash; `README.md` has the deploy steps.
+`deploy.sh` builds the `miobackend` and `mioweb` images for the current
+commit, sends them to the home server over SSH (no registry) and restarts
+them there with the compose file in the home server repo. `keygen.sh` creates
+the API key and its hash. `README.md` has the deploy, rollback and key
+rotation steps.
 
 ## Git
 
