@@ -49,6 +49,15 @@
     <string name="browse_write_unreachable">Couldn\'t reach the server. Check your connection and try again.</string>
     <string name="browse_write_failed">The server couldn\'t save this change. Try again in a moment.</string>
     <string name="browse_write_error">Couldn\'t save the change</string>
+    <string name="browse_search">Search</string>
+    <string name="browse_search_hint_root">Search your links</string>
+    <string name="browse_search_hint_directory">Search in %1$s</string>
+    <string name="browse_search_close">Close search</string>
+    <string name="browse_search_clear">Clear search</string>
+    <string name="browse_search_start_title">Find links and directories</string>
+    <string name="browse_search_start_message">Type part of a title, an address or a directory name.</string>
+    <string name="browse_search_no_results_title">No results</string>
+    <string name="browse_search_no_results_message">Nothing matches “%1$s”.</string>
 
     <!-- Directory -->
     <string name="directory_new_title">New directory</string>
@@ -90,6 +99,8 @@
 
     <!-- Link -->
     <string name="link_open">Open link</string>
+    <string name="link_layout_cards">Card view</string>
+    <string name="link_layout_condensed">Condensed view</string>
     <plurals name="link_views">
         <item quantity="one">%1$d view</item>
         <item quantity="other">%1$d views</item>

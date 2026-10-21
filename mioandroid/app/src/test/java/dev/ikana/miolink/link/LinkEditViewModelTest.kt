@@ -65,6 +65,8 @@ class LinkEditViewModelTest {
 
         override fun allDirectories(): Flow<List<DirectoryEntity>> = directories
 
+        override fun allLinks(): Flow<List<LinkEntity>> = links
+
         override fun link(id: Long): Flow<LinkEntity?> = links.map { all -> all.firstOrNull { it.id == id } }
 
         override suspend fun subtreeCount(id: Long) = SubtreeCount(0, 0)

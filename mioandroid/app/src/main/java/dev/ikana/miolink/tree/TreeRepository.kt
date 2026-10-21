@@ -64,6 +64,9 @@ class TreeRepository(
     /** Every directory, the root included, ordered by id. */
     override fun allDirectories(): Flow<List<DirectoryEntity>> = dao.observeAllDirectories()
 
+    /** Every link, newest first. */
+    override fun allLinks(): Flow<List<LinkEntity>> = dao.observeAllLinks()
+
     override fun link(id: Long): Flow<LinkEntity?> = dao.observeLink(id)
 
     override suspend fun subtreeCount(id: Long): SubtreeCount = dao.countSubtree(id)

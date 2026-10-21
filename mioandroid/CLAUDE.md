@@ -59,7 +59,7 @@ ShareApp.kt              the share flow's own back stack: Settings (if needed), 
 core/
   network/               Connect ProtocolClient, API key interceptor, ConnectException -> app errors
   database/              Room database and migrations
-  settings/              server base URL and API key storage
+  settings/              server base URL and API key storage; DisplayPreferences (link layout)
   ui/                    shared composables (ConfirmDeleteDialog, DirectoryPicker, ProgressButtonContent, ThumbnailImage, ...), openInCustomTab
 navigation/              route keys and the back stack
 ui/theme/                Color.kt, Type.kt, Shape.kt, Theme.kt (MaterialExpressiveTheme)
@@ -79,10 +79,14 @@ link/
   LinkEditScreen.kt      opened after CreateLink so the user can fix the title
   LinkEditViewModel.kt
   ShareLinkScreen.kt     AddLinkSheet for a shared URL (+ ShareLinkViewModel)
-  components/            LinkCard, LinkActionsSheet, AddLinkSheet (+ clipboard helpers, input error messages)
+  components/            LinkCard, LinkListItem (condensed), LinkLayoutToggle, LinkActionsSheet,
+                         AddLinkSheet (+ clipboard helpers, input error messages)
 browse/
   BrowseScreen.kt        a directory's contents: subdirectories and links, with their actions
   BrowseViewModel.kt
+  BrowseSearch.kt        the search field, the root's search app bar and the expanded results
+  LinkSearch.kt          searchTree: matches a subtree's directories and links in memory
+  SearchViewModel.kt     the query and its results for one directory's subtree
 settings/                SettingsScreen, SettingsViewModel (base URL, API key, test with Ping)
 ```
 
@@ -222,6 +226,17 @@ revision protocol:
   error with Retry or Settings. A directory deleted elsewhere navigates to
   its nearest existing ancestor (`BrowseUiState.redirectTo`).
 - Links open in a Custom Tab, then `RecordView` counts the view.
+- Link lists (a directory's links and search results) show as cards or
+  condensed segmented rows, picked by `LinkLayoutToggle` at the end of the
+  "Links" header. The choice is one app-wide preference
+  (`DisplayPreferences`, its own DataStore, backed up), not per directory.
+- Search runs in memory over the cached tree (`TreeSource.allLinks()`), so
+  it works offline and needs no RPC. It covers the current directory's
+  subtree and matches every word, ignoring case and accents, in directory
+  names and link titles and URLs. The root's top bar is an
+  `AppBarWithSearch`; other directories open it from a search action. The
+  results are an `ExpandedFullScreenSearchBar` with each hit's path; tapping
+  a link opens it, a long press edits it, and closing the search clears it.
 - Thumbnails load through `core/ui/ThumbnailImage` (Coil `AsyncImage`).
   `AppContainer.imageLoader` uses the shared OkHttpClient and is installed as
   Coil's singleton by `MioLinkApplication` (`SingletonImageLoader.Factory`).

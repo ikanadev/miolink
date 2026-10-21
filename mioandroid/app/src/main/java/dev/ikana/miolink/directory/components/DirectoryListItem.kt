@@ -26,7 +26,8 @@ import dev.ikana.miolink.ui.theme.MioLinkTheme
 /**
  * A subdirectory in a list of [count] directories, at [index]: an Expressive
  * segmented list item, so consecutive directories read as one group.
- * [onLongClick], when set, opens the directory's actions.
+ * [location], when set, is the path to it (search results). [onLongClick],
+ * when set, opens the directory's actions.
  */
 @Composable
 fun DirectoryListItem(
@@ -35,6 +36,7 @@ fun DirectoryListItem(
     count: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    location: String? = null,
     onLongClick: (() -> Unit)? = null,
     onLongClickLabel: String? = null,
 ) {
@@ -60,6 +62,9 @@ fun DirectoryListItem(
                     tint = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
             }
+        },
+        supportingContent = location?.let {
+            { Text(text = it, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         },
         trailingContent = {
             Icon(

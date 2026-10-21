@@ -56,6 +56,8 @@ class ShareLinkViewModelTest {
 
         override fun allDirectories(): Flow<List<DirectoryEntity>> = directories
 
+        override fun allLinks(): Flow<List<LinkEntity>> = emptyFlow()
+
         override fun link(id: Long): Flow<LinkEntity?> = flowOf(null)
 
         override suspend fun subtreeCount(id: Long) = SubtreeCount(0, 0)

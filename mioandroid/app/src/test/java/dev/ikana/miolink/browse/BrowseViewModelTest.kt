@@ -3,6 +3,8 @@ package dev.ikana.miolink.browse
 import app.cash.turbine.test
 import dev.ikana.miolink.core.network.ApiError
 import dev.ikana.miolink.core.network.ApiException
+import dev.ikana.miolink.core.settings.DisplayPreferences
+import dev.ikana.miolink.core.settings.LinkLayout
 import dev.ikana.miolink.directory.DirectoryNameError
 import dev.ikana.miolink.directory.DirectoryRepository
 import dev.ikana.miolink.directory.RejectedName
@@ -69,6 +71,11 @@ class BrowseViewModelTest {
 
         override fun allDirectories(): Flow<List<DirectoryEntity>> =
             directories.map { all -> all.sortedBy { it.id } }
+
+        override fun allLinks(): Flow<List<LinkEntity>> =
+            allLinks.map { all ->
+                all.sortedWith(compareByDescending<LinkEntity> { it.createdAt }.thenByDescending { it.id })
+            }
 
         override fun link(id: Long): Flow<LinkEntity?> =
             allLinks.map { all -> all.firstOrNull { it.id == id } }
@@ -145,9 +152,18 @@ class BrowseViewModelTest {
         override suspend fun delete(id: Long) = call("delete $id")
     }
 
+    private class FakePreferences : DisplayPreferences {
+        override val linkLayout = MutableStateFlow(LinkLayout.Cards)
+
+        override suspend fun setLinkLayout(layout: LinkLayout) {
+            linkLayout.value = layout
+        }
+    }
+
     private val tree = FakeTree()
     private val links = FakeLinks()
     private val directories = FakeDirectories()
+    private val preferences = FakePreferences()
 
     private fun dir(id: Long, parentId: Long?, name: String) = DirectoryEntity(id, parentId, name, 0)
 
@@ -164,7 +180,7 @@ class BrowseViewModelTest {
     )
 
     private fun TestScope.viewModel(directoryId: Long): BrowseViewModel {
-        val viewModel = BrowseViewModel(directoryId, tree, links, directories)
+        val viewModel = BrowseViewModel(directoryId, tree, links, directories, preferences)
         // stateIn(WhileSubscribed) only runs while collected, like on screen.
         backgroundScope.launch { viewModel.state.collect {} }
         return viewModel
@@ -208,6 +224,19 @@ class BrowseViewModelTest {
         assertEquals(listOf("Home", "Work"), state.directories.map { it.name })
         assertEquals(listOf(11L, 12L, 10L), state.links.map { it.id })
         assertFalse(state.isEmpty)
+    }
+
+    @Test
+    fun linkLayoutFollowsAndSavesThePreference() = runTest(dispatcher) {
+        tree.directories.value = sampleTree
+        val viewModel = viewModel(ROOT_DIRECTORY_ID)
+        advanceUntilIdle()
+        assertEquals(LinkLayout.Cards, viewModel.state.value.linkLayout)
+
+        viewModel.onAction(BrowseAction.SetLinkLayout(LinkLayout.Condensed))
+        advanceUntilIdle()
+        assertEquals(LinkLayout.Condensed, preferences.linkLayout.value)
+        assertEquals(LinkLayout.Condensed, viewModel.state.value.linkLayout)
     }
 
     @Test
@@ -318,7 +347,8 @@ class BrowseViewModelTest {
         viewModel.state.test {
             skipItems(1)
             tree.lastSyncError.value = ApiError.Unauthenticated
-            val state = awaitItem()
+            advanceUntilIdle()
+            val state = expectMostRecentItem()
             assertEquals(BrowseMessage.Error(ApiError.Unauthenticated), state.message)
             // Cached data stays.
             assertEquals(2, state.directories.size)

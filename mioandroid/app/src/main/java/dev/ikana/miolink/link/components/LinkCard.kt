@@ -32,8 +32,9 @@ import java.net.URI
 import java.net.URISyntaxException
 
 /**
- * A link in a list: thumbnail, title (two lines at most), host and view
- * count. [onLongClick], when set, opens the link's actions.
+ * A link in the cards layout: thumbnail, title (two lines at most), host and
+ * view count. [location], when set, names the link's directory (search
+ * results). [onLongClick], when set, opens the link's actions.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -41,6 +42,7 @@ fun LinkCard(
     link: LinkEntity,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    location: String? = null,
     onLongClick: (() -> Unit)? = null,
     onLongClickLabel: String? = null,
 ) {
@@ -80,10 +82,7 @@ fun LinkCard(
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = listOf(
-                        hostOf(link.url),
-                        pluralStringResource(R.plurals.link_views, link.views.toCount(), link.views),
-                    ).joinToString(" · "),
+                    text = linkDetails(link, location),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -93,6 +92,14 @@ fun LinkCard(
         }
     }
 }
+
+/** "[location] · host · N views", the supporting line of both link layouts. */
+@Composable
+internal fun linkDetails(link: LinkEntity, location: String?): String = listOfNotNull(
+    location,
+    hostOf(link.url),
+    pluralStringResource(R.plurals.link_views, link.views.toCount(), link.views),
+).joinToString(" · ")
 
 /** The URL's host without a leading `www.`, or the URL itself if it has none. */
 fun hostOf(url: String): String {

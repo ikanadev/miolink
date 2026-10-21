@@ -23,6 +23,9 @@ interface TreeSource {
      */
     fun allDirectories(): Flow<List<DirectoryEntity>>
 
+    /** Every cached link, newest first. */
+    fun allLinks(): Flow<List<LinkEntity>>
+
     fun link(id: Long): Flow<LinkEntity?>
 
     /** What deleting directory [id] would remove with it, from the cache. */

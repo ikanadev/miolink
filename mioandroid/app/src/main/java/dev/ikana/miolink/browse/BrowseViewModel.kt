@@ -9,6 +9,8 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.ikana.miolink.appContainer
 import dev.ikana.miolink.core.network.ApiError
 import dev.ikana.miolink.core.network.ApiException
+import dev.ikana.miolink.core.settings.DisplayPreferences
+import dev.ikana.miolink.core.settings.LinkLayout
 import dev.ikana.miolink.directory.DirectoryNameError
 import dev.ikana.miolink.directory.DirectoryRepository
 import dev.ikana.miolink.directory.RejectedName
@@ -144,6 +146,8 @@ data class BrowseUiState(
     val directories: List<DirectoryEntity> = emptyList(),
     /** Links, newest first. */
     val links: List<LinkEntity> = emptyList(),
+    /** How [links] look; the same in every directory. */
+    val linkLayout: LinkLayout = LinkLayout.Cards,
     /** Every cached directory, the root included, for the move picker. */
     val allDirectories: List<DirectoryEntity> = emptyList(),
     /** A tree is cached. False on first launch until the first sync. */
@@ -186,6 +190,9 @@ sealed interface BrowseAction {
     /** Pull-to-refresh or a retry button. */
     data object Refresh : BrowseAction
     data class MessageShown(val message: BrowseMessage) : BrowseAction
+
+    /** Saves the layout of link lists, for every directory. */
+    data class SetLinkLayout(val layout: LinkLayout) : BrowseAction
 
     // Directory writes. The root is never listed, so it has none of these.
 
@@ -248,6 +255,7 @@ class BrowseViewModel(
     private val tree: TreeSource,
     private val links: LinkRepository,
     private val directories: DirectoryRepository,
+    private val preferences: DisplayPreferences,
 ) : ViewModel() {
     private data class Local(
         val isRefreshing: Boolean = false,
@@ -267,9 +275,9 @@ class BrowseViewModel(
         tree.childDirectories(directoryId),
         tree.links(directoryId),
         tree.lastSyncError,
-        local,
-    ) { all, children, links, syncError, local ->
-        buildState(all, children, links, syncError, local)
+        local.combine(preferences.linkLayout, ::Pair),
+    ) { all, children, links, syncError, (local, linkLayout) ->
+        buildState(all, children, links, syncError, local, linkLayout)
     }.stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5_000),
@@ -293,6 +301,7 @@ class BrowseViewModel(
             is BrowseAction.MessageShown -> local.update {
                 if (it.message == action.message) it.copy(message = null) else it
             }
+            is BrowseAction.SetLinkLayout -> viewModelScope.launch { preferences.setLinkLayout(action.layout) }
             BrowseAction.ShowNewDirectory -> showDialog(BrowseDialog.NewDirectory())
             is BrowseAction.ShowDirectoryActions -> showDialog(BrowseDialog.DirectoryActions(action.directory))
             is BrowseAction.ShowRenameDirectory -> showDialog(BrowseDialog.RenameDirectory(action.directory))
@@ -327,6 +336,7 @@ class BrowseViewModel(
         links: List<LinkEntity>,
         syncError: ApiError?,
         local: Local,
+        linkLayout: LinkLayout,
     ): BrowseUiState {
         val byId = all.associateBy { it.id }
         val current = byId[directoryId]
@@ -351,6 +361,7 @@ class BrowseViewModel(
             ancestors = ancestors,
             directories = if (current != null) children else emptyList(),
             links = if (current != null) links else emptyList(),
+            linkLayout = linkLayout,
             allDirectories = all,
             hasCache = all.isNotEmpty(),
             syncError = syncError,
@@ -547,6 +558,7 @@ class BrowseViewModel(
                     tree = appContainer.treeRepository,
                     links = appContainer.linkRepository,
                     directories = appContainer.directoryRepository,
+                    preferences = appContainer.displayPreferences,
                 )
             }
         }

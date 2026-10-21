@@ -12,13 +12,17 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButtonMenu
 import androidx.compose.material3.FloatingActionButtonMenuItem
 import androidx.compose.material3.Icon
@@ -28,6 +32,8 @@ import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumFlexibleTopAppBar
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.SearchBarValue
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -38,6 +44,7 @@ import androidx.compose.material3.ToggleFloatingActionButton
 import androidx.compose.material3.ToggleFloatingActionButtonDefaults.animateIcon
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.animateFloatingActionButton
+import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -50,6 +57,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -78,6 +86,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.connectrpc.Code
 import dev.ikana.miolink.R
 import dev.ikana.miolink.core.network.ApiError
+import dev.ikana.miolink.core.settings.LinkLayout
 import dev.ikana.miolink.core.ui.ConfirmDeleteDialog
 import dev.ikana.miolink.core.ui.DirectoryPicker
 import dev.ikana.miolink.core.ui.EmptyState
@@ -91,6 +100,8 @@ import dev.ikana.miolink.directory.components.RenameDirectoryDialog
 import dev.ikana.miolink.link.components.AddLinkSheet
 import dev.ikana.miolink.link.components.LinkActionsSheet
 import dev.ikana.miolink.link.components.LinkCard
+import dev.ikana.miolink.link.components.LinkLayoutToggle
+import dev.ikana.miolink.link.components.LinkListItem
 import dev.ikana.miolink.navigation.ROOT_DIRECTORY_ID
 import dev.ikana.miolink.tree.DirectoryEntity
 import dev.ikana.miolink.tree.LinkEntity
@@ -119,8 +130,10 @@ fun BrowseScreen(
     incomingMessage: String? = null,
     onIncomingMessageShown: () -> Unit = {},
     viewModel: BrowseViewModel = viewModel(factory = BrowseViewModel.factory(directoryId)),
+    searchViewModel: SearchViewModel = viewModel(factory = SearchViewModel.factory(directoryId)),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val search by searchViewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -192,6 +205,8 @@ fun BrowseScreen(
         },
         modifier = modifier,
         snackbarHostState = snackbarHostState,
+        search = search,
+        onSearchQueryChange = searchViewModel::onQueryChange,
     )
 }
 
@@ -274,15 +289,39 @@ private enum class ContentKind { Loading, SyncError, Tree }
  * Once a tree is cached, a FAB menu adds links and directories here; it
  * hides while scrolling down. A long press on a subdirectory or a link opens
  * its actions. [BrowseUiState.dialog] is shown on top.
+ *
+ * Search covers this directory's subtree. The root's top bar is a search
+ * bar; other directories open the search from their top bar. The query goes
+ * to [onSearchQueryChange] and [search] holds its results; closing the
+ * search clears it.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BrowseContent(
     state: BrowseUiState,
     onAction: (BrowseAction) -> Unit,
     modifier: Modifier = Modifier,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+    search: SearchUiState = SearchUiState(),
+    onSearchQueryChange: (String) -> Unit = {},
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val searchScrollBehavior = SearchBarDefaults.enterAlwaysSearchBarScrollBehavior()
+    val searchBarState = rememberSearchBarState()
+    val queryState = rememberTextFieldState()
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(queryState) {
+        snapshotFlow { queryState.text.toString() }.collect(onSearchQueryChange)
+    }
+    LaunchedEffect(searchBarState.currentValue) {
+        if (searchBarState.currentValue == SearchBarValue.Collapsed) queryState.clearText()
+    }
+    val searchPlaceholder = if (state.isRoot || state.name.isEmpty()) {
+        stringResource(R.string.browse_search_hint_root)
+    } else {
+        stringResource(R.string.browse_search_hint_directory, state.name)
+    }
+    val inputField = @Composable { SearchInputField(queryState, searchBarState, searchPlaceholder) }
     val kind = when {
         state.isLoading -> ContentKind.Loading
         !state.hasCache -> ContentKind.SyncError
@@ -307,8 +346,21 @@ fun BrowseContent(
     Scaffold(
         modifier = modifier
             .nestedScroll(fabScrollConnection)
-            .nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = { BrowseTopBar(state, onAction, scrollBehavior) },
+            .nestedScroll(
+                if (state.isRoot) searchScrollBehavior.nestedScrollConnection else scrollBehavior.nestedScrollConnection,
+            ),
+        topBar = {
+            if (state.isRoot) {
+                RootSearchAppBar(searchBarState, inputField, searchScrollBehavior, onAction)
+            } else {
+                BrowseTopBar(
+                    state = state,
+                    onAction = onAction,
+                    scrollBehavior = scrollBehavior,
+                    onSearch = { scope.launch { searchBarState.animateToExpanded() } },
+                )
+            }
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             if (kind == ContentKind.Tree) {
@@ -372,6 +424,7 @@ fun BrowseContent(
             }
         }
     }
+    if (kind == ContentKind.Tree) BrowseSearchView(searchBarState, inputField, state, search, onAction)
     BrowseDialogs(state, onAction)
 }
 
@@ -647,63 +700,134 @@ private fun LazyListScope.directoryContents(
     }
     if (state.links.isNotEmpty()) {
         item(key = "links-header", contentType = "header") {
-            SectionHeader(R.string.browse_section_links, Modifier.animateItem())
+            LinksHeader(state.linkLayout, onAction, Modifier.animateItem())
         }
-        itemsIndexed(
-            items = state.links,
-            key = { _, link -> "link-${link.id}" },
-            contentType = { _, _ -> "link" },
-        ) { index, link ->
-            val editLabel = stringResource(R.string.link_action_edit)
-            val moveLabel = stringResource(R.string.link_action_move)
-            val deleteLabel = stringResource(R.string.link_action_delete)
-            LinkCard(
+        linkItems(state.links, state.linkLayout, onAction)
+    }
+}
+
+/**
+ * [links] in [layout]: cards, or condensed segmented rows. A tap opens the
+ * link. With [withActions], a long press opens its actions sheet, also
+ * offered as accessibility actions; without (search results), it edits the
+ * link. [location] gives a link's directory path, shown after its title.
+ */
+internal fun LazyListScope.linkItems(
+    links: List<LinkEntity>,
+    layout: LinkLayout,
+    onAction: (BrowseAction) -> Unit,
+    location: Map<Long, String?> = emptyMap(),
+    withActions: Boolean = true,
+) {
+    val count = links.size
+    itemsIndexed(
+        items = links,
+        key = { _, link -> "link-${link.id}" },
+        contentType = { _, _ -> "link-$layout" },
+    ) { index, link ->
+        val editLabel = stringResource(R.string.link_action_edit)
+        val moveLabel = stringResource(R.string.link_action_move)
+        val deleteLabel = stringResource(R.string.link_action_delete)
+        val onClick = { onAction(BrowseAction.OpenLink(link)) }
+        val onLongClick = {
+            onAction(if (withActions) BrowseAction.ShowLinkActions(link) else BrowseAction.EditLink(link.id))
+        }
+        val onLongClickLabel = if (withActions) stringResource(R.string.link_show_actions) else editLabel
+        val gap = when (layout) {
+            LinkLayout.Cards -> 8.dp
+            LinkLayout.Condensed -> ListItemDefaults.SegmentedGap
+        }
+        val itemModifier = Modifier
+            .animateItem()
+            .padding(bottom = if (index < count - 1) gap else 0.dp)
+            .semantics {
+                if (withActions) {
+                    customActions = listOf(
+                        CustomAccessibilityAction(editLabel) {
+                            onAction(BrowseAction.EditLink(link.id))
+                            true
+                        },
+                        CustomAccessibilityAction(moveLabel) {
+                            onAction(BrowseAction.ShowMoveLink(link))
+                            true
+                        },
+                        CustomAccessibilityAction(deleteLabel) {
+                            onAction(BrowseAction.ShowDeleteLink(link))
+                            true
+                        },
+                    )
+                }
+            }
+        when (layout) {
+            LinkLayout.Cards -> LinkCard(
                 link = link,
-                onClick = { onAction(BrowseAction.OpenLink(link)) },
-                onLongClick = { onAction(BrowseAction.ShowLinkActions(link)) },
-                onLongClickLabel = stringResource(R.string.link_show_actions),
-                modifier = Modifier
-                    .animateItem()
-                    .padding(bottom = if (index < state.links.size - 1) 8.dp else 0.dp)
-                    .semantics {
-                        customActions = listOf(
-                            CustomAccessibilityAction(editLabel) {
-                                onAction(BrowseAction.EditLink(link.id))
-                                true
-                            },
-                            CustomAccessibilityAction(moveLabel) {
-                                onAction(BrowseAction.ShowMoveLink(link))
-                                true
-                            },
-                            CustomAccessibilityAction(deleteLabel) {
-                                onAction(BrowseAction.ShowDeleteLink(link))
-                                true
-                            },
-                        )
-                    },
+                onClick = onClick,
+                location = location[link.id],
+                onLongClick = onLongClick,
+                onLongClickLabel = onLongClickLabel,
+                modifier = itemModifier,
+            )
+            LinkLayout.Condensed -> LinkListItem(
+                link = link,
+                index = index,
+                count = count,
+                onClick = onClick,
+                location = location[link.id],
+                onLongClick = onLongClick,
+                onLongClickLabel = onLongClickLabel,
+                modifier = itemModifier,
             )
         }
     }
 }
 
+/** The "Links" heading, with the layout toggle at its end. */
 @Composable
-private fun SectionHeader(@StringRes text: Int, modifier: Modifier = Modifier) {
-    Text(
-        text = stringResource(text),
+internal fun LinksHeader(
+    layout: LinkLayout,
+    onAction: (BrowseAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SectionHeader(R.string.browse_section_links, modifier) {
+        LinkLayoutToggle(layout = layout, onLayoutChange = { onAction(BrowseAction.SetLinkLayout(it)) })
+    }
+}
+
+/** A list section's heading, with optional [trailing] controls at its end. */
+@Composable
+internal fun SectionHeader(
+    @StringRes text: Int,
+    modifier: Modifier = Modifier,
+    trailing: (@Composable () -> Unit)? = null,
+) {
+    Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 4.dp, top = 16.dp, bottom = 8.dp)
-            .semantics { heading() },
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-    )
+            .heightIn(min = SECTION_HEADER_MIN_HEIGHT)
+            .padding(start = 4.dp, top = 8.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(text),
+            modifier = Modifier
+                .weight(1f)
+                .semantics { heading() },
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        trailing?.invoke()
+    }
 }
+
+/** Room for the layout toggle, so headers with and without it line up. */
+private val SECTION_HEADER_MIN_HEIGHT = 48.dp
 
 @Composable
 private fun BrowseTopBar(
     state: BrowseUiState,
     onAction: (BrowseAction) -> Unit,
     scrollBehavior: TopAppBarScrollBehavior,
+    onSearch: () -> Unit,
 ) {
     val title = if (state.isRoot) stringResource(R.string.app_name) else state.name
     MediumFlexibleTopAppBar(
@@ -717,11 +841,11 @@ private fun BrowseTopBar(
             if (!state.isRoot) NavigateUpButton { onAction(BrowseAction.NavigateUp) }
         },
         actions = {
-            if (state.isRoot) {
-                IconButton(onClick = { onAction(BrowseAction.OpenSettings) }) {
+            if (state.hasCache) {
+                IconButton(onClick = onSearch) {
                     Icon(
-                        painter = painterResource(R.drawable.ic_settings),
-                        contentDescription = stringResource(R.string.browse_open_settings),
+                        painter = painterResource(R.drawable.ic_search),
+                        contentDescription = stringResource(R.string.browse_search),
                     )
                 }
             }

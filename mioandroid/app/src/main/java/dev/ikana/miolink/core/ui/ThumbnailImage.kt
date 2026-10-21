@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.ikana.miolink.R
@@ -26,13 +27,14 @@ import dev.ikana.miolink.ui.theme.MioLinkTheme
  * A link icon on a tonal background shows while the image loads, when it
  * fails and when there is no thumbnail; the image crossfades in over it
  * (the app's Coil `ImageLoader` enables crossfade). Decorative: the link's
- * title says what it is.
+ * title says what it is. [iconSize] scales that icon for small thumbnails.
  */
 @Composable
 fun ThumbnailImage(
     url: String?,
     modifier: Modifier = Modifier,
     shape: Shape = MaterialTheme.shapes.medium,
+    iconSize: Dp = 28.dp,
 ) {
     Box(
         modifier = modifier
@@ -43,7 +45,7 @@ fun ThumbnailImage(
         Icon(
             painter = painterResource(R.drawable.ic_link),
             contentDescription = null,
-            modifier = Modifier.size(28.dp),
+            modifier = Modifier.size(iconSize),
             tint = MaterialTheme.colorScheme.onSecondaryContainer,
         )
         if (url != null) {

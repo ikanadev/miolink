@@ -33,6 +33,10 @@ interface TreeDao {
     @Query("SELECT * FROM directories ORDER BY id")
     fun observeAllDirectories(): Flow<List<DirectoryEntity>>
 
+    /** Every link, newest first, for searching the whole tree. */
+    @Query("SELECT * FROM links ORDER BY created_at DESC, id DESC")
+    fun observeAllLinks(): Flow<List<LinkEntity>>
+
     @Query("SELECT * FROM links WHERE id = :id")
     fun observeLink(id: Long): Flow<LinkEntity?>
 

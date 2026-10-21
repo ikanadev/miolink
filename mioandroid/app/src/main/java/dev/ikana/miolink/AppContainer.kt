@@ -10,6 +10,8 @@ import androidx.datastore.preferences.preferencesDataStoreFile
 import dev.ikana.miolink.core.database.MioDatabase
 import dev.ikana.miolink.core.network.ConnectClients
 import dev.ikana.miolink.core.network.ServiceClientsProvider
+import dev.ikana.miolink.core.settings.DisplayPreferences
+import dev.ikana.miolink.core.settings.DisplayPreferencesStore
 import dev.ikana.miolink.core.settings.ServerSettings
 import dev.ikana.miolink.core.settings.ServerSettingsStore
 import dev.ikana.miolink.directory.DefaultDirectoryRepository
@@ -53,6 +55,15 @@ class AppContainer(
 
     /** The saved server settings; null until the user saves them. */
     val serverSettings: Flow<ServerSettings?> = serverSettingsStore.settings
+
+    val displayPreferences: DisplayPreferences = DisplayPreferencesStore(
+        PreferenceDataStoreFactory.create(
+            scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+            produceFile = {
+                applicationContext.preferencesDataStoreFile(DisplayPreferencesStore.DATASTORE_NAME)
+            },
+        ),
+    )
 
     /** Shared by every RPC client (each adds its own auth) and Coil (no auth). */
     val okHttpClient: OkHttpClient = ConnectClients.createOkHttpClient()
