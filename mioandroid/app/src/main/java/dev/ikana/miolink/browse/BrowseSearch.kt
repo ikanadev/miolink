@@ -17,12 +17,15 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SearchBarScrollBehavior
 import androidx.compose.material3.SearchBarState
 import androidx.compose.material3.SearchBarValue
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -112,9 +115,26 @@ internal fun RootSearchAppBar(
  * Directories open in Browse; links open like the directory's own (tap) or
  * go to their edit screen (long press). The links follow
  * [BrowseUiState.linkLayout], with the same toggle.
+ *
+ * The search opens in its own window, whose status and navigation bar icons
+ * are dark when `LocalContentColor` is dark. Outside a `Surface` that's the
+ * default black, so this provides `onSurface` to keep them right in dark mode.
  */
 @Composable
 internal fun BrowseSearchView(
+    searchBarState: SearchBarState,
+    inputField: @Composable () -> Unit,
+    state: BrowseUiState,
+    search: SearchUiState,
+    onAction: (BrowseAction) -> Unit,
+) {
+    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
+        SearchResults(searchBarState, inputField, state, search, onAction)
+    }
+}
+
+@Composable
+private fun SearchResults(
     searchBarState: SearchBarState,
     inputField: @Composable () -> Unit,
     state: BrowseUiState,
