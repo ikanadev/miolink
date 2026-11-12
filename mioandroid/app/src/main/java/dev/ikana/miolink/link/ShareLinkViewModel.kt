@@ -1,6 +1,5 @@
 package dev.ikana.miolink.link
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -9,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.ikana.miolink.appContainer
 import dev.ikana.miolink.core.network.ApiError
 import dev.ikana.miolink.core.network.ApiException
+import dev.ikana.miolink.core.network.log
 import dev.ikana.miolink.navigation.ROOT_DIRECTORY_ID
 import dev.ikana.miolink.tree.DirectoryEntity
 import dev.ikana.miolink.tree.TreeSource
@@ -97,7 +97,7 @@ class ShareLinkViewModel(
                 val id = links.create(directoryId, url)
                 local.update { it.copy(isSaving = false, createdLinkId = id) }
             } catch (e: ApiException) {
-                Log.w(TAG, "Saving a shared link failed: ${e.error}")
+                e.log(TAG, "Saving a shared link failed")
                 when (e.error) {
                     ApiError.NotFound -> {
                         local.update {

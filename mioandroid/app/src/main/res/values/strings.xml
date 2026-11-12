@@ -184,6 +184,18 @@
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
+    <string name="settings_server_connection">Server connection</string>
+    <string name="settings_server_connection_summary">Server URL and API key</string>
+    <string name="settings_error_log">Error log</string>
+    <string name="settings_error_log_summary">Unexpected errors and crashes recorded on this device</string>
+    <string name="error_log_share">Share error log</string>
+    <string name="error_log_share_subject">Mio Link error log</string>
+    <string name="error_log_clear">Clear error log</string>
+    <string name="error_log_clear_title">Clear the error log?</string>
+    <string name="error_log_clear_message">Every recorded error is deleted from this device.</string>
+    <string name="error_log_clear_confirm">Clear</string>
+    <string name="error_log_empty_title">No errors recorded</string>
+    <string name="error_log_empty_message">Unexpected errors and crashes show up here, so you can share them for debugging.</string>
     <string name="settings_welcome_title">Connect your server</string>
     <string name="settings_welcome_message">Mio Link keeps your links on your own miolink server. Enter its address and the API key you created with make keygen.</string>
     <string name="settings_server_title">Server</string>

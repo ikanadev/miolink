@@ -8,6 +8,8 @@ import coil3.request.crossfade
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.preferencesDataStoreFile
 import dev.ikana.miolink.core.database.MioDatabase
+import dev.ikana.miolink.core.log.ErrorLog
+import dev.ikana.miolink.core.log.ErrorLogFile
 import dev.ikana.miolink.core.network.ConnectClients
 import dev.ikana.miolink.core.network.ServiceClientsProvider
 import dev.ikana.miolink.core.settings.DisplayPreferences
@@ -21,6 +23,7 @@ import dev.ikana.miolink.link.LinkRepository
 import dev.ikana.miolink.settings.DefaultSettingsRepository
 import dev.ikana.miolink.settings.SettingsRepository
 import dev.ikana.miolink.tree.TreeRepository
+import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -39,6 +42,16 @@ class AppContainer(
     apiKeyAead: Lazy<Aead>? = null,
 ) {
     val applicationContext: Context = context.applicationContext
+
+    /**
+     * Unexpected errors and crashes, kept on the device for the error log
+     * screen. Installed first, so failures building the rest are recorded.
+     */
+    val errorLog = ErrorLogFile(File(applicationContext.filesDir, "logs/errors.log"))
+
+    init {
+        ErrorLog.install(errorLog)
+    }
 
     /** Lives as long as the process; for work that outlives any screen. */
     val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)

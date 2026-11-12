@@ -1,6 +1,5 @@
 package dev.ikana.miolink.link
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -9,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.ikana.miolink.appContainer
 import dev.ikana.miolink.core.network.ApiError
 import dev.ikana.miolink.core.network.ApiException
+import dev.ikana.miolink.core.network.log
 import dev.ikana.miolink.tree.DirectoryEntity
 import dev.ikana.miolink.tree.LinkEntity
 import dev.ikana.miolink.tree.TreeSource
@@ -309,7 +309,7 @@ class LinkEditViewModel(
                 block()
                 local.update { it.copy(pending = null) }
             } catch (e: ApiException) {
-                Log.w(TAG, "A link write failed: ${e.error}")
+                e.log(TAG, "A link write failed")
                 local.update { it.copy(pending = null) }
                 when (e.error) {
                     ApiError.NotFound -> onNotFound()

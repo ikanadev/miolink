@@ -1,14 +1,15 @@
 package dev.ikana.miolink.tree
 
 import android.database.SQLException
-import android.util.Log
 import androidx.lifecycle.Lifecycle
 import androidx.room.withTransaction
 import dev.ikana.miolink.core.database.MioDatabase
+import dev.ikana.miolink.core.log.ErrorLog
 import dev.ikana.miolink.core.network.ApiError
 import dev.ikana.miolink.core.network.ApiException
 import dev.ikana.miolink.core.network.ServiceClientsProvider
 import dev.ikana.miolink.core.network.getOrThrowApi
+import dev.ikana.miolink.core.network.log
 import dev.ikana.miolink.core.settings.ServerSettings
 import dev.ikana.miolink.gen.miolink.tree.v1.GetTreeResponse
 import dev.ikana.miolink.gen.miolink.tree.v1.getTreeRequest
@@ -118,7 +119,7 @@ class TreeRepository(
         } catch (e: SQLException) {
             // The cache didn't hold what the change needs (a parent that's
             // gone, say); the transaction rolled back. Refetch instead.
-            Log.w(TAG, "Couldn't apply a write locally", e)
+            ErrorLog.record(TAG, "Couldn't apply a write locally", e)
             false
         }
         if (!applied) {
@@ -176,11 +177,11 @@ class TreeRepository(
     } catch (e: CancellationException) {
         throw e
     } catch (e: ApiException) {
-        Log.w(TAG, "Couldn't refresh the tree: ${e.error}", e)
+        e.log(TAG, "Couldn't refresh the tree")
         _lastSyncError.value = e.error
         e.error
     } catch (e: Exception) {
-        Log.e(TAG, "Couldn't store the tree", e)
+        ErrorLog.record(TAG, "Couldn't store the tree", e)
         ApiError.Unknown(null).also { _lastSyncError.value = it }
     }
 

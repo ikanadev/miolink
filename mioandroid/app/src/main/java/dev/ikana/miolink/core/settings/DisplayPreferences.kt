@@ -1,11 +1,11 @@
 package dev.ikana.miolink.core.settings
 
-import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
+import dev.ikana.miolink.core.log.ErrorLog
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -36,7 +36,7 @@ class DisplayPreferencesStore(private val dataStore: DataStore<Preferences>) : D
     override val linkLayout: Flow<LinkLayout> = dataStore.data
         .catch { e ->
             if (e is IOException) {
-                Log.w(TAG, "Couldn't read display preferences", e)
+                ErrorLog.record(TAG, "Couldn't read display preferences", e)
                 emit(emptyPreferences())
             } else {
                 throw e
@@ -53,7 +53,7 @@ class DisplayPreferencesStore(private val dataStore: DataStore<Preferences>) : D
             dataStore.edit { it[KEY_LINK_LAYOUT] = layout.name }
         } catch (e: IOException) {
             // Only a preference; not worth interrupting the user.
-            Log.w(TAG, "Couldn't save the link layout", e)
+            ErrorLog.record(TAG, "Couldn't save the link layout", e)
         }
     }
 

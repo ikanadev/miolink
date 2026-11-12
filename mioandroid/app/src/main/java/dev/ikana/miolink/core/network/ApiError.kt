@@ -1,8 +1,10 @@
 package dev.ikana.miolink.core.network
 
+import android.util.Log
 import com.connectrpc.Code
 import com.connectrpc.ConnectException
 import com.connectrpc.ResponseMessage
+import dev.ikana.miolink.core.log.ErrorLog
 import java.io.IOException
 
 /**
@@ -50,6 +52,19 @@ fun ConnectException.toApiError(): ApiError = when (code) {
     // connect-kotlin reports transport failures (unknown host, connection
     // refused, TLS errors) as UNKNOWN with the IOException as the cause.
     else -> if (exception is IOException) ApiError.Unreachable else ApiError.Unknown(code)
+}
+
+/**
+ * Logs a failed call: [ApiError.Unknown] is unexpected (a server error or a
+ * response the app doesn't handle), so it goes to the [ErrorLog] with its
+ * cause; the rest are expected and only go to Logcat.
+ */
+fun ApiException.log(tag: String, message: String) {
+    if (error is ApiError.Unknown) {
+        ErrorLog.record(tag, "$message: $error", this)
+    } else {
+        Log.w(tag, "$message: $error")
+    }
 }
 
 /** Returns the response message, or throws [ApiException] for a failure. */

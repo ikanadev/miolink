@@ -4,6 +4,7 @@ import dev.ikana.miolink.core.network.ApiError
 import dev.ikana.miolink.core.network.ApiException
 import dev.ikana.miolink.core.network.ConnectClients
 import dev.ikana.miolink.core.network.getOrThrowApi
+import dev.ikana.miolink.core.network.log
 import dev.ikana.miolink.core.settings.ServerSettings
 import dev.ikana.miolink.core.settings.ServerSettingsStore
 import dev.ikana.miolink.gen.miolink.health.v1.pingRequest
@@ -31,6 +32,11 @@ class DefaultSettingsRepository(
         clients.forSettings(settings).health.ping(pingRequest {}).getOrThrowApi()
         null
     } catch (e: ApiException) {
+        e.log(TAG, "Test connection failed")
         e.error
+    }
+
+    private companion object {
+        const val TAG = "SettingsRepository"
     }
 }

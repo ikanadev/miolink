@@ -125,6 +125,7 @@ fun BrowseScreen(
     onNavigateTo: (Long) -> Unit,
     onNavigateUp: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenServerSettings: () -> Unit,
     onEditLink: (Long) -> Unit,
     modifier: Modifier = Modifier,
     incomingMessage: String? = null,
@@ -173,7 +174,7 @@ fun BrowseScreen(
             )
             if (result == SnackbarResult.ActionPerformed) {
                 when (action) {
-                    MessageAction.Settings -> onOpenSettings()
+                    MessageAction.Settings -> onOpenServerSettings()
                     MessageAction.Retry -> viewModel.onAction(BrowseAction.Refresh)
                     is MessageAction.OpenDirectory -> onOpenDirectory(action.id)
                     null -> Unit
@@ -191,6 +192,7 @@ fun BrowseScreen(
                 is BrowseAction.OpenAncestor -> onNavigateTo(action.id)
                 BrowseAction.NavigateUp -> onNavigateUp()
                 BrowseAction.OpenSettings -> onOpenSettings()
+                BrowseAction.OpenServerSettings -> onOpenServerSettings()
                 is BrowseAction.EditLink -> onEditLink(action.id)
                 is BrowseAction.OpenLink -> {
                     val toolbarColor = colorScheme.surfaceContainer.toArgb()
@@ -930,7 +932,7 @@ private fun SyncErrorState(
         action = {
             Button(
                 onClick = {
-                    onAction(if (needsSettings) BrowseAction.OpenSettings else BrowseAction.Refresh)
+                    onAction(if (needsSettings) BrowseAction.OpenServerSettings else BrowseAction.Refresh)
                 },
             ) {
                 Text(stringResource(if (needsSettings) R.string.browse_open_settings else R.string.browse_retry))

@@ -21,6 +21,14 @@ data class LinkEdit(val linkId: Long) : NavKey
 @Serializable
 data class ShareLink(val url: String) : NavKey
 
-/** Server URL and API key. */
+/** The settings menu: [ServerConnection] and [ErrorLogs]. */
 @Serializable
 data object Settings : NavKey
+
+/** Server URL and API key; also the first-run setup. */
+@Serializable
+data object ServerConnection : NavKey
+
+/** Unexpected errors recorded on this device. */
+@Serializable
+data object ErrorLogs : NavKey

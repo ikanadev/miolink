@@ -54,11 +54,12 @@ AppContainer.kt          wiring only (the app's main.go): OkHttp, Connect client
 MainActivity.kt          setContent { MioLinkTheme { MioLinkApp() } }
 MioLinkApp.kt            back stack and NavDisplay; each screen owns its Scaffold and insets
 ShareActivity.kt         the share target (ACTION_SEND text/plain): translucent, separate from MainActivity
-ShareApp.kt              the share flow's own back stack: Settings (if needed), ShareLink sheet, LinkEdit
+ShareApp.kt              the share flow's own back stack: ServerConnection (if needed), ShareLink sheet, LinkEdit
 
 core/
   network/               Connect ProtocolClient, API key interceptor, ConnectException -> app errors
   database/              Room database and migrations
+  log/                   ErrorLog (records unexpected errors and crashes), ErrorLogFile (the file on disk)
   settings/              server base URL and API key storage; DisplayPreferences (link layout)
   ui/                    shared composables (ConfirmDeleteDialog, DirectoryPicker, ProgressButtonContent, ThumbnailImage, ...), openInCustomTab
 navigation/              route keys and the back stack
@@ -87,7 +88,8 @@ browse/
   BrowseSearch.kt        the search field, the root's search app bar and the expanded results
   LinkSearch.kt          searchTree: matches a subtree's directories and links in memory
   SearchViewModel.kt     the query and its results for one directory's subtree
-settings/                SettingsScreen, SettingsViewModel (base URL, API key, test with Ping)
+settings/                SettingsScreen (menu), ServerSettingsScreen + SettingsViewModel (base URL, API key,
+                         test with Ping), ErrorLogScreen + ErrorLogViewModel
 ```
 
 Tests mirror the same packages under `app/src/test/`.
@@ -176,6 +178,14 @@ revision protocol:
   DataStore and the Tink keyset are excluded from backups (`res/xml`): the
   Keystore key that wraps them never leaves the device, so a restored copy
   couldn't be decrypted. An undecryptable key reads as "not configured".
+- **Error log.** Unexpected errors go through `ErrorLog.record(tag, message, e)`,
+  which writes to Logcat and appends to `files/logs/errors.log` (capped at
+  128 KB, oldest entries dropped). `AppContainer` installs it first, with an
+  uncaught exception handler that records crashes before the process ends.
+  Unexpected means `ApiError.Unknown`, storage, Room and Keystore failures,
+  and crashes; expected failures (unreachable, unauthenticated, not found,
+  invalid input) go to Logcat only. Catch `ApiException` and call
+  `e.log(TAG, message)`, which picks the right one. Never record the API key.
 - Cleartext `http://` is allowed only in debug builds
   (`src/debug/res/xml/network_security_config.xml`).
 
@@ -240,8 +250,13 @@ revision protocol:
 - Thumbnails load through `core/ui/ThumbnailImage` (Coil `AsyncImage`).
   `AppContainer.imageLoader` uses the shared OkHttpClient and is installed as
   Coil's singleton by `MioLinkApplication` (`SingletonImageLoader.Factory`).
-- Until server settings are saved, the app opens `Settings` alone, without
-  a back arrow; saving swaps it for `Browse`.
+- `Settings` is a menu of two screens: `ServerConnection` (URL and API key)
+  and `ErrorLogs` (the recorded errors, newest first, with Share as plain
+  text with the app and Android versions, and Clear after a confirm). Errors
+  that need the key fixed (`UNAUTHENTICATED`, not configured) open
+  `ServerConnection` directly.
+- Until server settings are saved, the app opens `ServerConnection` alone,
+  without a back arrow; saving swaps it for `Browse`.
 - Sharing to the app (`ACTION_SEND`, `text/plain`) opens `ShareActivity`,
   not `MainActivity`: a translucent activity (`Theme.MioLink.Share`,
   `taskAffinity=""`, excluded from recents) that runs in the sharing app's
@@ -251,8 +266,8 @@ revision protocol:
   toast. `ShareApp` shows `AddLinkSheet` prefilled with the URL in the root
   directory, with "Change" once the tree is cached (an empty cache is
   refreshed first; saving to the root doesn't wait for it). Unconfigured
-  settings open `Settings` first and continue to the sheet after saving; a
-  rejected API key opens `Settings` over the sheet. `NOT_FOUND` on save
+  settings open `ServerConnection` first and continue to the sheet after saving; a
+  rejected API key opens `ServerConnection` over the sheet. `NOT_FOUND` on save
   (directory deleted elsewhere) refreshes and falls back to the root with a
   message in the sheet. Success replaces the sheet with `LinkEdit`; leaving
   it finishes the activity with a toast ("Saved to Mio Link" or its exit

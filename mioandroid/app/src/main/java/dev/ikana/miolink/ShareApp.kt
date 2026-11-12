@@ -12,9 +12,9 @@ import androidx.navigation3.ui.NavDisplay
 import dev.ikana.miolink.link.LinkEditScreen
 import dev.ikana.miolink.link.ShareLinkScreen
 import dev.ikana.miolink.navigation.LinkEdit
-import dev.ikana.miolink.navigation.Settings
+import dev.ikana.miolink.navigation.ServerConnection
 import dev.ikana.miolink.navigation.ShareLink
-import dev.ikana.miolink.settings.SettingsScreen
+import dev.ikana.miolink.settings.ServerSettingsScreen
 
 /**
  * The share flow inside [ShareActivity], with its own back stack:
@@ -22,7 +22,7 @@ import dev.ikana.miolink.settings.SettingsScreen
  * - [ShareLink]: the add-link sheet over the sharing app, prefilled with
  *   [url] and saving in the root unless the user picks another directory.
  *   Cancelling it ends the flow.
- * - [Settings] first when [isConfigured] is false (back ends the flow,
+ * - [ServerConnection] first when [isConfigured] is false (back ends the flow,
  *   saving continues to the sheet), or over the sheet when the server
  *   rejects the API key.
  * - [LinkEdit] replaces the sheet once the link is created. Leaving it ends
@@ -38,7 +38,7 @@ fun ShareApp(
     onFinish: (message: String?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val backStack = rememberNavBackStack(if (isConfigured) ShareLink(url) else Settings)
+    val backStack = rememberNavBackStack(if (isConfigured) ShareLink(url) else ServerConnection)
     val saved = stringResource(R.string.share_saved)
     val finish: () -> Unit = { onFinish(saved.takeIf { backStack.lastOrNull() is LinkEdit }) }
     val back: () -> Unit = { if (backStack.size > 1) backStack.removeLastOrNull() else finish() }
@@ -58,7 +58,7 @@ fun ShareApp(
                     url = key.url,
                     onCreated = { id -> ifOnTop { backStack.replaceAll(LinkEdit(id)) } },
                     onDismiss = { ifOnTop { onFinish(null) } },
-                    onOpenSettings = { ifOnTop { backStack.add(Settings) } },
+                    onOpenSettings = { ifOnTop { backStack.add(ServerConnection) } },
                 )
             }
             entry<LinkEdit> { key ->
@@ -66,15 +66,15 @@ fun ShareApp(
                 LinkEditScreen(
                     linkId = key.linkId,
                     onClose = { message -> ifOnTop { onFinish(message ?: saved) } },
-                    onOpenSettings = { ifOnTop { backStack.add(Settings) } },
+                    onOpenSettings = { ifOnTop { backStack.add(ServerConnection) } },
                 )
             }
-            entry<Settings> {
-                SettingsScreen(
+            entry<ServerConnection> {
+                ServerSettingsScreen(
                     onNavigateUp = back,
                     onSaved = {
                         // First run: continue with the share. Otherwise return
-                        // to the screen that asked for Settings.
+                        // to the screen that asked for them.
                         if (backStack.size > 1) backStack.removeLastOrNull() else backStack.replaceAll(ShareLink(url))
                     },
                 )

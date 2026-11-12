@@ -1,6 +1,5 @@
 package dev.ikana.miolink.browse
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -9,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.ikana.miolink.appContainer
 import dev.ikana.miolink.core.network.ApiError
 import dev.ikana.miolink.core.network.ApiException
+import dev.ikana.miolink.core.network.log
 import dev.ikana.miolink.core.settings.DisplayPreferences
 import dev.ikana.miolink.core.settings.LinkLayout
 import dev.ikana.miolink.directory.DirectoryNameError
@@ -187,6 +187,9 @@ sealed interface BrowseAction {
     data object NavigateUp : BrowseAction
     data object OpenSettings : BrowseAction
 
+    /** The server URL and API key, for a sync error that needs them fixed. */
+    data object OpenServerSettings : BrowseAction
+
     /** Pull-to-refresh or a retry button. */
     data object Refresh : BrowseAction
     data class MessageShown(val message: BrowseMessage) : BrowseAction
@@ -325,6 +328,7 @@ class BrowseViewModel(
             is BrowseAction.OpenAncestor,
             BrowseAction.NavigateUp,
             BrowseAction.OpenSettings,
+            BrowseAction.OpenServerSettings,
             is BrowseAction.EditLink,
             -> Unit
         }
@@ -393,7 +397,7 @@ class BrowseViewModel(
             try {
                 links.recordView(linkId)
             } catch (e: ApiException) {
-                Log.w(TAG, "Couldn't record a view: ${e.error}")
+                e.log(TAG, "Couldn't record a view")
                 when (e.error) {
                     // Deleted on another device; the refresh removes it here.
                     ApiError.NotFound -> tree.refresh()
@@ -533,7 +537,7 @@ class BrowseViewModel(
                 val message = block()
                 local.update { it.copy(isSaving = false, dialog = null, message = message ?: it.message) }
             } catch (e: ApiException) {
-                Log.w(TAG, "A write failed: ${e.error}")
+                e.log(TAG, "A write failed")
                 when (e.error) {
                     ApiError.NotFound -> {
                         local.update { it.copy(isSaving = false, dialog = null, message = gone) }

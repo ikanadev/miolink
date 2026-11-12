@@ -1,12 +1,12 @@
 package dev.ikana.miolink.settings
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.ikana.miolink.appContainer
+import dev.ikana.miolink.core.log.ErrorLog
 import dev.ikana.miolink.core.network.ApiError
 import dev.ikana.miolink.core.settings.ServerSettings
 import dev.ikana.miolink.core.settings.normalizeBaseUrl
@@ -115,10 +115,10 @@ class SettingsViewModel(private val repository: SettingsRepository) : ViewModel(
                 repository.save(settings)
                 true
             } catch (e: IOException) {
-                Log.w(TAG, "Couldn't save settings", e)
+                ErrorLog.record(TAG, "Couldn't save settings", e)
                 false
             } catch (e: GeneralSecurityException) {
-                Log.w(TAG, "Couldn't encrypt the API key", e)
+                ErrorLog.record(TAG, "Couldn't encrypt the API key", e)
                 false
             }
             _state.update { it.copy(isSaving = false, isSaved = saved, saveFailed = !saved) }

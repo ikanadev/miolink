@@ -2,7 +2,6 @@ package dev.ikana.miolink.core.settings
 
 import android.content.Context
 import android.util.Base64
-import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -13,6 +12,7 @@ import com.google.crypto.tink.KeyTemplates
 import com.google.crypto.tink.RegistryConfiguration
 import com.google.crypto.tink.aead.AeadConfig
 import com.google.crypto.tink.integration.android.AndroidKeysetManager
+import dev.ikana.miolink.core.log.ErrorLog
 import java.io.IOException
 import java.security.GeneralSecurityException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -43,7 +43,7 @@ class ServerSettingsStore(
     val settings: Flow<ServerSettings?> = dataStore.data
         .catch { e ->
             if (e is IOException) {
-                Log.w(TAG, "Couldn't read settings", e)
+                ErrorLog.record(TAG, "Couldn't read settings", e)
                 emit(emptyPreferences())
             } else {
                 throw e
@@ -73,10 +73,10 @@ class ServerSettingsStore(
         } catch (e: GeneralSecurityException) {
             // The Keystore key is gone (app data restored on another device,
             // Keystore reset). The user has to enter the key again.
-            Log.w(TAG, "Couldn't decrypt the stored API key", e)
+            ErrorLog.record(TAG, "Couldn't decrypt the stored API key", e)
             return null
         } catch (e: IllegalArgumentException) {
-            Log.w(TAG, "Stored API key isn't valid Base64", e)
+            ErrorLog.record(TAG, "Stored API key isn't valid Base64", e)
             return null
         }
         return ServerSettings(baseUrl = baseUrl, apiKey = apiKey)

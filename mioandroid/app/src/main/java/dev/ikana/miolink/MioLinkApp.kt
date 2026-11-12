@@ -23,8 +23,12 @@ import androidx.navigation3.ui.NavDisplay
 import dev.ikana.miolink.browse.BrowseScreen
 import dev.ikana.miolink.link.LinkEditScreen
 import dev.ikana.miolink.navigation.Browse
+import dev.ikana.miolink.navigation.ErrorLogs
 import dev.ikana.miolink.navigation.LinkEdit
+import dev.ikana.miolink.navigation.ServerConnection
 import dev.ikana.miolink.navigation.Settings
+import dev.ikana.miolink.settings.ErrorLogScreen
+import dev.ikana.miolink.settings.ServerSettingsScreen
 import dev.ikana.miolink.settings.SettingsScreen
 
 /**
@@ -32,17 +36,17 @@ import dev.ikana.miolink.settings.SettingsScreen
  * insets); this only holds the back stack and maps route keys to screens.
  *
  * Until server settings are saved ([isConfigured] false) the app opens
- * [Settings] alone, without a back arrow; saving them swaps it for [Browse].
+ * [ServerConnection] alone, without a back arrow; saving them swaps it for [Browse].
  */
 @Composable
 fun MioLinkApp(isConfigured: Boolean, modifier: Modifier = Modifier) {
-    val backStack = rememberNavBackStack(if (isConfigured) Browse() else Settings)
+    val backStack = rememberNavBackStack(if (isConfigured) Browse() else ServerConnection)
     val navigateUp: () -> Unit = { if (backStack.size > 1) backStack.removeLastOrNull() }
     // A message a closing screen leaves for the Browse entry below it.
     var pendingMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
     LaunchedEffect(isConfigured) {
-        if (isConfigured && backStack.toList() == listOf(Settings)) backStack[0] = Browse()
+        if (isConfigured && backStack.toList() == listOf(ServerConnection)) backStack[0] = Browse()
     }
 
     // Shared-axis X, with the theme's expressive springs.
@@ -79,6 +83,7 @@ fun MioLinkApp(isConfigured: Boolean, modifier: Modifier = Modifier) {
                     onNavigateTo = { id -> ifOnTop { backStack.showDirectory(id) } },
                     onNavigateUp = { ifOnTop(navigateUp) },
                     onOpenSettings = { ifOnTop { backStack.add(Settings) } },
+                    onOpenServerSettings = { ifOnTop { backStack.add(ServerConnection) } },
                     onEditLink = { id -> ifOnTop { backStack.add(LinkEdit(id)) } },
                     incomingMessage = pendingMessage.takeIf { backStack.lastOrNull() == key },
                     onIncomingMessageShown = { pendingMessage = null },
@@ -94,11 +99,22 @@ fun MioLinkApp(isConfigured: Boolean, modifier: Modifier = Modifier) {
                             navigateUp()
                         }
                     },
-                    onOpenSettings = { ifOnTop { backStack.add(Settings) } },
+                    onOpenSettings = { ifOnTop { backStack.add(ServerConnection) } },
                 )
             }
-            entry<Settings> {
-                SettingsScreen(onNavigateUp = navigateUp.takeIf { backStack.size > 1 })
+            entry<Settings> { key ->
+                val ifOnTop: (() -> Unit) -> Unit = { if (backStack.lastOrNull() == key) it() }
+                SettingsScreen(
+                    onNavigateUp = { ifOnTop(navigateUp) },
+                    onOpenServerSettings = { ifOnTop { backStack.add(ServerConnection) } },
+                    onOpenErrorLog = { ifOnTop { backStack.add(ErrorLogs) } },
+                )
+            }
+            entry<ServerConnection> {
+                ServerSettingsScreen(onNavigateUp = navigateUp.takeIf { backStack.size > 1 })
+            }
+            entry<ErrorLogs> {
+                ErrorLogScreen(onNavigateUp = navigateUp)
             }
         },
     )
